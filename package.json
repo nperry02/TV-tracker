@@ -1,0 +1,20 @@
+{
+  "name": "next-episode",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node --watch --env-file-if-exists=.env server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "test:live": "LIVE_TMDB=1 node tests/browser.mjs",
+    "check": "node --check server.mjs && node --check public/app.js && npm test"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}
