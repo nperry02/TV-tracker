@@ -135,7 +135,7 @@ function render() {
   $("#continue-list").innerHTML = continuing
     .map((s) => {
       const next = progress(s).next;
-      return `<button class="continue-card" data-show="${s.id}">${poster(s, "mini-poster", "w92")}<div><strong>${esc(s.name)}</strong><small>Up next · ${code(next)}</small><small>${esc(next.name)}</small></div><span class="play" aria-hidden="true">▶</span></button>`;
+      return `<article class="continue-card"><button class="continue-open" data-show="${s.id}" aria-label="Open ${esc(s.name)}">${poster(s, "mini-poster", "w92")}<span><strong>${esc(s.name)}</strong><small>Up next · ${code(next)}</small><small>${esc(next.name)}</small></span></button><button class="next-watched" data-next="${s.id}" aria-label="Mark ${esc(s.name)} ${code(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
     })
     .join("");
 }
@@ -195,6 +195,22 @@ function renderShow() {
             .join("")
         : '<p class="muted">No episodes announced for this season yet.</p>'
     }</div><div class="detail-bottom"><small>Show info refreshed ${new Date(s.refreshedAt).toLocaleDateString()}. Refresh to check for new episodes.</small><button class="text-button" id="remove-show">Remove from library</button></div></div>`;
+  if (p.next) {
+    $(".detail-progress").insertAdjacentHTML(
+      "beforeend",
+      `<button class="next-watched-detail" data-next="${s.id}">✓ Mark ${code(p.next)} watched</button>`,
+    );
+  }
+  const lastAired = episodes
+    .filter((e) => aired(e))
+    .sort((a, b) => a.episode_number - b.episode_number)
+    .at(-1);
+  if (selectedSeason > 0 && lastAired) {
+    $("#mark-season").insertAdjacentHTML(
+      "afterend",
+      `<button data-through="${lastAired.episode_number}">Watched through this season</button>`,
+    );
+  }
   if (mutationPending)
     $("#show-content")
       .querySelectorAll("button:not([data-close]), input, select")
@@ -202,15 +218,16 @@ function renderShow() {
         el.disabled = true;
       });
 }
-async function save(body, message) {
+async function save(body, message, id = selectedId) {
   if (mutationPending) return;
   mutationPending = true;
-  const id = selectedId;
+  const isCurrentDialog = () => selectedId === id && $("#show-dialog").open;
   const scroll = $("#show-dialog").scrollTop;
   const focused = document.activeElement;
   const focusId = focused?.id;
   const episode = focused?.dataset.episode;
-  renderShow();
+  render();
+  if (isCurrentDialog()) renderShow();
   try {
     const updated = await api(`/api/shows/${id}`, { method: "PATCH", body });
     shows = shows.map((s) => (s.id === id ? updated : s));
@@ -220,7 +237,9 @@ async function save(body, message) {
     report(error);
   } finally {
     mutationPending = false;
-    renderShow();
+    render();
+    if ($("#show-dialog").open) renderShow();
+    if (!isCurrentDialog()) return;
     $("#show-dialog").scrollTop = scroll;
     const target = focusId
       ? document.getElementById(focusId)
@@ -247,6 +266,24 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.dataset.show) return openShow(button.dataset.show);
+  if (button.dataset.next) {
+    const id = Number(button.dataset.next);
+    const show = shows.find((s) => s.id === id);
+    const next = show && progress(show).next;
+    if (!next) return;
+    return save(
+      {
+        progress: {
+          action: "episode",
+          season: next.season_number,
+          episode: next.episode_number,
+          watched: true,
+        },
+      },
+      `${show.name} · ${code(next)} marked watched.`,
+      id,
+    );
+  }
   if (["add-show", "first-show"].includes(button.id)) return openSearch();
   if (button.id === "credits") return $("#credits-dialog").showModal();
   if (button.id === "reset-filters") {

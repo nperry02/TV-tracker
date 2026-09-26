@@ -19,6 +19,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Combine title search, genre, and personal rating filters. Sort by title, rating, or recently added.
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
+- Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.
 - Correct progress by unchecking episodes or clearing a season.
 - Automatic status distinguishes ongoing shows from ended/canceled shows. Manual status overrides are available, including Dropped.
 - Specials are optional and do not affect completion. Future episodes and episodes with unknown air dates are not marked watched in bulk.

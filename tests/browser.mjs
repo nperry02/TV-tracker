@@ -112,6 +112,48 @@ try {
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   if (!live) {
+    // Quick progress works from the library without opening a dialog.
+    await page.locator('#continue-list [data-next="1396"]').click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('#continue-list [data-next="1396"]')
+          ?.getAttribute("aria-label") === "Mark Breaking Bad S2 E2 watched",
+    );
+    assert.equal(await page.locator("#show-dialog").isVisible(), false);
+    await page.locator('.show-card[data-show="1396"]').click();
+    await page.locator('#show-content [data-next="1396"]').click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('#show-content [data-next="1396"]')
+          ?.textContent.includes("S2 E3") &&
+        !document.querySelector("#show-rating").disabled,
+    );
+    // Correct an earlier gap, then complete through season 2 in one action.
+    await page.locator("#season-select").selectOption("1");
+    await page.locator('[data-episode="1"]').uncheck();
+    await page.waitForFunction(
+      () => !document.querySelector("#show-rating").disabled,
+    );
+    await page.locator("#season-select").selectOption("2");
+    await page
+      .getByRole("button", { name: "Watched through this season", exact: true })
+      .click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector(".detail-hero .status-badge")?.textContent ===
+          "Completed" && !document.querySelector("#show-rating").disabled,
+    );
+    assert.equal(await page.locator("#show-content [data-next]").count(), 0);
+    await page.locator("#season-select").selectOption("1");
+    assert.equal(await page.locator('[data-episode="1"]').isChecked(), true);
+    assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
+    await page.getByRole("button", { name: "Close show", exact: true }).click();
+    await page.reload();
+    await page
+      .locator('.show-card[data-show="1396"] .status-completed')
+      .waitFor();
     for (const [id, rating, statusOverride] of [
       [95396, 5, "Caught Up"],
       [76331, 5, "Completed"],
@@ -131,7 +173,7 @@ try {
     await page.reload();
     await page.locator(".show-card").nth(5).waitFor();
     await page.locator('[data-tab="Completed"]').click();
-    assert.equal(await page.locator(".show-card").count(), 1);
+    assert.equal(await page.locator(".show-card").count(), 2);
     await page.locator('[data-tab="All"]').click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);

@@ -217,6 +217,45 @@ h1 {
   background: linear-gradient(120deg, #233027, #19231c);
   gap: 14px;
   min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.continue-open {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 14px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+.continue-open:hover {
+  background: transparent;
+}
+.continue-open > span {
+  min-width: 0;
+}
+.continue-open strong,
+.continue-open small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.next-watched {
+  color: var(--accent);
+  flex-shrink: 0;
+  padding: 9px;
+}
+.next-watched span {
+  display: block;
+  margin-top: 4px;
+  font-size: 9px;
+}
+.next-watched-detail {
+  color: var(--accent);
+  font-size: 12px;
 }
 .continue-card img,
 .mini-poster {
