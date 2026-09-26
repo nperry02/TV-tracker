@@ -43,6 +43,14 @@ const catalog = [
     first_air_date: "2002-06-02",
   },
 ];
+catalog.push(
+  ...Array.from({ length: 23 }, (_, i) => ({
+    id: 200000 + i,
+    name: `Test series ${String(i + 1).padStart(2, "0")}`,
+    status: "Returning Series",
+    first_air_date: "2020-01-01",
+  })),
+);
 globalThis.fetch = async (input) => {
   const url = new URL(input);
   if (url.hostname !== "api.themoviedb.org")
@@ -51,8 +59,13 @@ globalThis.fetch = async (input) => {
   if (path === "search/tv") {
     const query = url.searchParams.get("query").toLowerCase();
     if (query === "offline") return Response.json({}, { status: 503 });
+    const page = Number(url.searchParams.get("page") || 1);
+    const results = catalog.filter((s) => s.name.toLowerCase().includes(query));
     return Response.json({
-      results: catalog.filter((s) => s.name.toLowerCase().includes(query)),
+      results: results.slice((page - 1) * 20, page * 20),
+      page,
+      total_results: results.length,
+      total_pages: Math.ceil(results.length / 20),
     });
   }
   const match = path.match(/^tv\/(\d+)(?:\/season\/(\d+))?$/);

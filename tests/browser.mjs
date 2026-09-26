@@ -50,6 +50,21 @@ try {
   });
   page.on("pageerror", (error) => errors.push(error.message));
   page.setDefaultTimeout(live ? 60000 : 10000);
+  if (live) {
+    const first = await (
+      await page.request.get(`${base}/api/search?q=Star&page=1`)
+    ).json();
+    const second = await (
+      await page.request.get(`${base}/api/search?q=Star&page=2`)
+    ).json();
+    assert.equal(first.page, 1);
+    assert.equal(second.page, 2);
+    assert.ok(second.results.length > 0);
+    assert.notDeepEqual(
+      first.results.map((s) => s.id),
+      second.results.map((s) => s.id),
+    );
+  }
   await page.goto(base);
   await page.getByRole("button", { name: /Find your first show/ }).click();
   await page
@@ -212,6 +227,83 @@ try {
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await page.getByRole("button", { name: /Find a show/ }).click();
   if (!live) {
+    const searchFor = async (query) => {
+      await page
+        .getByRole("searchbox", { name: "Search TMDB", exact: true })
+        .fill(query);
+      await page.getByRole("button", { name: "Search", exact: true }).click();
+      await page.waitForFunction(
+        (q) =>
+          document
+            .querySelector("#search-message")
+            .textContent.includes(`results for “${q}”`),
+        query,
+      );
+    };
+    await searchFor("Test series");
+    assert.equal(await page.locator(".search-result").count(), 20);
+    await page.route("**/api/search?**", async (route) => {
+      if (new URL(route.request().url()).searchParams.get("page") === "2") {
+        await route.fulfill({
+          status: 502,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Temporary search failure." }),
+        });
+      } else await route.continue();
+    });
+    await page.locator("#load-more").click();
+    await page
+      .getByText("Temporary search failure.", { exact: true })
+      .waitFor();
+    assert.equal(await page.locator(".search-result").count(), 20);
+    await page.unroute("**/api/search?**");
+    await page.locator("#load-more").click();
+    await page
+      .getByText("Showing 23 of 23 results for “Test series”", { exact: true })
+      .waitFor();
+    assert.equal(await page.locator(".search-result").count(), 23);
+    assert.equal(await page.locator("#load-more").isVisible(), false);
+    await page.locator('[data-add="200022"]').click();
+    await page.locator("#show-rating").waitFor();
+    await page.getByRole("button", { name: "Close show", exact: true }).click();
+    await page.getByRole("button", { name: /Find a show/ }).click();
+    assert.equal(
+      await page.locator('#search-results [data-show="200022"]').count(),
+      1,
+    );
+    // A late response from an older query must not mix shows into the new query.
+    await searchFor("Test series");
+    let release, started;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const intercepted = new Promise((resolve) => {
+      started = resolve;
+    });
+    await page.route("**/api/search?**", async (route) => {
+      if (new URL(route.request().url()).searchParams.get("page") === "2") {
+        started();
+        await gate;
+      }
+      await route.continue();
+    });
+    await page.locator("#load-more").click();
+    await intercepted;
+    await searchFor("Breaking Bad");
+    const oldResponse = page.waitForResponse(
+      (response) => new URL(response.url()).searchParams.get("page") === "2",
+    );
+    release();
+    await (await oldResponse).finished();
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    );
+    assert.equal(await page.locator(".search-result").count(), 1);
+    assert.equal(await page.locator("#load-more").isVisible(), false);
+    await page.unroute("**/api/search?**");
     await page
       .getByRole("searchbox", { name: "Search TMDB", exact: true })
       .fill("offline");

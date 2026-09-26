@@ -127,6 +127,12 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(hostile.status, 403);
   assert.equal((await fetch(`${base}/.env`)).status, 404);
   assert.equal((await fetch(`${base}/api/search?q=test`)).status, 503);
+  for (const page of ["0", "-1", "1.5", "501", "oops"]) {
+    assert.equal(
+      (await fetch(`${base}/api/search?q=test&page=${page}`)).status,
+      400,
+    );
+  }
   const exported = await (await fetch(`${base}/api/export`)).json();
   assert.equal(exported.shows[0].rating, 4.5);
   await stop();

@@ -188,11 +188,14 @@ export const server = http.createServer(async (req, res) => {
     }
     if (req.method === "GET" && path === "/api/search") {
       const q = (url.searchParams.get("q") || "").trim().slice(0, 200);
+      const page = Number(url.searchParams.get("page") || 1);
+      if (!Number.isSafeInteger(page) || page < 1 || page > 500)
+        return send(400, { error: "Search page must be between 1 and 500." });
       if (!q) return send(200, { results: [] });
       return send(
         200,
         await tmdb(
-          `search/tv?query=${encodeURIComponent(q)}&include_adult=false`,
+          `search/tv?query=${encodeURIComponent(q)}&include_adult=false&page=${page}`,
         ),
       );
     }

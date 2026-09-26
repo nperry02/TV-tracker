@@ -611,6 +611,10 @@ dialog::backdrop {
   flex-direction: column;
   gap: 8px;
 }
+.load-more {
+  display: block;
+  margin: 20px auto 0;
+}
 .search-result {
   display: flex;
   align-items: center;

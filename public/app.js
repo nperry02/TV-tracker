@@ -32,6 +32,16 @@ let shows = [],
   mutationPending = false;
 let searchRun = 0,
   toastTimer;
+let searchState = {
+  query: "",
+  page: 0,
+  totalPages: 0,
+  total: 0,
+  results: [],
+  loading: false,
+  error: "",
+};
+const addingShows = new Set();
 async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
@@ -140,30 +150,84 @@ function render() {
     .join("");
 }
 function openSearch() {
+  renderSearch();
   $("#search-dialog").showModal();
   $("#tmdb-query").focus();
 }
-async function search(event) {
+function search(event) {
   event.preventDefault();
   const query = $("#tmdb-query").value.trim();
   if (!query) return;
+  searchState = {
+    query,
+    page: 0,
+    totalPages: 0,
+    total: 0,
+    results: [],
+    loading: false,
+    error: "",
+  };
+  loadSearchPage();
+}
+function renderSearch() {
+  const s = searchState;
+  $("#search-message").textContent =
+    s.error ||
+    (s.loading
+      ? s.page
+        ? "Loading more shows…"
+        : "Searching TV shows…"
+      : !s.query
+        ? "Search for a show to start your collection."
+        : s.results.length
+          ? `Showing ${s.results.length} of ${s.total} results for “${s.query}”`
+          : `No shows found for “${s.query}”. Try a different title.`);
+  $("#search-results").setAttribute("aria-busy", String(s.loading));
+  $("#search-results").innerHTML = s.results
+    .map(
+      (show) =>
+        `<article class="search-result">${poster(show, "mini-poster", "w92")}<div class="result-info"><h3>${esc(show.name)} <span class="year">${year(show)}</span></h3><p>${esc(show.overview || "No description available.")}</p></div>${shows.some((x) => x.id === show.id) ? `<button data-show="${show.id}">Open ↗</button>` : `<button data-add="${show.id}"${addingShows.has(show.id) ? " disabled" : ""}>${addingShows.has(show.id) ? "Adding…" : "＋ Add"}</button>`}</article>`,
+    )
+    .join("");
+  $("#load-more").hidden = !s.page || s.page >= s.totalPages;
+  $("#load-more").disabled = s.loading;
+  $("#load-more").textContent = s.loading
+    ? "Loading…"
+    : s.error
+      ? "Try loading more again"
+      : "Load more shows";
+}
+async function loadSearchPage() {
+  if (searchState.loading) return;
   const run = ++searchRun;
-  $("#search-message").textContent = "Searching TV shows…";
-  $("#search-results").innerHTML = "";
+  const query = searchState.query;
+  const page = searchState.page + 1;
+  searchState.loading = true;
+  searchState.error = "";
+  renderSearch();
   try {
-    const data = await api(`/api/search?q=${encodeURIComponent(query)}`);
+    const data = await api(
+      `/api/search?q=${encodeURIComponent(query)}&page=${page}`,
+    );
     if (run !== searchRun) return;
-    $("#search-message").textContent = data.results.length
-      ? `${data.results.length} results${data.total_results > 20 ? " · first page" : ""} for “${query}”`
-      : `No shows found for “${query}”. Try a different title.`;
-    $("#search-results").innerHTML = data.results
-      .map(
-        (s) =>
-          `<article class="search-result">${poster(s, "mini-poster", "w92")}<div class="result-info"><h3>${esc(s.name)} <span class="year">${year(s)}</span></h3><p>${esc(s.overview || "No description available.")}</p></div>${shows.some((x) => x.id === s.id) ? `<button data-show="${s.id}">Open ↗</button>` : `<button data-add="${s.id}">＋ Add</button>`}</article>`,
-      )
-      .join("");
+    searchState.results = [
+      ...new Map(
+        [...searchState.results, ...data.results].map((show) => [
+          show.id,
+          show,
+        ]),
+      ).values(),
+    ];
+    searchState.page = page;
+    searchState.totalPages = Math.min(data.total_pages || 1, 500);
+    searchState.total = data.total_results ?? searchState.results.length;
   } catch (error) {
-    if (run === searchRun) $("#search-message").textContent = error.message;
+    if (run === searchRun) searchState.error = error.message;
+  } finally {
+    if (run === searchRun) {
+      searchState.loading = false;
+      renderSearch();
+    }
   }
 }
 function openShow(id) {
@@ -286,6 +350,7 @@ document.addEventListener("click", async (event) => {
   }
   if (["add-show", "first-show"].includes(button.id)) return openSearch();
   if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.id === "load-more") return loadSearchPage();
   if (button.id === "reset-filters") {
     activeTab = "All";
     $("#library-query").value = "";
@@ -295,6 +360,9 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.dataset.add) {
+    const id = Number(button.dataset.add);
+    if (addingShows.has(id)) return;
+    addingShows.add(id);
     button.disabled = true;
     button.textContent = "Adding…";
     try {
@@ -308,12 +376,8 @@ document.addEventListener("click", async (event) => {
     } catch (error) {
       report(error);
     } finally {
-      button.disabled = false;
-      button.textContent = shows.some(
-        (s) => String(s.id) === button.dataset.add,
-      )
-        ? "Added ✓"
-        : "＋ Add";
+      addingShows.delete(id);
+      renderSearch();
     }
     return;
   }

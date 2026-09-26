@@ -14,7 +14,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 
 ## First version
 
-- Search TMDB and add shows to your library.
+- Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
 - Switch between All, Watching, Caught Up, Completed, and Dropped.
 - Combine title search, genre, and personal rating filters. Sort by title, rating, or recently added.
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
