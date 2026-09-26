@@ -222,6 +222,7 @@ export const server = http.createServer(async (req, res) => {
           rating: null,
           seasonRatings: {},
           statusOverride: null,
+          watchlist: null,
           addedAt: new Date().toISOString(),
         };
         commit({ ...library, shows: [...library.shows, show] });
@@ -230,6 +231,14 @@ export const server = http.createServer(async (req, res) => {
       if (req.method === "PATCH" && !match[2]) {
         const b = await body(req);
         const show = update(id, (s) => {
+          if ("watchlist" in b) {
+            if (typeof b.watchlist !== "boolean")
+              throw Object.assign(
+                new Error("Watchlist must be true or false."),
+                { status: 400 },
+              );
+            s.watchlist = b.watchlist;
+          }
           if ("rating" in b) {
             validateRating(b.rating);
             s.rating = b.rating;

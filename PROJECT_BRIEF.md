@@ -39,7 +39,7 @@ Suggested implementation rules, subject to refinement during development:
 - Metadata can be incomplete or delayed; do not interpret a missing next air date as proof that a show has ended. Allow a manual correction when necessary.
 - An ongoing status does not guarantee renewal or a known next-season date.
 
-Watchlist is a separate tab, excluded from All shows and its count. New shows with no watched episodes start there automatically. Marking the first episode watched moves a show into the tracked library; clearing all progress returns it to Watchlist. Explicit status overrides remain in effect until changed back to Automatic. Ratings alone do not start a show. Existing automatic-status shows without progress follow the same rule.
+Watchlist is an independent flag: any show can be both Watching (or Caught Up, Completed, or Dropped) and in Watchlist. Flagged shows that are Watching, Caught Up, Completed, or Dropped appear in their status tab, Watchlist, and All shows. Only watchlist-only, unstarted entries are excluded from All shows and its count. Add or remove the flag in show details without changing ratings, status, or progress. New shows default to Watchlist until their first watched episode; an explicitly set flag persists through progress and status changes. Older saved shows without a flag retain the same automatic default.
 
 ## Viewing progress
 
@@ -60,7 +60,7 @@ Watchlist is a separate tab, excluded from All shows and its count. New shows wi
 
 ## Your Shows
 
-- A personal library with an All view and tabs for Watching, Completed, Caught Up, and Dropped, plus a separate Watchlist excluded from All.
+- A personal library with an All view and tabs for Watching, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
 - Sort by personal rating, title, recently added, and original release date (newest or oldest first). Release date means the show's first premiere, not its most recent season; unknown dates appear last.
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
@@ -79,7 +79,7 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 - Local Node.js web app, available on this Mac at localhost:3210. No login or cloud sync.
 - Personal library and cached metadata persist in `data/library.json`, with atomic file replacement and a downloadable JSON backup.
 - Show and optional season ratings both ship in the first version.
-- Newly added shows appear in Watchlist until an episode is marked watched. Tracked-show totals and average ratings exclude watchlist entries.
+- New shows automatically start in Watchlist; explicitly set watchlist flags persist independently of status and progress. All-show totals and average ratings exclude only watchlist-only, unstarted entries.
 - Metadata refreshes on startup when older than six hours, with a manual refresh in show details.
 - All four statuses can be manually set; Automatic returns to progress-based status. Manual status does not change episode progress.
 

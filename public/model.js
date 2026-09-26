@@ -1,5 +1,16 @@
 export const statuses = ["Watching", "Caught Up", "Completed", "Dropped"];
 export const libraryTabs = ["All", ...statuses, "Watchlist"];
+export function inWatchlist(show) {
+  return typeof show.watchlist === "boolean"
+    ? show.watchlist
+    : !show.watched.length && !show.statusOverride;
+}
+export function matchesTab(show, tab) {
+  if (tab === "Watchlist") return inWatchlist(show);
+  if (tab === "All")
+    return !inWatchlist(show) || statuses.includes(watchStatus(show));
+  return watchStatus(show) === tab;
+}
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 export function today() {
   const d = new Date();
@@ -30,7 +41,7 @@ export function progress(show, date = today()) {
 }
 export function watchStatus(show, date = today()) {
   if (show.statusOverride) return show.statusOverride;
-  if (!show.watched.length) return "Watchlist";
+  if (!show.watched.length) return "Not started";
   const p = progress(show, date);
   if (!p.total || p.done < p.total) return "Watching";
   const all = regularEpisodes(show);

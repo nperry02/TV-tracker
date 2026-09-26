@@ -15,7 +15,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 ## First version
 
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
-- Switch between All, Watching, Caught Up, Completed, Dropped, and a separate Watchlist. Watchlist entries are excluded from All shows and its count.
+- Switch between All, Watching, Caught Up, Completed, Dropped, and a separate Watchlist. Only watchlist-only, unstarted shows are excluded from All shows and its count.
 - Combine title search, genre, and personal rating filters. Sort by title, rating, recently added, or release date (newest/oldest premiere first; unknown dates last).
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
@@ -26,7 +26,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Show information refreshes when opening the app if older than six hours; a manual refresh is available in show details. Saved library data remains usable when TMDB is offline.
 - Download a JSON backup from the footer.
 
-Newly added shows start in Watchlist. Marking an episode watched moves them into the tracked library automatically; clearing all progress returns them to Watchlist. Explicit status overrides (such as Dropped) remain in effect until you choose Automatic. Existing unstarted shows with automatic status also appear in Watchlist, without changing their saved data. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+Watchlist is an independent flag: any show can be both Watching (or Caught Up, Completed, or Dropped) and in Watchlist. Flagged shows that are Watching, Caught Up, Completed, or Dropped appear in their status tab, Watchlist, and All shows. Only watchlist-only, unstarted entries are excluded from All shows and its count. Add or remove the flag in show details without changing ratings, status, or progress. New shows default to Watchlist until their first watched episode; an explicitly set flag persists through progress and status changes. Older saved shows without a flag retain the same automatic default. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
 ## Storage and backups
 

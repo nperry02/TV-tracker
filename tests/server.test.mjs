@@ -93,6 +93,11 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.deepEqual(result.data.watched, ["1:1", "1:2", "2:1"]);
   assert.equal(result.data.rating, 4.5);
   assert.equal(result.data.seasonRatings["1"], 3.5);
+  result = await patch({ watchlist: true });
+  assert.equal(result.data.watchlist, true);
+  assert.deepEqual(result.data.watched, ["1:1", "1:2", "2:1"]);
+  assert.equal(result.data.rating, 4.5);
+  assert.equal((await patch({ watchlist: "yes" })).status, 400);
   result = await patch({
     progress: { action: "season", season: 2, watched: true },
     statusOverride: "Dropped",
@@ -140,6 +145,11 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   const saved = await (await fetch(`${base}/api/library`)).json();
   assert.equal(saved.shows[0].statusOverride, "Dropped");
   assert.equal(saved.shows[0].rating, 4.5);
+  assert.equal(saved.shows[0].watchlist, true);
+  result = await patch({ watchlist: false });
+  assert.equal(result.data.statusOverride, "Dropped");
+  assert.equal(result.data.watchlist, false);
+  assert.equal(result.data.rating, 4.5);
   assert.deepEqual(saved.shows[0].watched, ["1:2", "2:1", "2:2"]);
   await fetch(`${base}/api/shows/1`, { method: "DELETE" });
   assert.equal(JSON.parse(readFileSync(file)).shows.length, 0);

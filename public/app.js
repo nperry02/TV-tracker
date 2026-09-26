@@ -5,6 +5,8 @@ import {
   statuses,
   libraryTabs,
   watchStatus,
+  inWatchlist,
+  matchesTab,
 } from "./model.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -88,10 +90,10 @@ function render() {
   const counts = Object.fromEntries(
     [...statuses, "Watchlist"].map((status) => [
       status,
-      shows.filter((s) => watchStatus(s) === status).length,
+      shows.filter((s) => matchesTab(s, status)).length,
     ]),
   );
-  const tracked = shows.filter((s) => watchStatus(s) !== "Watchlist");
+  const tracked = shows.filter((s) => matchesTab(s, "All"));
   const rated = tracked.filter((s) => s.rating);
   $("#stats").innerHTML =
     `<div class="stat"><strong>${tracked.length}</strong><span>Tracked shows</span></div><div class="stat"><strong>${counts.Watching}</strong><span>Watching</span></div><div class="stat"><strong>${rated.length ? (rated.reduce((sum, s) => sum + s.rating, 0) / rated.length).toFixed(1) : "—"}<small class="stars"> ★</small></strong><span>Average rating</span></div>`;
@@ -117,9 +119,7 @@ function render() {
   const rating = $("#rating-filter").value;
   const filtered = shows.filter(
     (s) =>
-      (activeTab === "All"
-        ? watchStatus(s) !== "Watchlist"
-        : watchStatus(s) === activeTab) &&
+      matchesTab(s, activeTab) &&
       s.name.toLowerCase().includes(query) &&
       (!$("#genre").value ||
         s.genres.some((g) => String(g.id) === $("#genre").value)) &&
@@ -152,7 +152,7 @@ function render() {
   $("#library-grid").innerHTML = filtered
     .map((s) => {
       const p = progress(s);
-      return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}${badge(watchStatus(s))}</div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
+      return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}<span class="card-badges">${badge(watchStatus(s))}${inWatchlist(s) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
     })
     .join("");
   $("#empty").hidden = filtered.length > 0;
@@ -161,10 +161,10 @@ function render() {
     : '<span class="empty-icon">▰</span><h2>A new season starts here.</h2><p>Build a home for the shows you love. Find your first show, give it a rating, and pick up right where you left off.</p><button class="primary" id="first-show">Find your first show <span aria-hidden="true">↗</span></button>';
   if (!filtered.length && activeTab === "Watchlist") {
     $("#empty").innerHTML =
-      '<span class="empty-icon">＋</span><h2>Your next great show starts here.</h2><p>New shows live in your watchlist until you mark an episode watched. Try adjusting your filters or find a show to save for later.</p><button class="primary" id="first-show">Find a show</button>';
+      '<span class="empty-icon">＋</span><h2>Your next great show starts here.</h2><p>Save any show here, whether you have started it or not. Add or remove the watchlist flag from its details.</p><button class="primary" id="first-show">Find a show</button>';
   } else if (!tracked.length && counts.Watchlist && activeTab === "All") {
     $("#empty").innerHTML =
-      '<span class="empty-icon">▰</span><h2>Ready for your first episode?</h2><p>Your saved shows are in Watchlist. Mark an episode watched to bring a show into All shows.</p><button class="primary" data-tab="Watchlist">View watchlist</button>';
+      '<span class="empty-icon">▰</span><h2>Your shows are on your watchlist.</h2><p>Start watching a saved show to include it in All shows. You can keep its watchlist flag and viewing status separately.</p><button class="primary" data-tab="Watchlist">View watchlist</button>';
   }
   const continuing = shows
     .filter(
@@ -279,7 +279,7 @@ function renderShow() {
   const p = progress(s);
   const episodes = s.episodes.filter((e) => e.season_number === selectedSeason);
   $("#show-content").innerHTML =
-    `<div class="detail-hero">${image(s.backdrop_path) ? `<img class="detail-backdrop" src="${image(s.backdrop_path, "w1280")}" alt="">` : ""}${poster(s, "detail-poster")}<div class="detail-heading">${badge(watchStatus(s))}<h2>${esc(s.name)}</h2><p>${year(s)} · ${esc(s.seriesStatus)} · ${s.seasons.filter((x) => x.number > 0).length} seasons<br>${s.genres.map((g) => esc(g.name)).join(" · ")}</p></div><button class="icon-button" data-close="show-dialog" aria-label="Close show">×</button></div><div class="detail-body"><p class="overview">${esc(s.overview || "No description available.")}</p><div class="detail-controls"><label class="rating-control"><span class="field-label">Your show rating</span><select id="show-rating">${ratingOptions(s.rating)}</select></label><label class="status-control"><span class="field-label">Watch status</span><select id="show-status"><option value=""${!s.statusOverride ? " selected" : ""}>Automatic · ${watchStatus({ ...s, statusOverride: null })}</option>${statuses.map((status) => `<option${s.statusOverride === status ? " selected" : ""}>${status}</option>`).join("")}</select></label><div class="refresh-control"><button id="refresh-show">↻ Refresh show info</button></div></div><div class="detail-progress"><div class="detail-progress-top"><strong>${p.done ? `Last watched ${code(p.last)}` : "Ready when you are"}</strong><span>${p.done} of ${p.total} aired episodes watched</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="Show progress"></progress><p>${p.next ? `Up next: ${code(p.next)} · ${esc(p.next.name)}` : p.upcoming ? `Next episode: ${code(p.upcoming)} · ${esc(p.upcoming.air_date)}` : p.done ? "You have watched every currently available episode." : "Choose an episode below to set your progress."}${s.statusOverride ? " Your status is set manually; choose Automatic to follow episode progress." : ""}</p></div><div class="season-header"><label><span class="sr-only">Season</span><select id="season-select">${s.seasons.map((season) => `<option value="${season.number}"${season.number === selectedSeason ? " selected" : ""}>${esc(season.name)}</option>`).join("")}</select></label><div class="season-actions"><label><span class="sr-only">Season rating</span><select id="season-rating">${ratingOptions(s.seasonRatings[selectedSeason], "Rate season")}</select></label><button id="mark-season">✓ Mark season watched</button><button id="clear-season">Clear season</button></div></div>${selectedSeason === 0 ? '<p class="muted">Specials are optional and do not affect show completion.</p>' : ""}<div class="episode-list">${
+    `<div class="detail-hero">${image(s.backdrop_path) ? `<img class="detail-backdrop" src="${image(s.backdrop_path, "w1280")}" alt="">` : ""}${poster(s, "detail-poster")}<div class="detail-heading">${badge(watchStatus(s))}${inWatchlist(s) ? badge("Watchlist") : ""}<h2>${esc(s.name)}</h2><p>${year(s)} · ${esc(s.seriesStatus)} · ${s.seasons.filter((x) => x.number > 0).length} seasons<br>${s.genres.map((g) => esc(g.name)).join(" · ")}</p></div><button class="icon-button" data-close="show-dialog" aria-label="Close show">×</button></div><div class="detail-body"><p class="overview">${esc(s.overview || "No description available.")}</p><div class="detail-controls"><label class="rating-control"><span class="field-label">Your show rating</span><select id="show-rating">${ratingOptions(s.rating)}</select></label><label class="status-control"><span class="field-label">Watch status</span><select id="show-status"><option value=""${!s.statusOverride ? " selected" : ""}>Automatic · ${watchStatus({ ...s, statusOverride: null })}</option>${statuses.map((status) => `<option${s.statusOverride === status ? " selected" : ""}>${status}</option>`).join("")}</select></label><div class="refresh-control"><button id="refresh-show">↻ Refresh show info</button></div></div><div class="detail-progress"><div class="detail-progress-top"><strong>${p.done ? `Last watched ${code(p.last)}` : "Ready when you are"}</strong><span>${p.done} of ${p.total} aired episodes watched</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="Show progress"></progress><p>${p.next ? `Up next: ${code(p.next)} · ${esc(p.next.name)}` : p.upcoming ? `Next episode: ${code(p.upcoming)} · ${esc(p.upcoming.air_date)}` : p.done ? "You have watched every currently available episode." : "Choose an episode below to set your progress."}${s.statusOverride ? " Your status is set manually; choose Automatic to follow episode progress." : ""}</p></div><div class="season-header"><label><span class="sr-only">Season</span><select id="season-select">${s.seasons.map((season) => `<option value="${season.number}"${season.number === selectedSeason ? " selected" : ""}>${esc(season.name)}</option>`).join("")}</select></label><div class="season-actions"><label><span class="sr-only">Season rating</span><select id="season-rating">${ratingOptions(s.seasonRatings[selectedSeason], "Rate season")}</select></label><button id="mark-season">✓ Mark season watched</button><button id="clear-season">Clear season</button></div></div>${selectedSeason === 0 ? '<p class="muted">Specials are optional and do not affect show completion.</p>' : ""}<div class="episode-list">${
       episodes.length
         ? episodes
             .map((e) => {
@@ -296,6 +296,10 @@ function renderShow() {
       `<button class="next-watched-detail" data-next="${s.id}">✓ Mark ${code(p.next)} watched</button>`,
     );
   }
+  $(".detail-controls").insertAdjacentHTML(
+    "beforeend",
+    `<button id="toggle-watchlist" aria-pressed="${inWatchlist(s)}">${inWatchlist(s) ? "✓ In watchlist · Remove" : "＋ Add to watchlist"}</button>`,
+  );
   const lastAired = episodes
     .filter((e) => aired(e))
     .sort((a, b) => a.episode_number - b.episode_number)
@@ -381,6 +385,16 @@ document.addEventListener("click", async (event) => {
   }
   if (["add-show", "first-show"].includes(button.id)) return openSearch();
   if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.id === "toggle-watchlist") {
+    const show = shows.find((s) => s.id === selectedId);
+    const watchlist = !inWatchlist(show);
+    return save(
+      { watchlist },
+      watchlist
+        ? "Added to watchlist. Status and progress kept."
+        : "Removed from watchlist. Status and progress kept.",
+    );
+  }
   if (button.id === "load-more") return loadSearchPage();
   if (button.id === "reset-filters") {
     activeTab = "All";

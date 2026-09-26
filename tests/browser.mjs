@@ -74,8 +74,8 @@ try {
   await page.locator('[data-add="1396"]').click();
   await page.locator("#show-rating").waitFor();
   assert.equal(
-    await page.locator(".detail-hero .status-badge").textContent(),
-    "Watchlist",
+    await page.locator(".detail-hero .status-badge").first().textContent(),
+    "Not started",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   assert.equal(
@@ -120,6 +120,40 @@ try {
     "0",
   );
   await page.locator("#season-select").selectOption("2");
+  await page.locator("#toggle-watchlist").click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("#toggle-watchlist")
+        ?.getAttribute("aria-pressed") === "true" &&
+      !document.querySelector("#toggle-watchlist").disabled,
+  );
+  assert.equal(
+    await page.locator('[data-tab="All"] .count').textContent(),
+    "1",
+  );
+  assert.equal(
+    await page.locator('#tabs [data-tab="Watching"] .count').textContent(),
+    "1",
+  );
+  assert.equal(
+    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    "1",
+  );
+  await page.getByRole("button", { name: "Close show", exact: true }).click();
+  await page.locator('#tabs [data-tab="Watching"]').click();
+  assert.equal(await page.locator(".show-card").count(), 1);
+  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  assert.equal(await page.locator(".show-card").count(), 1);
+  await page.reload();
+  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  await page.locator('.show-card[data-show="1396"]').click();
+  assert.equal(
+    await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
+  await page.locator("#season-select").selectOption("2");
   await page.locator('[data-through="1"]').click();
   await page.waitForFunction(
     () =>
@@ -132,6 +166,19 @@ try {
       !document.querySelector("#show-status").disabled &&
       document.querySelector("#show-status").value === "Dropped",
   );
+  assert.equal(
+    await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.locator("#toggle-watchlist").click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("#toggle-watchlist")
+        ?.getAttribute("aria-pressed") === "false" &&
+      !document.querySelector("#toggle-watchlist").disabled,
+  );
+  assert.equal(await page.locator("#show-status").inputValue(), "Dropped");
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await page.reload();
   await page.locator('[data-show="1396"]').first().click();

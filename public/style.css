@@ -429,6 +429,24 @@ h1 {
 .status-watchlist {
   color: #e6c68d;
 }
+.card-badges {
+  position: absolute;
+  bottom: 10px;
+  left: 9px;
+  right: 9px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.poster-wrap .card-badges .status-badge {
+  position: static;
+}
+.detail-heading .status-badge + .status-badge {
+  margin-left: 6px;
+}
+#toggle-watchlist[aria-pressed="true"] {
+  color: #e6c68d;
+}
 .status-caught-up {
   color: #98d9c9;
 }

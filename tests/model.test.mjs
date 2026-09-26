@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { progress, watchStatus } from "../public/model.js";
+import {
+  progress,
+  watchStatus,
+  inWatchlist,
+  matchesTab,
+} from "../public/model.js";
 
 const episode = (season, number, date = "2026-01-01") => ({
   season_number: season,
@@ -16,7 +21,7 @@ const show = (changes) => ({
   ...changes,
 });
 test("progress distinguishes not started, partially watched, and caught up", () => {
-  assert.equal(watchStatus(show(), "2026-09-26"), "Watchlist");
+  assert.equal(watchStatus(show(), "2026-09-26"), "Not started");
   assert.equal(
     watchStatus(show({ watched: ["1:1"] }), "2026-09-26"),
     "Watching",
@@ -85,19 +90,24 @@ test("dropped and manual corrections persist over automatic status", () => {
   assert.equal(watchStatus(show({ statusOverride: "Completed" })), "Completed");
 });
 test("watchlist needs no migration and follows progress even for unrated or upcoming shows", () => {
-  assert.equal(watchStatus(show({ rating: 5 })), "Watchlist");
+  assert.equal(inWatchlist(show()), true);
+  assert.equal(matchesTab(show(), "All"), false);
+  assert.equal(matchesTab(show({ watchlist: false }), "All"), true);
+  assert.equal(inWatchlist(show({ watched: ["1:1"] })), false);
+  assert.equal(inWatchlist(show({ watchlist: false })), false);
+  assert.equal(watchStatus(show({ rating: 5 })), "Not started");
   assert.equal(
     watchStatus(show({ episodes: [], episodeCount: 0 })),
-    "Watchlist",
+    "Not started",
   );
   assert.equal(
     watchStatus(show({ episodes: [episode(1, 1, "2099-01-01")] })),
-    "Watchlist",
+    "Not started",
   );
   const s = show({ watched: ["1:1"] });
   assert.equal(watchStatus(s), "Watching");
   s.watched = [];
-  assert.equal(watchStatus(s), "Watchlist");
+  assert.equal(watchStatus(s), "Not started");
   // A watched special counts as starting a show, but not toward regular completion.
   assert.equal(
     watchStatus(
@@ -105,4 +115,24 @@ test("watchlist needs no migration and follows progress even for unrated or upco
     ),
     "Watching",
   );
+});
+test("explicit watchlist flags overlap every status and stay in All without changing progress", () => {
+  for (const statusOverride of [
+    "Watching",
+    "Caught Up",
+    "Completed",
+    "Dropped",
+  ]) {
+    const s = show({ watched: ["1:1"], statusOverride, watchlist: true });
+    assert.equal(watchStatus(s), statusOverride);
+    assert.equal(matchesTab(s, statusOverride), true);
+    assert.equal(matchesTab(s, "Watchlist"), true);
+    assert.equal(matchesTab(s, "All"), true);
+    s.watched.push("1:2");
+    assert.equal(inWatchlist(s), true);
+    s.watchlist = false;
+    assert.equal(matchesTab(s, "All"), true);
+    assert.equal(matchesTab(s, "Watchlist"), false);
+    assert.equal(watchStatus(s), statusOverride);
+  }
 });
