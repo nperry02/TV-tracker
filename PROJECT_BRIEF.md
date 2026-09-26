@@ -62,7 +62,7 @@ Watchlist/unstarted handling remains to be decided. Do not silently add On Hold 
 
 - A personal library with an All view and tabs or equivalent controls for Watching, Completed, Caught Up, and Dropped.
 - Filter by personal rating, watch status, and genre; combine filters.
-- Sort by personal rating and title initially; additional useful sorting can be refined during implementation.
+- Sort by personal rating, title, recently added, and original release date (newest or oldest first). Release date means the show's first premiere, not its most recent season; unknown dates appear last.
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
 - Search TMDB and add shows to this library.
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.

@@ -16,7 +16,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
 - Switch between All, Watching, Caught Up, Completed, and Dropped.
-- Combine title search, genre, and personal rating filters. Sort by title, rating, or recently added.
+- Combine title search, genre, and personal rating filters. Sort by title, rating, recently added, or release date (newest/oldest premiere first; unknown dates last).
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
 - Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.

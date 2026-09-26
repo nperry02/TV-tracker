@@ -197,6 +197,40 @@ try {
     assert.equal(await page.locator(".show-card").count(), 1);
     await page.locator("#library-query").fill("");
     await page.locator("#rating-filter").selectOption("");
+    const showOrder = () =>
+      page
+        .locator(".show-card")
+        .evaluateAll((cards) => cards.map((card) => Number(card.dataset.show)));
+    await page
+      .getByLabel("Sort shows", { exact: true })
+      .selectOption("release-newest");
+    assert.deepEqual(
+      await showOrder(),
+      [95396, 85552, 76331, 60059, 1396, 1438],
+    );
+    await page
+      .getByLabel("Sort shows", { exact: true })
+      .selectOption("release-oldest");
+    assert.deepEqual(
+      await showOrder(),
+      [1438, 1396, 60059, 76331, 85552, 95396],
+    );
+    // Missing premiere dates stay last for both directions.
+    await page.route("**/api/library", async (route) => {
+      const response = await route.fetch();
+      const library = await response.json();
+      library.shows.find((show) => show.id === 1438).first_air_date = null;
+      await route.fulfill({ response, json: library });
+    });
+    await page.reload();
+    await page.locator(".show-card").nth(5).waitFor();
+    for (const sort of ["release-newest", "release-oldest"]) {
+      await page.getByLabel("Sort shows", { exact: true }).selectOption(sort);
+      assert.equal((await showOrder()).at(-1), 1438);
+    }
+    await page.unroute("**/api/library");
+    await page.reload();
+    await page.locator(".show-card").nth(5).waitFor();
   }
   mkdirSync("test-results", { recursive: true });
   await page.screenshot({

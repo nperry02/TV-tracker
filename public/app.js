@@ -116,13 +116,27 @@ function render() {
       (!rating ||
         (rating === "unrated" ? !s.rating : s.rating >= Number(rating))),
   );
-  filtered.sort((a, b) =>
-    $("#sort").value === "title"
+  const sort = $("#sort").value;
+  filtered.sort((a, b) => {
+    if (sort === "release-newest" || sort === "release-oldest") {
+      // TMDB dates use YYYY-MM-DD; unknown premiere dates go last in either direction.
+      if (!a.first_air_date || !b.first_air_date)
+        return (
+          Number(!a.first_air_date) - Number(!b.first_air_date) ||
+          a.name.localeCompare(b.name)
+        );
+      const order = a.first_air_date.localeCompare(b.first_air_date);
+      return (
+        (sort === "release-newest" ? -order : order) ||
+        a.name.localeCompare(b.name)
+      );
+    }
+    return sort === "title"
       ? a.name.localeCompare(b.name)
-      : $("#sort").value === "rating"
+      : sort === "rating"
         ? (b.rating || 0) - (a.rating || 0) || a.name.localeCompare(b.name)
-        : b.addedAt.localeCompare(a.addedAt),
-  );
+        : b.addedAt.localeCompare(a.addedAt);
+  });
   $("#result-count").textContent =
     `${filtered.length} ${filtered.length === 1 ? "show" : "shows"}${activeTab === "All" ? " in your collection" : ` · ${activeTab.toLowerCase()}`}`;
   $("#library-grid").innerHTML = filtered
