@@ -426,6 +426,9 @@ h1 {
 .status-watching {
   color: #d5ed9c;
 }
+.status-watchlist {
+  color: #e6c68d;
+}
 .status-caught-up {
   color: #98d9c9;
 }

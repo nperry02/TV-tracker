@@ -15,7 +15,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 ## First version
 
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
-- Switch between All, Watching, Caught Up, Completed, and Dropped.
+- Switch between All, Watching, Caught Up, Completed, Dropped, and a separate Watchlist. Watchlist entries are excluded from All shows and its count.
 - Combine title search, genre, and personal rating filters. Sort by title, rating, recently added, or release date (newest/oldest premiere first; unknown dates last).
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
@@ -26,7 +26,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Show information refreshes when opening the app if older than six hours; a manual refresh is available in show details. Saved library data remains usable when TMDB is offline.
 - Download a JSON backup from the footer.
 
-Newly added shows start in Watching with “Not started” progress. There is no separate watchlist yet. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+Newly added shows start in Watchlist. Marking an episode watched moves them into the tracked library automatically; clearing all progress returns them to Watchlist. Explicit status overrides (such as Dropped) remain in effect until you choose Automatic. Existing unstarted shows with automatic status also appear in Watchlist, without changing their saved data. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
 ## Storage and backups
 

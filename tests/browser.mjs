@@ -73,6 +73,21 @@ try {
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.locator('[data-add="1396"]').click();
   await page.locator("#show-rating").waitFor();
+  assert.equal(
+    await page.locator(".detail-hero .status-badge").textContent(),
+    "Watchlist",
+  );
+  await page.getByRole("button", { name: "Close show", exact: true }).click();
+  assert.equal(
+    await page.locator('[data-tab="All"] .count').textContent(),
+    "0",
+  );
+  assert.equal(await page.locator(".show-card").count(), 0);
+  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  assert.equal(await page.locator(".show-card").count(), 1);
+  await page.reload();
+  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  await page.locator('.show-card[data-show="1396"]').click();
   await page.locator("#show-rating").selectOption("4.5");
   await page.waitForFunction(
     () =>
@@ -92,6 +107,18 @@ try {
       !document.querySelector("#show-rating").disabled,
   );
   assert.equal(await page.locator('[data-episode="1"]').isChecked(), true);
+  assert.equal(
+    await page.locator(".detail-hero .status-badge").textContent(),
+    "Watching",
+  );
+  assert.equal(
+    await page.locator('[data-tab="All"] .count').textContent(),
+    "1",
+  );
+  assert.equal(
+    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    "0",
+  );
   await page.locator("#season-select").selectOption("2");
   await page.locator('[data-through="1"]').click();
   await page.waitForFunction(

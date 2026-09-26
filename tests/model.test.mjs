@@ -16,7 +16,7 @@ const show = (changes) => ({
   ...changes,
 });
 test("progress distinguishes not started, partially watched, and caught up", () => {
-  assert.equal(watchStatus(show(), "2026-09-26"), "Watching");
+  assert.equal(watchStatus(show(), "2026-09-26"), "Watchlist");
   assert.equal(
     watchStatus(show({ watched: ["1:1"] }), "2026-09-26"),
     "Watching",
@@ -76,9 +76,33 @@ test("specials do not count toward completion or next episode", () => {
   assert.equal(progress(s, "2026-09-26").total, 2);
 });
 test("dropped and manual corrections persist over automatic status", () => {
+  assert.equal(watchStatus(show({ statusOverride: "Dropped" })), "Dropped");
+  assert.equal(watchStatus(show({ statusOverride: "Watching" })), "Watching");
   assert.equal(
     watchStatus(show({ statusOverride: "Dropped", watched: ["1:1", "1:2"] })),
     "Dropped",
   );
   assert.equal(watchStatus(show({ statusOverride: "Completed" })), "Completed");
+});
+test("watchlist needs no migration and follows progress even for unrated or upcoming shows", () => {
+  assert.equal(watchStatus(show({ rating: 5 })), "Watchlist");
+  assert.equal(
+    watchStatus(show({ episodes: [], episodeCount: 0 })),
+    "Watchlist",
+  );
+  assert.equal(
+    watchStatus(show({ episodes: [episode(1, 1, "2099-01-01")] })),
+    "Watchlist",
+  );
+  const s = show({ watched: ["1:1"] });
+  assert.equal(watchStatus(s), "Watching");
+  s.watched = [];
+  assert.equal(watchStatus(s), "Watchlist");
+  // A watched special counts as starting a show, but not toward regular completion.
+  assert.equal(
+    watchStatus(
+      show({ watched: ["0:1"], episodes: [episode(0, 1), episode(1, 1)] }),
+    ),
+    "Watching",
+  );
 });

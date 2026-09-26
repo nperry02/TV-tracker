@@ -1,4 +1,11 @@
-import { aired, episodeKey, progress, statuses, watchStatus } from "./model.js";
+import {
+  aired,
+  episodeKey,
+  progress,
+  statuses,
+  libraryTabs,
+  watchStatus,
+} from "./model.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
@@ -79,18 +86,19 @@ function ratingOptions(value, empty = "Not rated") {
 }
 function render() {
   const counts = Object.fromEntries(
-    statuses.map((status) => [
+    [...statuses, "Watchlist"].map((status) => [
       status,
       shows.filter((s) => watchStatus(s) === status).length,
     ]),
   );
-  const rated = shows.filter((s) => s.rating);
+  const tracked = shows.filter((s) => watchStatus(s) !== "Watchlist");
+  const rated = tracked.filter((s) => s.rating);
   $("#stats").innerHTML =
-    `<div class="stat"><strong>${shows.length}</strong><span>In your library</span></div><div class="stat"><strong>${counts.Watching}</strong><span>Watching</span></div><div class="stat"><strong>${rated.length ? (rated.reduce((sum, s) => sum + s.rating, 0) / rated.length).toFixed(1) : "—"}<small class="stars"> ★</small></strong><span>Average rating</span></div>`;
-  $("#tabs").innerHTML = ["All", ...statuses]
+    `<div class="stat"><strong>${tracked.length}</strong><span>Tracked shows</span></div><div class="stat"><strong>${counts.Watching}</strong><span>Watching</span></div><div class="stat"><strong>${rated.length ? (rated.reduce((sum, s) => sum + s.rating, 0) / rated.length).toFixed(1) : "—"}<small class="stars"> ★</small></strong><span>Average rating</span></div>`;
+  $("#tabs").innerHTML = libraryTabs
     .map(
       (status) =>
-        `<button class="tab ${activeTab === status ? "active" : ""}" data-tab="${status}" aria-pressed="${activeTab === status}">${status === "All" ? "All shows" : status}<span class="count">${status === "All" ? shows.length : counts[status]}</span></button>`,
+        `<button class="tab ${activeTab === status ? "active" : ""}" data-tab="${status}" aria-pressed="${activeTab === status}">${status === "All" ? "All shows" : status}<span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`,
     )
     .join("");
   const genre = $("#genre").value;
@@ -109,7 +117,9 @@ function render() {
   const rating = $("#rating-filter").value;
   const filtered = shows.filter(
     (s) =>
-      (activeTab === "All" || watchStatus(s) === activeTab) &&
+      (activeTab === "All"
+        ? watchStatus(s) !== "Watchlist"
+        : watchStatus(s) === activeTab) &&
       s.name.toLowerCase().includes(query) &&
       (!$("#genre").value ||
         s.genres.some((g) => String(g.id) === $("#genre").value)) &&
@@ -149,6 +159,13 @@ function render() {
   $("#empty").innerHTML = shows.length
     ? '<span class="empty-icon">⌕</span><h2>No shows here just yet.</h2><p>Try another status or adjust your filters to find your shows.</p><button id="reset-filters">Clear filters</button>'
     : '<span class="empty-icon">▰</span><h2>A new season starts here.</h2><p>Build a home for the shows you love. Find your first show, give it a rating, and pick up right where you left off.</p><button class="primary" id="first-show">Find your first show <span aria-hidden="true">↗</span></button>';
+  if (!filtered.length && activeTab === "Watchlist") {
+    $("#empty").innerHTML =
+      '<span class="empty-icon">＋</span><h2>Your next great show starts here.</h2><p>New shows live in your watchlist until you mark an episode watched. Try adjusting your filters or find a show to save for later.</p><button class="primary" id="first-show">Find a show</button>';
+  } else if (!tracked.length && counts.Watchlist && activeTab === "All") {
+    $("#empty").innerHTML =
+      '<span class="empty-icon">▰</span><h2>Ready for your first episode?</h2><p>Your saved shows are in Watchlist. Mark an episode watched to bring a show into All shows.</p><button class="primary" data-tab="Watchlist">View watchlist</button>';
+  }
   const continuing = shows
     .filter(
       (s) =>
@@ -386,7 +403,7 @@ document.addEventListener("click", async (event) => {
       if (!shows.some((s) => s.id === show.id)) shows.push(show);
       render();
       openShow(show.id);
-      toast(`${show.name} added to your shows.`);
+      toast(`${show.name} added to your watchlist.`);
     } catch (error) {
       report(error);
     } finally {

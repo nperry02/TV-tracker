@@ -1,4 +1,5 @@
 export const statuses = ["Watching", "Caught Up", "Completed", "Dropped"];
+export const libraryTabs = ["All", ...statuses, "Watchlist"];
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 export function today() {
   const d = new Date();
@@ -29,6 +30,7 @@ export function progress(show, date = today()) {
 }
 export function watchStatus(show, date = today()) {
   if (show.statusOverride) return show.statusOverride;
+  if (!show.watched.length) return "Watchlist";
   const p = progress(show, date);
   if (!p.total || p.done < p.total) return "Watching";
   const all = regularEpisodes(show);

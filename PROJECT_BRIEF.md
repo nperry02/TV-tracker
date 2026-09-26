@@ -39,7 +39,7 @@ Suggested implementation rules, subject to refinement during development:
 - Metadata can be incomplete or delayed; do not interpret a missing next air date as proof that a show has ended. Allow a manual correction when necessary.
 - An ongoing status does not guarantee renewal or a known next-season date.
 
-Watchlist/unstarted handling remains to be decided. Do not silently add On Hold or other statuses to the four requested statuses.
+Watchlist is a separate tab, excluded from All shows and its count. New shows with no watched episodes start there automatically. Marking the first episode watched moves a show into the tracked library; clearing all progress returns it to Watchlist. Explicit status overrides remain in effect until changed back to Automatic. Ratings alone do not start a show. Existing automatic-status shows without progress follow the same rule.
 
 ## Viewing progress
 
@@ -60,7 +60,7 @@ Watchlist/unstarted handling remains to be decided. Do not silently add On Hold 
 
 ## Your Shows
 
-- A personal library with an All view and tabs or equivalent controls for Watching, Completed, Caught Up, and Dropped.
+- A personal library with an All view and tabs for Watching, Completed, Caught Up, and Dropped, plus a separate Watchlist excluded from All.
 - Filter by personal rating, watch status, and genre; combine filters.
 - Sort by personal rating, title, recently added, and original release date (newest or oldest first). Release date means the show's first premiere, not its most recent season; unknown dates appear last.
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
@@ -79,13 +79,12 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 - Local Node.js web app, available on this Mac at localhost:3210. No login or cloud sync.
 - Personal library and cached metadata persist in `data/library.json`, with atomic file replacement and a downloadable JSON backup.
 - Show and optional season ratings both ship in the first version.
-- Newly added shows appear under Watching with “Not started” progress. No extra status was introduced.
+- Newly added shows appear in Watchlist until an episode is marked watched. Tracked-show totals and average ratings exclude watchlist entries.
 - Metadata refreshes on startup when older than six hours, with a manual refresh in show details.
 - All four statuses can be manually set; Automatic returns to progress-based status. Manual status does not change episode progress.
 
 ## Still open for later
 
 - Whether cross-device access is needed.
-- Whether saved but unstarted shows should eventually have a separate watchlist.
 
 Diary and viewing-date features remain deferred.
