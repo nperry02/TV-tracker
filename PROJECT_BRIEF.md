@@ -39,7 +39,7 @@ Suggested implementation rules, subject to refinement during development:
 - Metadata can be incomplete or delayed; do not interpret a missing next air date as proof that a show has ended. Allow a manual correction when necessary.
 - An ongoing status does not guarantee renewal or a known next-season date.
 
-Watchlist is an independent flag: any show can be both Watching (or Caught Up, Completed, or Dropped) and in Watchlist. Flagged shows that are Watching, Caught Up, Completed, or Dropped appear in their status tab, Watchlist, and All shows. Only watchlist-only, unstarted entries are excluded from All shows and its count. Add or remove the flag in show details without changing ratings, status, or progress. New shows default to Watchlist until their first watched episode; an explicitly set flag persists through progress and status changes. Older saved shows without a flag retain the same automatic default.
+Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its status tab. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when explicitly added, assigned a viewing status, or marked with watched episodes. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships.
 
 ## Viewing progress
 
@@ -79,7 +79,7 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 - Local Node.js web app, available on this Mac at localhost:3210. No login or cloud sync.
 - Personal library and cached metadata persist in `data/library.json`, with atomic file replacement and a downloadable JSON backup.
 - Show and optional season ratings both ship in the first version.
-- New shows automatically start in Watchlist; explicitly set watchlist flags persist independently of status and progress. All-show totals and average ratings exclude only watchlist-only, unstarted entries.
+- Search offers separate + Add and + Watchlist actions. All-show totals and average ratings use tracked library membership, independently of the watchlist flag.
 - Metadata refreshes on startup when older than six hours, with a manual refresh in show details.
 - All four statuses can be manually set; Automatic returns to progress-based status. Manual status does not change episode progress.
 

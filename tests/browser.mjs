@@ -75,18 +75,23 @@ try {
   await page.locator("#show-rating").waitFor();
   assert.equal(
     await page.locator(".detail-hero .status-badge").first().textContent(),
-    "Not started",
+    "Watching",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   assert.equal(
     await page.locator('[data-tab="All"] .count').textContent(),
+    "1",
+  );
+  assert.equal(await page.locator(".show-card").count(), 1);
+  assert.equal(
+    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
     "0",
   );
-  assert.equal(await page.locator(".show-card").count(), 0);
-  await page.locator('#tabs [data-tab="Watchlist"]').click();
-  assert.equal(await page.locator(".show-card").count(), 1);
+  assert.equal(
+    await page.locator('#continue-list [data-show="1396"]').count(),
+    1,
+  );
   await page.reload();
-  await page.locator('#tabs [data-tab="Watchlist"]').click();
   await page.locator('.show-card[data-show="1396"]').click();
   await page.locator("#show-rating").selectOption("4.5");
   await page.waitForFunction(
@@ -371,10 +376,68 @@ try {
       .waitFor();
     assert.equal(await page.locator(".search-result").count(), 23);
     assert.equal(await page.locator("#load-more").isVisible(), false);
+    await page.locator('[data-watchlist-add="200022"]').click();
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-watchlist-add="200022"]')?.textContent ===
+        "✓ Watchlist",
+    );
+    assert.equal(
+      await page.locator('[data-tab="All"] .count').textContent(),
+      "6",
+    );
+    assert.equal(
+      await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+      "1",
+    );
+    await page
+      .getByRole("button", { name: "Close search", exact: true })
+      .click();
+    await page.reload();
+    await page.locator('#tabs [data-tab="Watchlist"]').click();
+    await page.locator('.show-card[data-show="200022"]').click();
+    assert.equal(
+      await page.locator(".detail-hero .status-badge").first().textContent(),
+      "Not started",
+    );
+    await page.locator("#toggle-watchlist").click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector("#toggle-watchlist")
+          ?.getAttribute("aria-pressed") === "false" &&
+        !document.querySelector("#toggle-watchlist").disabled,
+    );
+    assert.equal(
+      await page.locator('[data-tab="All"] .count').textContent(),
+      "6",
+    );
+    await page.locator("#toggle-watchlist").click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector("#toggle-watchlist")
+          ?.getAttribute("aria-pressed") === "true" &&
+        !document.querySelector("#toggle-watchlist").disabled,
+    );
     await page.locator('[data-add="200022"]').click();
     await page.locator("#show-rating").waitFor();
+    await page.waitForFunction(
+      () =>
+        document.querySelector(".detail-hero .status-badge")?.textContent ===
+        "Watching",
+    );
+    assert.equal(
+      await page.locator('[data-tab="All"] .count').textContent(),
+      "7",
+    );
+    assert.equal(
+      await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
+      "true",
+    );
     await page.getByRole("button", { name: "Close show", exact: true }).click();
     await page.getByRole("button", { name: /Find a show/ }).click();
+    await searchFor("Test series 23");
     assert.equal(
       await page.locator('#search-results [data-show="200022"]').count(),
       1,

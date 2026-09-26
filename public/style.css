@@ -632,6 +632,20 @@ dialog::backdrop {
   flex-direction: column;
   gap: 8px;
 }
+.search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  max-width: 220px;
+}
+@media (max-width: 560px) {
+  .search-actions {
+    flex-direction: column;
+    max-width: 95px;
+    flex-shrink: 0;
+  }
+}
 .load-more {
   display: block;
   margin: 20px auto 0;

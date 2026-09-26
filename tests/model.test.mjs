@@ -89,7 +89,7 @@ test("dropped and manual corrections persist over automatic status", () => {
   );
   assert.equal(watchStatus(show({ statusOverride: "Completed" })), "Completed");
 });
-test("watchlist needs no migration and follows progress even for unrated or upcoming shows", () => {
+test("legacy show membership is preserved before normalization", () => {
   assert.equal(inWatchlist(show()), true);
   assert.equal(matchesTab(show(), "All"), false);
   assert.equal(matchesTab(show({ watchlist: false }), "All"), true);
@@ -115,6 +115,19 @@ test("watchlist needs no migration and follows progress even for unrated or upco
     ),
     "Watching",
   );
+});
+test("tracking and watchlist flags are independent even without progress", () => {
+  for (const tracked of [true, false]) {
+    const s = show({ tracked, watchlist: false });
+    assert.equal(matchesTab(s, "All"), tracked);
+    assert.equal(watchStatus(s), tracked ? "Watching" : "Not started");
+    s.watchlist = true;
+    assert.equal(matchesTab(s, "All"), tracked);
+    assert.equal(matchesTab(s, "Watching"), tracked);
+    assert.equal(inWatchlist(s), true);
+    s.watchlist = false;
+    assert.equal(matchesTab(s, "All"), tracked);
+  }
 });
 test("explicit watchlist flags overlap every status and stay in All without changing progress", () => {
   for (const statusOverride of [

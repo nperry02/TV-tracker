@@ -84,7 +84,28 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     });
     return { status: res.status, data: await res.json() };
   }
-  let result = await patch({
+  let result = await patch({ watchlist: false });
+  assert.equal(result.data.tracked, false);
+  assert.equal(result.data.watchlist, false);
+  const promoted = await (
+    await fetch(`${base}/api/shows/1`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destination: "library" }),
+    })
+  ).json();
+  assert.equal(promoted.tracked, true);
+  assert.equal(promoted.watchlist, false);
+  const flagged = await (
+    await fetch(`${base}/api/shows/1`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destination: "watchlist" }),
+    })
+  ).json();
+  assert.equal(flagged.tracked, true);
+  assert.equal(flagged.watchlist, true);
+  result = await patch({
     progress: { action: "through", season: 2, episode: 1, watched: true },
     rating: 4.5,
     seasonRating: { season: 1, rating: 3.5 },
@@ -146,6 +167,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(saved.shows[0].statusOverride, "Dropped");
   assert.equal(saved.shows[0].rating, 4.5);
   assert.equal(saved.shows[0].watchlist, true);
+  assert.equal(saved.shows[0].tracked, true);
   result = await patch({ watchlist: false });
   assert.equal(result.data.statusOverride, "Dropped");
   assert.equal(result.data.watchlist, false);

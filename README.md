@@ -26,7 +26,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Show information refreshes when opening the app if older than six hours; a manual refresh is available in show details. Saved library data remains usable when TMDB is offline.
 - Download a JSON backup from the footer.
 
-Watchlist is an independent flag: any show can be both Watching (or Caught Up, Completed, or Dropped) and in Watchlist. Flagged shows that are Watching, Caught Up, Completed, or Dropped appear in their status tab, Watchlist, and All shows. Only watchlist-only, unstarted entries are excluded from All shows and its count. Add or remove the flag in show details without changing ratings, status, or progress. New shows default to Watchlist until their first watched episode; an explicitly set flag persists through progress and status changes. Older saved shows without a flag retain the same automatic default. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its status tab. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when explicitly added, assigned a viewing status, or marked with watched episodes. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
 ## Storage and backups
 

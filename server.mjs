@@ -8,7 +8,13 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { aired, episodeKey, statuses } from "./public/model.js";
+import {
+  aired,
+  episodeKey,
+  statuses,
+  inLibrary,
+  inWatchlist,
+} from "./public/model.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const dataFile = resolve(
@@ -20,6 +26,11 @@ let library = existsSync(dataFile)
   : { version: 1, shows: [] };
 if (library.version !== 1 || !Array.isArray(library.shows))
   throw new Error("Unsupported library file. Your data has not been changed.");
+library.shows = library.shows.map((s) => ({
+  ...s,
+  tracked: inLibrary(s),
+  watchlist: inWatchlist(s),
+}));
 function commit(next) {
   writeFileSync(`${dataFile}.tmp`, JSON.stringify(next, null, 2), {
     mode: 0o600,
@@ -203,8 +214,17 @@ export const server = http.createServer(async (req, res) => {
     if (match) {
       const id = Number(match[1]);
       if (req.method === "POST") {
+        const request = match[2] ? {} : await body(req);
+        const destination = request?.destination ?? "library";
+        if (!["library", "watchlist"].includes(destination))
+          return send(400, { error: "Invalid destination." });
+        const addToDestination = (current) =>
+          destination === "watchlist"
+            ? { ...current, watchlist: true }
+            : { ...current, tracked: true };
         const existing = library.shows.find((s) => s.id === id);
-        if (existing && !match[2]) return send(200, existing);
+        if (existing && !match[2])
+          return send(200, update(id, addToDestination));
         if (!existing && match[2])
           return send(404, { error: "Show not found." });
         const meta = await metadata(id);
@@ -215,14 +235,15 @@ export const server = http.createServer(async (req, res) => {
           );
         // Recheck after the remote request to avoid duplicate concurrent additions.
         const duplicate = library.shows.find((s) => s.id === id);
-        if (duplicate) return send(200, duplicate);
+        if (duplicate) return send(200, update(id, addToDestination));
         const show = {
           ...meta,
           watched: [],
           rating: null,
           seasonRatings: {},
           statusOverride: null,
-          watchlist: null,
+          watchlist: destination === "watchlist",
+          tracked: destination === "library",
           addedAt: new Date().toISOString(),
         };
         commit({ ...library, shows: [...library.shows, show] });
@@ -252,6 +273,7 @@ export const server = http.createServer(async (req, res) => {
                 status: 400,
               });
             s.statusOverride = b.statusOverride;
+            if (b.statusOverride !== null) s.tracked = true;
           }
           if ("seasonRating" in b) {
             if (
@@ -301,6 +323,7 @@ export const server = http.createServer(async (req, res) => {
                 watched ? keys.add(episodeKey(e)) : keys.delete(episodeKey(e));
             }
             s.watched = [...keys];
+            if (s.watched.length) s.tracked = true;
           }
           return s;
         });

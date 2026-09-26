@@ -7,6 +7,7 @@ import {
   watchStatus,
   inWatchlist,
   matchesTab,
+  inLibrary,
 } from "./model.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -168,8 +169,7 @@ function render() {
   }
   const continuing = shows
     .filter(
-      (s) =>
-        watchStatus(s) === "Watching" && s.watched.length && progress(s).next,
+      (s) => inLibrary(s) && watchStatus(s) === "Watching" && progress(s).next,
     )
     .slice(0, 3);
   $("#continue-section").hidden = !continuing.length;
@@ -215,10 +215,11 @@ function renderSearch() {
           : `No shows found for “${s.query}”. Try a different title.`);
   $("#search-results").setAttribute("aria-busy", String(s.loading));
   $("#search-results").innerHTML = s.results
-    .map(
-      (show) =>
-        `<article class="search-result">${poster(show, "mini-poster", "w92")}<div class="result-info"><h3>${esc(show.name)} <span class="year">${year(show)}</span></h3><p>${esc(show.overview || "No description available.")}</p></div>${shows.some((x) => x.id === show.id) ? `<button data-show="${show.id}">Open ↗</button>` : `<button data-add="${show.id}"${addingShows.has(show.id) ? " disabled" : ""}>${addingShows.has(show.id) ? "Adding…" : "＋ Add"}</button>`}</article>`,
-    )
+    .map((show) => {
+      const saved = shows.find((x) => x.id === show.id);
+      const busy = addingShows.has(show.id);
+      return `<article class="search-result">${poster(show, "mini-poster", "w92")}<div class="result-info"><h3>${esc(show.name)} <span class="year">${year(show)}</span></h3><p>${esc(show.overview || "No description available.")}</p></div><div class="search-actions">${saved && inLibrary(saved) ? `<button data-show="${show.id}">Open ↗</button>` : `<button data-add="${show.id}"${busy ? " disabled" : ""}>${busy ? "Adding…" : "＋ Add"}</button>`}<button data-watchlist-add="${show.id}"${busy || (saved && inWatchlist(saved)) ? " disabled" : ""}>${saved && inWatchlist(saved) ? "✓ Watchlist" : "＋ Watchlist"}</button>${saved && !inLibrary(saved) ? `<button data-show="${show.id}">Details ↗</button>` : ""}</div></article>`;
+    })
     .join("");
   $("#load-more").hidden = !s.page || s.page >= s.totalPages;
   $("#load-more").disabled = s.loading;
@@ -300,6 +301,11 @@ function renderShow() {
     "beforeend",
     `<button id="toggle-watchlist" aria-pressed="${inWatchlist(s)}">${inWatchlist(s) ? "✓ In watchlist · Remove" : "＋ Add to watchlist"}</button>`,
   );
+  if (!inLibrary(s))
+    $("#toggle-watchlist").insertAdjacentHTML(
+      "afterend",
+      `<button data-add="${s.id}">＋ Start watching</button>`,
+    );
   const lastAired = episodes
     .filter((e) => aired(e))
     .sort((a, b) => a.episode_number - b.episode_number)
@@ -404,20 +410,26 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
-  if (button.dataset.add) {
-    const id = Number(button.dataset.add);
+  if (button.dataset.add || button.dataset.watchlistAdd) {
+    const id = Number(button.dataset.add || button.dataset.watchlistAdd);
+    const watchlistOnly = Boolean(button.dataset.watchlistAdd);
     if (addingShows.has(id)) return;
     addingShows.add(id);
     button.disabled = true;
     button.textContent = "Adding…";
     try {
-      const show = await api(`/api/shows/${button.dataset.add}`, {
+      const show = await api(`/api/shows/${id}`, {
         method: "POST",
+        body: { destination: watchlistOnly ? "watchlist" : "library" },
       });
-      if (!shows.some((s) => s.id === show.id)) shows.push(show);
+      if (shows.some((s) => s.id === show.id))
+        shows = shows.map((s) => (s.id === show.id ? show : s));
+      else shows.push(show);
       render();
-      openShow(show.id);
-      toast(`${show.name} added to your watchlist.`);
+      if (!watchlistOnly) openShow(show.id);
+      toast(
+        `${show.name} added to your ${watchlistOnly ? "watchlist" : "shows"}.`,
+      );
     } catch (error) {
       report(error);
     } finally {
