@@ -1342,10 +1342,7 @@ html {
   scroll-padding-top: 112px;
 }
 body {
-  background:
-    radial-gradient(circle 700px at 48% 80px, #16301f66, transparent 70%),
-    var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
 }
 .topbar {
   position: sticky;
