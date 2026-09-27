@@ -16,7 +16,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
 - Switch between All, Watching, Paused, Caught Up, Completed, Dropped, and a separate Watchlist. Only watchlist-only, unstarted shows are excluded from All shows and its count.
-- Combine title search, genre, and personal rating filters. Release date (newest premiere first) is the default sort; last updated, title, rating, recently added, and oldest release are also available. “Last updated” uses the most recent newly watched progress and places shows without a recorded update afterward. Unknown premiere dates appear last for release sorting.
+- Combine title search, genre, and personal rating filters. Last updated is the default sort; release date, title, rating, and recently added are also available. “Last updated” uses the most recent newly watched progress and places shows without a recorded update afterward. Unknown premiere dates appear last for release sorting.
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
 - Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.
