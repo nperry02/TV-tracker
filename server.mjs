@@ -287,6 +287,7 @@ export const server = http.createServer(async (req, res) => {
             s.seasonRatings[b.seasonRating.season] = b.seasonRating.rating;
           }
           if (b.progress) {
+            const previousWatchedCount = s.watched.length;
             const { action, season, episode, watched } = b.progress;
             if (
               !["episode", "season", "through"].includes(action) ||
@@ -322,8 +323,17 @@ export const server = http.createServer(async (req, res) => {
               if (selected && (!watched || aired(e)))
                 watched ? keys.add(episodeKey(e)) : keys.delete(episodeKey(e));
             }
-            s.watched = [...keys];
+            s.watched = [...keys].sort((a, b) => {
+              const [seasonA, episodeA] = a.split(":").map(Number);
+              const [seasonB, episodeB] = b.split(":").map(Number);
+              return seasonA - seasonB || episodeA - episodeB;
+            });
             if (s.watched.length) s.tracked = true;
+            if (
+              s.statusOverride === "Paused" &&
+              s.watched.length > previousWatchedCount
+            )
+              s.statusOverride = null;
           }
           return s;
         });

@@ -426,6 +426,9 @@ h1 {
 .status-watching {
   color: #d5ed9c;
 }
+.status-paused {
+  color: #edcf91;
+}
 .status-watchlist {
   color: #e6c68d;
 }

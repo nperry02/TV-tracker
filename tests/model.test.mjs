@@ -81,6 +81,7 @@ test("specials do not count toward completion or next episode", () => {
   assert.equal(progress(s, "2026-09-26").total, 2);
 });
 test("dropped and manual corrections persist over automatic status", () => {
+  assert.equal(watchStatus(show({ statusOverride: "Paused" })), "Paused");
   assert.equal(watchStatus(show({ statusOverride: "Dropped" })), "Dropped");
   assert.equal(watchStatus(show({ statusOverride: "Watching" })), "Watching");
   assert.equal(
@@ -132,6 +133,7 @@ test("tracking and watchlist flags are independent even without progress", () =>
 test("explicit watchlist flags overlap every status and stay in All without changing progress", () => {
   for (const statusOverride of [
     "Watching",
+    "Paused",
     "Caught Up",
     "Completed",
     "Dropped",

@@ -1,4 +1,10 @@
-export const statuses = ["Watching", "Caught Up", "Completed", "Dropped"];
+export const statuses = [
+  "Watching",
+  "Paused",
+  "Caught Up",
+  "Completed",
+  "Dropped",
+];
 export const libraryTabs = ["All", ...statuses, "Watchlist"];
 export function inLibrary(show) {
   // Preserve membership of libraries saved before tracking and watchlist were separate.

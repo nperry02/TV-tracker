@@ -119,6 +119,16 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.deepEqual(result.data.watched, ["1:1", "1:2", "2:1"]);
   assert.equal(result.data.rating, 4.5);
   assert.equal((await patch({ watchlist: "yes" })).status, 400);
+  result = await patch({ statusOverride: "Paused" });
+  assert.equal(result.data.statusOverride, "Paused");
+  result = await patch({
+    progress: { action: "episode", season: 1, episode: 1, watched: false },
+  });
+  assert.equal(result.data.statusOverride, "Paused");
+  result = await patch({
+    progress: { action: "episode", season: 1, episode: 1, watched: true },
+  });
+  assert.equal(result.data.statusOverride, null);
   result = await patch({
     progress: { action: "season", season: 2, watched: true },
     statusOverride: "Dropped",

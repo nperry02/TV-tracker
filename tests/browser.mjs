@@ -204,6 +204,35 @@ try {
       !document.querySelector("#show-status").disabled &&
       document.querySelector("#show-status").value === "",
   );
+  await page.locator("#show-status").selectOption("Paused");
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#show-status")?.value === "Paused" &&
+      !document.querySelector("#show-status").disabled,
+  );
+  assert.equal(
+    await page.locator('[data-tab="Paused"] .count').textContent(),
+    "1",
+  );
+  await page.locator('[data-episode="1"]').check();
+  await page.waitForFunction(
+    () =>
+      document.querySelector("#show-status")?.value === "" &&
+      document.querySelector(".detail-hero .status-badge")?.textContent ===
+        "Watching" &&
+      !document.querySelector("#show-status").disabled,
+  );
+  assert.equal(
+    await page.locator('[data-tab="Paused"] .count').textContent(),
+    "0",
+  );
+  // Restore the earlier gap so the existing quick-progress flow still begins there.
+  await page.locator('[data-episode="1"]').uncheck();
+  await page.waitForFunction(
+    () =>
+      !document.querySelector('[data-episode="1"]').checked &&
+      !document.querySelector("#show-status").disabled,
+  );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   if (!live) {
     // Quick progress works from the library without opening a dialog.
