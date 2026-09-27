@@ -6,6 +6,8 @@ import {
   inWatchlist,
   matchesTab,
   libraryStats,
+  metadataRefreshInterval,
+  metadataRefreshQueue,
 } from "../public/model.js";
 
 const episode = (season, number, date = "2026-01-01") => ({
@@ -251,4 +253,36 @@ test("library stats handle empty libraries and missing runtime metadata", () => 
   assert.equal(stats.unratedShows, 1);
   assert.equal(stats.runtimeCoveredEpisodes, 0);
   assert.deepEqual(libraryStats([]).topGenres, []);
+});
+
+test("metadata refreshes active shows most often and limits startup work", () => {
+  const day = 24 * 60 * 60 * 1000;
+  const now = new Date("2026-09-27T12:00:00.000Z");
+  const dated = (daysAgo) =>
+    new Date(now.getTime() - daysAgo * day).toISOString();
+  const entries = [
+    show({ id: 1, name: "Fresh active", tracked: true, refreshedAt: dated(0.5) }),
+    show({ id: 2, name: "Stale active", tracked: true, refreshedAt: dated(2) }),
+    show({ id: 3, name: "Fresh paused", tracked: true, statusOverride: "Paused", refreshedAt: dated(6) }),
+    show({ id: 4, name: "Stale paused", tracked: true, statusOverride: "Paused", refreshedAt: dated(8) }),
+    show({ id: 5, name: "Fresh completed", tracked: true, statusOverride: "Completed", refreshedAt: dated(29) }),
+    show({ id: 6, name: "Stale completed", tracked: true, statusOverride: "Completed", refreshedAt: dated(31) }),
+    show({ id: 7, name: "Watchlist only", tracked: false, watchlist: true, refreshedAt: dated(8) }),
+    show({ id: 8, name: "Never refreshed", tracked: true, refreshedAt: null }),
+    show({ id: 9, name: "Second stale active", tracked: true, refreshedAt: dated(3) }),
+    show({ id: 10, name: "Third stale active", tracked: true, refreshedAt: dated(4) }),
+    show({ id: 11, name: "Fourth stale active", tracked: true, refreshedAt: dated(5) }),
+  ];
+  assert.equal(metadataRefreshInterval(entries[0]), day);
+  assert.equal(metadataRefreshInterval(entries[2]), 7 * day);
+  assert.equal(metadataRefreshInterval(entries[4]), 30 * day);
+  assert.equal(metadataRefreshInterval(entries[6]), 7 * day);
+  assert.deepEqual(
+    metadataRefreshQueue(entries, now).map((entry) => entry.id),
+    [8, 11, 10, 9, 2],
+  );
+  assert.deepEqual(
+    metadataRefreshQueue(entries, now, 20).map((entry) => entry.id),
+    [8, 11, 10, 9, 2, 4, 7, 6],
+  );
 });

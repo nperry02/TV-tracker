@@ -69,6 +69,38 @@ export function watchStatus(show, date = today()) {
   return "Caught Up";
 }
 
+const DAY = 24 * 60 * 60 * 1000;
+export function metadataRefreshInterval(show, date = today()) {
+  if (!inLibrary(show) && inWatchlist(show)) return 7 * DAY;
+  const status = watchStatus(show, date);
+  if (["Watching", "Caught Up"].includes(status)) return DAY;
+  if (status === "Paused") return 7 * DAY;
+  return 30 * DAY;
+}
+export function metadataRefreshQueue(
+  shows,
+  now = new Date(),
+  limit = 5,
+) {
+  const timestamp = now.getTime();
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return shows
+    .filter((show) => {
+      const refreshed = new Date(show.refreshedAt).getTime();
+      return (
+        !Number.isFinite(refreshed) ||
+        timestamp - refreshed > metadataRefreshInterval(show, date)
+      );
+    })
+    .sort(
+      (a, b) =>
+        metadataRefreshInterval(a, date) - metadataRefreshInterval(b, date) ||
+        (a.refreshedAt || "").localeCompare(b.refreshedAt || "") ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, limit);
+}
+
 const positiveRuntime = (value) =>
   Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null;
 

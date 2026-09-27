@@ -9,6 +9,7 @@ import {
   matchesTab,
   inLibrary,
   libraryStats,
+  metadataRefreshQueue,
 } from "./model.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -742,19 +743,14 @@ async function boot() {
     render();
     applyRoute({ scroll: true });
     // Refresh stale metadata without blocking access to saved progress and ratings.
-    for (const show of [...shows]) {
-      if (
-        Date.now() - new Date(show.refreshedAt).getTime() >
-        6 * 60 * 60 * 1000
-      ) {
-        try {
-          await refreshShow(show.id, false);
-        } catch (error) {
-          toast(
-            "Your saved library is ready. Show information could not refresh; try again when online.",
-          );
-          break;
-        }
+    for (const show of metadataRefreshQueue(shows)) {
+      try {
+        await refreshShow(show.id, false);
+      } catch (error) {
+        toast(
+          "Your saved library is ready. Show information could not refresh; try again when online.",
+        );
+        break;
       }
     }
   } catch (error) {

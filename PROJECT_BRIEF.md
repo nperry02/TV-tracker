@@ -95,7 +95,7 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 - Personal library and cached metadata persist in `data/library.json`, with atomic file replacement and a downloadable JSON backup.
 - Show and optional season ratings both ship in the first version.
 - Search offers separate + Add and + Watchlist actions. All-show totals and average ratings use tracked library membership, independently of the watchlist flag.
-- Metadata refreshes on startup when older than six hours, with a manual refresh in show details.
+- Metadata refreshes on startup using status-aware intervals: 24 hours for Watching and Caught Up, seven days for Paused and Watchlist-only shows, and 30 days for Completed and Dropped. Limit automatic work to five stale shows per startup, prioritizing active shows and then the oldest metadata. Keep a manual refresh in show details.
 - All five statuses can be manually set; Automatic returns to progress-based status. Manual status does not change episode progress. Paused returns to automatic status when newly watched progress is added.
 
 ## Still open for later
