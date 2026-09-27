@@ -295,6 +295,20 @@ try {
     }
     await page.reload();
     await page.locator(".show-card").nth(5).waitFor();
+    assert.equal(
+      await page
+        .locator("#continue-list .continue-open")
+        .first()
+        .getAttribute("data-show"),
+      "1438",
+    );
+    await page.locator('#continue-list [data-next="60059"]').click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector("#continue-list .continue-open")
+          ?.getAttribute("data-show") === "60059",
+    );
     await page.locator('[data-tab="Completed"]').click();
     assert.equal(await page.locator(".show-card").count(), 2);
     await page.locator('[data-tab="All"]').click();

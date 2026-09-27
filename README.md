@@ -20,6 +20,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
 - Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.
+- “Pick up where you left off” shows up to three Watching shows with remaining episodes, ordered by the most recently added watched progress. Correcting/removing progress does not move a show to the front.
 - Correct progress by unchecking episodes or clearing a season.
 - Remove an accidentally added show from All Shows. This clears its viewing status, ratings, and progress; a separate Watchlist flag is preserved. Unflagged shows are removed entirely and can be added again from search.
 - Automatic status distinguishes ongoing shows from ended/canceled shows. Paused is a manual status for shows you may resume; adding newly watched progress returns it to Watching automatically. Dropped remains set until changed manually.

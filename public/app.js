@@ -171,6 +171,12 @@ function render() {
     .filter(
       (s) => inLibrary(s) && watchStatus(s) === "Watching" && progress(s).next,
     )
+    .sort(
+      (a, b) =>
+        (b.lastWatchedAt || "").localeCompare(a.lastWatchedAt || "") ||
+        (b.addedAt || "").localeCompare(a.addedAt || "") ||
+        a.name.localeCompare(b.name),
+    )
     .slice(0, 3);
   $("#continue-section").hidden = !continuing.length;
   $("#continue-list").innerHTML = continuing

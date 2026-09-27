@@ -50,6 +50,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - A “watched through” action should mark preceding regular episodes watched so the user does not have to enter their history episode by episode.
 - Make progress editable to correct mistakes.
 - Show the last watched position and next unwatched episode where available.
+- Order “Pick up where you left off” by the time watched progress was most recently added, newest first, and show at most three eligible Watching shows. Progress corrections that only remove watched episodes do not update this order. Existing history has no inferred timestamp and uses a stable fallback until new progress is recorded.
 - Suggested default: track specials separately without making them mandatory for completion. Exclude unaired episodes from currently available progress; handle missing air dates conservatively.
 
 ## Ratings

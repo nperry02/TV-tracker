@@ -244,6 +244,7 @@ export const server = http.createServer(async (req, res) => {
           statusOverride: null,
           watchlist: destination === "watchlist",
           tracked: destination === "library",
+          lastWatchedAt: null,
           addedAt: new Date().toISOString(),
         };
         commit({ ...library, shows: [...library.shows, show] });
@@ -263,6 +264,7 @@ export const server = http.createServer(async (req, res) => {
               s.rating = null;
               s.seasonRatings = {};
               s.statusOverride = null;
+              s.lastWatchedAt = null;
             }
           }
           if ("watchlist" in b) {
@@ -342,6 +344,8 @@ export const server = http.createServer(async (req, res) => {
               return seasonA - seasonB || episodeA - episodeB;
             });
             if (s.watched.length) s.tracked = true;
+            if (s.watched.length > previousWatchedCount)
+              s.lastWatchedAt = new Date().toISOString();
             if (
               s.statusOverride === "Paused" &&
               s.watched.length > previousWatchedCount

@@ -126,6 +126,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   });
   assert.equal(result.status, 200);
   assert.deepEqual(result.data.watched, ["1:1", "1:2", "2:1"]);
+  assert.match(result.data.lastWatchedAt, /^\d{4}-\d{2}-\d{2}T/);
+  const firstWatchedAt = result.data.lastWatchedAt;
   assert.equal(result.data.rating, 4.5);
   assert.equal(result.data.seasonRatings["1"], 3.5);
   result = await patch({ watchlist: true });
@@ -139,6 +141,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     progress: { action: "episode", season: 1, episode: 1, watched: false },
   });
   assert.equal(result.data.statusOverride, "Paused");
+  assert.equal(result.data.lastWatchedAt, firstWatchedAt);
   result = await patch({
     progress: { action: "episode", season: 1, episode: 1, watched: true },
   });
@@ -199,6 +202,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(result.data.rating, null);
   assert.deepEqual(result.data.seasonRatings, {});
   assert.deepEqual(result.data.watched, []);
+  assert.equal(result.data.lastWatchedAt, null);
   assert.deepEqual(
     JSON.parse(readFileSync(file)).shows.find((show) => show.id === 2),
     untouchedShow,
