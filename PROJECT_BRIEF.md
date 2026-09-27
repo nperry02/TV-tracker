@@ -65,7 +65,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
-- Sort by personal rating, title, recently added, and original release date (newest or oldest first). Newest release is the default. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
+- Sort by personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Newest release is the default. “Last updated” orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
 - Search TMDB and add shows to this library.
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.

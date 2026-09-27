@@ -129,6 +129,19 @@ function render() {
   );
   const sort = $("#sort").value;
   filtered.sort((a, b) => {
+    if (sort === "last-updated") {
+      if (!a.lastWatchedAt || !b.lastWatchedAt)
+        return (
+          Number(!a.lastWatchedAt) - Number(!b.lastWatchedAt) ||
+          (b.addedAt || "").localeCompare(a.addedAt || "") ||
+          a.name.localeCompare(b.name)
+        );
+      return (
+        b.lastWatchedAt.localeCompare(a.lastWatchedAt) ||
+        (b.addedAt || "").localeCompare(a.addedAt || "") ||
+        a.name.localeCompare(b.name)
+      );
+    }
     if (sort === "release-newest" || sort === "release-oldest") {
       // TMDB dates use YYYY-MM-DD; unknown premiere dates go last in either direction.
       if (!a.first_air_date || !b.first_air_date)

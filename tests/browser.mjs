@@ -333,6 +333,10 @@ try {
     );
     await page
       .getByLabel("Sort shows", { exact: true })
+      .selectOption("last-updated");
+    assert.equal((await showOrder()).at(0), 60059);
+    await page
+      .getByLabel("Sort shows", { exact: true })
       .selectOption("release-newest");
     assert.deepEqual(
       await showOrder(),
