@@ -1343,7 +1343,9 @@ html {
 }
 body {
   background:
-    radial-gradient(circle at 48% 8%, #16301f66, transparent 34%), var(--bg);
+    radial-gradient(circle 700px at 48% 80px, #16301f66, transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
 }
 .topbar {
   position: sticky;
