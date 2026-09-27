@@ -205,7 +205,7 @@ function render() {
       : filtered
           .map((s) => {
             const p = progress(s);
-            return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}<span class="card-badges">${badge(watchStatus(s))}${inWatchlist(s) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
+            return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}<span class="card-badges">${inLibrary(s) ? badge(watchStatus(s)) : ""}${inWatchlist(s) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
           })
           .join("");
   $("#empty").hidden = filtered.length > 0;
