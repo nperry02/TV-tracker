@@ -1348,15 +1348,17 @@ body {
   position: sticky;
   top: 0;
   z-index: 20;
+  display: grid;
+  grid-template-columns: 208px minmax(320px, 620px) 1fr;
+  gap: 34px;
   height: 86px;
   padding: 0 32px;
   background: #0e1511ee;
   backdrop-filter: blur(18px);
 }
 .brand {
-  width: 196px;
-  flex: 0 0 196px;
-  font-size: 21px;
+  width: auto;
+  font-size: 30px;
 }
 .brand-icon {
   width: 38px;
@@ -1368,7 +1370,7 @@ body {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  width: min(620px, 48vw);
+  width: 100%;
   padding: 12px 14px;
   color: var(--muted);
   background: #141d18;
@@ -1398,6 +1400,7 @@ body {
   align-items: center;
   font-size: 12px;
   color: #c8d0c9;
+  justify-self: end;
 }
 .sidebar {
   position: fixed;
@@ -1758,6 +1761,8 @@ h1 {
 }
 @media (max-width: 900px) {
   .topbar {
+    grid-template-columns: auto 1fr;
+    gap: 18px;
     height: 78px;
     padding: 0 22px;
   }
@@ -1767,6 +1772,7 @@ h1 {
   }
   .top-search {
     width: min(440px, 55vw);
+    justify-self: end;
   }
   .sidebar {
     display: none;
