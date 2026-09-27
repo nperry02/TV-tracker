@@ -1477,6 +1477,9 @@ body {
 .nav-dot.watching {
   color: #cef37b;
 }
+.nav-dot.all {
+  color: #f0f1e9;
+}
 .nav-dot.caught-up {
   color: #69c8b1;
 }
@@ -1488,6 +1491,9 @@ body {
 }
 .nav-dot.dropped {
   color: #dc6b72;
+}
+.nav-dot.watchlist {
+  color: #e6c68d;
 }
 .sidebar-note {
   display: grid;

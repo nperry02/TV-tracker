@@ -69,6 +69,12 @@ try {
   await page.waitForFunction(
     () => document.querySelector(".brand-icon")?.naturalWidth > 0,
   );
+  assert.deepEqual(
+    await page
+      .locator(".side-statuses [data-sidebar-tab]")
+      .evaluateAll((buttons) => buttons.map((button) => button.dataset.sidebarTab)),
+    ["All", "Watching", "Paused", "Caught Up", "Completed", "Dropped", "Watchlist"],
+  );
   await page.getByRole("button", { name: /Find your first show/ }).click();
   await page
     .getByRole("searchbox", { name: "Search TMDB", exact: true })
