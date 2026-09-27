@@ -513,15 +513,27 @@ h1 {
   background: linear-gradient(140deg, #344635, #17221b);
 }
 .status-badge {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 650;
-  border: 1px solid #ffffff15;
-  border-radius: 5px;
-  padding: 5px 7px;
-  background: #152119ed;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  font-weight: 750;
+  border: 1px solid #ffffff24;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #152119f7;
   color: #c7d6c9;
+  box-shadow: 0 2px 8px #0004;
   white-space: nowrap;
+}
+.status-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
 }
 .poster-wrap .status-badge {
   position: absolute;
@@ -529,12 +541,18 @@ h1 {
   left: 9px;
 }
 .status-watching {
+  border-color: #bff36d55;
+  background: #23331bf2;
   color: #d5ed9c;
 }
 .status-paused {
+  border-color: #e9b95255;
+  background: #33291af2;
   color: #edcf91;
 }
 .status-watchlist {
+  border-color: #d9aa6155;
+  background: #30271cf2;
   color: #e6c68d;
 }
 .card-badges {
@@ -556,13 +574,19 @@ h1 {
   color: #e6c68d;
 }
 .status-caught-up {
+  border-color: #69c8b155;
+  background: #17312bf2;
   color: #98d9c9;
 }
 .status-completed {
+  border-color: #9d8ce255;
+  background: #26223af2;
   color: #c1b5ed;
 }
 .status-dropped {
-  color: #c3b1a7;
+  border-color: #dc6b725f;
+  background: #3a1f23f2;
+  color: #f0a1a6;
 }
 .card-heading {
   display: flex;
