@@ -39,7 +39,7 @@ Suggested implementation rules, subject to refinement during development:
 - Metadata can be incomplete or delayed; do not interpret a missing next air date as proof that a show has ended. Allow a manual correction when necessary.
 - An ongoing status does not guarantee renewal or a known next-season date.
 
-Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its status tab. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when explicitly added, assigned a viewing status, or marked with watched episodes. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships.
+Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its status tab. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when assigned a viewing status or marked with watched episodes. Show details do not need a separate “Start watching” button. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships.
 
 ## Viewing progress
 

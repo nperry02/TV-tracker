@@ -299,13 +299,8 @@ function renderShow() {
   }
   $(".detail-controls").insertAdjacentHTML(
     "beforeend",
-    `<button id="toggle-watchlist" aria-pressed="${inWatchlist(s)}">${inWatchlist(s) ? "✓ In watchlist · Remove" : "＋ Add to watchlist"}</button>`,
+    `<button id="toggle-watchlist" aria-pressed="${inWatchlist(s)}" aria-label="${inWatchlist(s) ? "Remove from watchlist" : "Add to watchlist"}">${inWatchlist(s) ? "✓ Watchlist" : "＋ Watchlist"}</button>`,
   );
-  if (!inLibrary(s))
-    $("#toggle-watchlist").insertAdjacentHTML(
-      "afterend",
-      `<button data-add="${s.id}">＋ Start watching</button>`,
-    );
   const lastAired = episodes
     .filter((e) => aired(e))
     .sort((a, b) => a.episode_number - b.episode_number)

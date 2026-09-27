@@ -420,12 +420,17 @@ try {
           ?.getAttribute("aria-pressed") === "true" &&
         !document.querySelector("#toggle-watchlist").disabled,
     );
-    await page.locator('[data-add="200022"]').click();
-    await page.locator("#show-rating").waitFor();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Start watching", exact: true })
+        .count(),
+      0,
+    );
+    await page.locator("#show-status").selectOption("Watching");
     await page.waitForFunction(
       () =>
         document.querySelector(".detail-hero .status-badge")?.textContent ===
-        "Watching",
+          "Watching" && !document.querySelector("#show-status").disabled,
     );
     assert.equal(
       await page.locator('[data-tab="All"] .count').textContent(),
