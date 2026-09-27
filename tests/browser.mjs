@@ -160,12 +160,12 @@ try {
     "1",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.locator('#tabs [data-tab="Watching"]').click();
+  await page.locator('[data-sidebar-tab="Watching"]').click();
   assert.equal(await page.locator(".show-card").count(), 1);
-  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  await page.locator('[data-sidebar-tab="Watchlist"]').click();
   assert.equal(await page.locator(".show-card").count(), 1);
   await page.reload();
-  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  await page.locator('[data-sidebar-tab="Watchlist"]').click();
   await page.locator('.show-card[data-show="1396"]').click();
   assert.equal(
     await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
@@ -323,9 +323,9 @@ try {
           .querySelector("#continue-list .continue-open")
           ?.getAttribute("data-show") === "60059",
     );
-    await page.locator('[data-tab="Completed"]').click();
+    await page.locator('[data-sidebar-tab="Completed"]').click();
     assert.equal(await page.locator(".show-card").count(), 2);
-    await page.locator('[data-tab="All"]').click();
+    await page.locator('[data-sidebar-tab="All"]').click();
     await page.locator('[data-sidebar-tab="Completed"]').click();
     assert.equal(await page.locator(".show-card").count(), 2);
     assert.equal(
@@ -334,7 +334,7 @@ try {
         .evaluate((button) => button.classList.contains("active")),
       true,
     );
-    await page.locator('[data-tab="All"]').click();
+    await page.locator('[data-sidebar-tab="All"]').click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);
     await page.locator("#genre").selectOption("18");
