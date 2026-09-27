@@ -15,28 +15,65 @@
         ><img class="brand-icon" src="/assets/logo.png" alt="" />
         Next Episode</a
       >
-      <span class="personal">YOUR PERSONAL TV COMPANION</span>
-      <button class="primary" id="add-show">
-        <span aria-hidden="true">＋</span> Find a show
+      <button class="top-search" id="add-show" aria-label="Find a show">
+        <span aria-hidden="true">⌕</span>
+        <span>Search for a show…</span>
+        <kbd>⌘ K</kbd>
       </button>
+      <nav class="top-links" aria-label="Quick links">
+        <a href="#library">My Shows</a>
+        <a href="/api/export" download>Backup</a>
+      </nav>
     </header>
-    <main>
+    <aside class="sidebar" aria-label="Main navigation">
+      <nav class="side-nav">
+        <a class="active" href="#home"><span aria-hidden="true">⌂</span>Home</a>
+        <a href="#library"><span aria-hidden="true">♡</span>My Shows</a>
+        <button type="button" data-sidebar-tab="Watchlist">
+          <span aria-hidden="true">▯</span>Watchlist
+        </button>
+      </nav>
+      <div class="side-divider"></div>
+      <p class="side-label">Library</p>
+      <nav class="side-nav side-statuses" aria-label="Library shortcuts">
+        <button type="button" data-sidebar-tab="Watching">
+          <span class="nav-dot watching"></span>Watching
+        </button>
+        <button type="button" data-sidebar-tab="Caught Up">
+          <span class="nav-dot caught-up"></span>Caught Up
+        </button>
+        <button type="button" data-sidebar-tab="Completed">
+          <span class="nav-dot completed"></span>Completed
+        </button>
+        <button type="button" data-sidebar-tab="Paused">
+          <span class="nav-dot paused"></span>Paused
+        </button>
+        <button type="button" data-sidebar-tab="Dropped">
+          <span class="nav-dot dropped"></span>Dropped
+        </button>
+      </nav>
+      <div class="sidebar-note">
+        <strong>Your library, your pace.</strong>
+        <span>Everything stays private on this Mac.</span>
+      </div>
+    </aside>
+    <main id="home">
       <section class="page-heading">
         <div>
-          <p class="eyebrow">ONE MORE EPISODE?</p>
+          <p class="eyebrow">WELCOME BACK</p>
           <h1>Your Shows</h1>
-          <p class="subtitle">Every show. Your pace. All in one place.</p>
+          <p class="subtitle">Track what you watch. Pick up where you left off.</p>
         </div>
         <div class="stats" id="stats"></div>
       </section>
       <section id="continue-section" hidden>
         <div class="section-heading">
-          <h2>Pick up where you left off</h2>
-          <span>THE NEXT CHAPTER</span>
+          <h2>Continue Watching</h2>
+          <a href="#library">See all →</a>
         </div>
         <div id="continue-list" class="continue-list"></div>
       </section>
-      <section class="library" aria-label="Your show library">
+      <section class="library" id="library" aria-label="Your show library">
         <div class="tabs" id="tabs" aria-label="Filter by watch status"></div>
         <div class="filterbar">
           <label class="library-search"
@@ -91,7 +128,7 @@
         <div id="empty" class="empty" hidden></div>
       </section>
     </main>
-    <footer>
+    <footer class="site-footer">
       <div>
         <span class="footer-brand">Next Episode</span
         ><span>A little home for your love of television.</span>

@@ -117,6 +117,9 @@ function render() {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.view === viewMode));
   });
+  document.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.sidebarTab === activeTab);
+  });
   const counts = Object.fromEntries(
     [...statuses, "Watchlist"].map((status) => [
       status,
@@ -126,7 +129,7 @@ function render() {
   const tracked = shows.filter((s) => matchesTab(s, "All"));
   const rated = tracked.filter((s) => s.rating);
   $("#stats").innerHTML =
-    `<div class="stat"><strong>${tracked.length}</strong><span>Tracked shows</span></div><div class="stat"><strong>${counts.Watching}</strong><span>Watching</span></div><div class="stat"><strong>${rated.length ? (rated.reduce((sum, s) => sum + s.rating, 0) / rated.length).toFixed(1) : "—"}<small class="stars"> ★</small></strong><span>Average rating</span></div>`;
+    `<div class="stat"><i aria-hidden="true">▶</i><strong>${tracked.length}</strong><span>Tracked shows</span></div><div class="stat"><i aria-hidden="true">◉</i><strong>${counts.Watching}</strong><span>Watching</span></div><div class="stat"><i aria-hidden="true">✓</i><strong>${counts.Completed}</strong><span>Completed</span></div><div class="stat"><i aria-hidden="true">★</i><strong>${rated.length ? (rated.reduce((sum, s) => sum + s.rating, 0) / rated.length).toFixed(1) : "—"}</strong><span>Average rating</span></div>`;
   $("#tabs").innerHTML = libraryTabs
     .map(
       (status) =>
@@ -233,8 +236,10 @@ function render() {
   $("#continue-section").hidden = !continuing.length;
   $("#continue-list").innerHTML = continuing
     .map((s) => {
-      const next = progress(s).next;
-      return `<article class="continue-card"><button class="continue-open" data-show="${s.id}" aria-label="Open ${esc(s.name)}">${poster(s, "mini-poster", "w92")}<span><strong>${esc(s.name)}</strong><small>Up next · ${code(next)}</small><small>${esc(next.name)}</small></span></button><button class="next-watched" data-next="${s.id}" aria-label="Mark ${esc(s.name)} ${code(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
+      const p = progress(s);
+      const next = p.next;
+      const backdrop = image(s.backdrop_path, "w780");
+      return `<article class="continue-card"><button class="continue-open" data-show="${s.id}" aria-label="Open ${esc(s.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(s, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(s.name)}</strong><small>${code(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></span></button><button class="next-watched" data-next="${s.id}" aria-label="Mark ${esc(s.name)} ${code(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
     })
     .join("");
 }
@@ -423,6 +428,12 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
+  if (button.dataset.sidebarTab) {
+    activeTab = button.dataset.sidebarTab;
+    render();
+    $("#library").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   if (button.dataset.view) {
     viewMode = button.dataset.view;
     try {
@@ -605,6 +616,12 @@ document.addEventListener("change", (event) => {
 });
 $("#library-query").addEventListener("input", render);
 $("#search-form").addEventListener("submit", search);
+document.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    openSearch();
+  }
+});
 for (const dialog of document.querySelectorAll("dialog"))
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;

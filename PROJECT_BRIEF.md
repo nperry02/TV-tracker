@@ -63,6 +63,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Your Shows
 
+- Present the library as a responsive dashboard. On desktop, provide sidebar shortcuts for Home, My Shows, Watchlist, and viewing statuses; keep mobile focused on the header, summary, Continue Watching, and library controls.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
 - Sort by personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.

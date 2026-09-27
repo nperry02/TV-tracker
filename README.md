@@ -14,6 +14,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 
 ## First version
 
+- Use a dashboard layout with desktop sidebar shortcuts, a global show-search control, summary cards, backdrop-based Continue Watching cards, and a responsive mobile presentation. All existing library tools remain available in the dashboard.
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
 - Switch between All, Watching, Paused, Caught Up, Completed, Dropped, and a separate Watchlist. Only watchlist-only, unstarted shows are excluded from All shows and its count.
 - Combine title search, genre, and personal rating filters. Last updated is the default sort; release date, title, rating, and recently added are also available. “Last updated” uses the most recent newly watched progress and places shows without a recorded update afterward. Unknown premiere dates appear last for release sorting.

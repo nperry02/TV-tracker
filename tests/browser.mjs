@@ -320,6 +320,15 @@ try {
     await page.locator('[data-tab="Completed"]').click();
     assert.equal(await page.locator(".show-card").count(), 2);
     await page.locator('[data-tab="All"]').click();
+    await page.locator('[data-sidebar-tab="Completed"]').click();
+    assert.equal(await page.locator(".show-card").count(), 2);
+    assert.equal(
+      await page
+        .locator('[data-sidebar-tab="Completed"]')
+        .evaluate((button) => button.classList.contains("active")),
+      true,
+    );
+    await page.locator('[data-tab="All"]').click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);
     await page.locator("#genre").selectOption("18");
