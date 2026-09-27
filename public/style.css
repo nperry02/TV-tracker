@@ -1415,7 +1415,7 @@ body {
 }
 .side-nav {
   display: grid;
-  gap: 7px;
+  gap: 3px;
 }
 .side-nav a,
 .side-nav button {
@@ -1423,7 +1423,7 @@ body {
   align-items: center;
   width: 100%;
   gap: 13px;
-  padding: 12px 14px;
+  padding: 11px 14px;
   color: #aebbb0;
   background: transparent;
   border: 1px solid transparent;
@@ -1432,12 +1432,21 @@ body {
   font-size: 13px;
   font-weight: 550;
 }
-.side-nav a > span:first-child,
-.side-nav button > span:first-child:not(.nav-dot) {
+.side-icon {
+  display: grid;
   width: 20px;
+  height: 20px;
+  place-items: center;
   color: #d8e3d9;
-  font-size: 20px;
-  text-align: center;
+}
+.side-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 .side-nav a:hover,
 .side-nav button:hover,
