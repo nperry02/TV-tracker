@@ -309,6 +309,14 @@ try {
       page
         .locator(".show-card")
         .evaluateAll((cards) => cards.map((card) => Number(card.dataset.show)));
+    assert.equal(
+      await page.getByLabel("Sort shows", { exact: true }).inputValue(),
+      "release-newest",
+    );
+    assert.deepEqual(
+      await showOrder(),
+      [95396, 85552, 76331, 60059, 1396, 1438],
+    );
     await page
       .getByLabel("Sort shows", { exact: true })
       .selectOption("release-newest");
