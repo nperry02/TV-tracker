@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Purpose and scope
 
@@ -72,6 +72,15 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Search TMDB and add shows to this library.
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.
 - Allow removing a show from All Shows to return it to an unwatched state. Clear viewing status, ratings, and progress; preserve an independent Watchlist flag. If it is not on Watchlist, remove the saved entry entirely so it can be added again from search.
+
+## Stats
+
+- Provide a dedicated Stats view inside the dashboard shell with lifetime library totals.
+- Show tracked shows, episodes watched, completed seasons, estimated watch hours, show-rating distribution, status counts, regular aired-episode progress, top genres, and up to five top-rated shows.
+- Keep Watchlist separate from viewing-status counts because it can overlap any status.
+- Count watched specials in episode and watch-time totals. Exclude specials from completed-season and show-progress calculations.
+- Estimate runtime from episode metadata first, typical show runtime second, and the median known library runtime as a fallback. Label watch time as approximate and let runtime coverage improve through the normal metadata-refresh cycle rather than a bulk backfill.
+- Keep monthly activity, streaks, and time-based trends deferred until dated viewing history exists.
 
 ## Deferred — remember for later
 

@@ -15,6 +15,8 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 ## First version
 
 - Use a dashboard layout with desktop sidebar shortcuts, a global show-search control, summary cards, backdrop-based Continue Watching cards, and a responsive mobile presentation. All existing library tools remain available in the dashboard.
+- Open Stats from the sidebar for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
+- Stats estimate watch time from episode runtimes, each show's typical runtime, and the median known runtime in the library. Specials count toward episodes watched and watch time, but not season-completion or regular-episode progress.
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
 - Switch between All, Watching, Paused, Caught Up, Completed, Dropped, and a separate Watchlist. Only watchlist-only, unstarted shows are excluded from All shows and its count.
 - Combine title search, genre, and personal rating filters. Last updated is the default sort; release date, title, rating, and recently added are also available. “Last updated” uses the most recent newly watched progress and places shows without a recorded update afterward. Unknown premiere dates appear last for release sorting.
@@ -47,7 +49,7 @@ npm install
 npm run test:browser
 ```
 
-The tests cover status transitions, unaired episodes, specials, persistent ratings/progress, invalid inputs, and cross-origin write protection. Tests use temporary data and do not call TMDB.
+The tests cover status transitions, unaired episodes, specials, stats aggregations, runtime estimates, persistent ratings/progress/runtime metadata, invalid inputs, and cross-origin write protection. Tests use temporary data and do not call TMDB.
 
 Browser tests use Playwright with installed Google Chrome, a temporary library, and fixture metadata. `npm run test:live` runs the main browser flow against real TMDB using `.env`; it also uses an isolated temporary library. Screenshots are saved under ignored `test-results/`.
 

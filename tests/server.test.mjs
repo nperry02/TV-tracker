@@ -10,12 +10,13 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   const directory = mkdtempSync(join(tmpdir(), "tv-tracker-test-"));
   const file = join(directory, "library.json");
   const episodes = [
-    { season_number: 0, episode_number: 1, air_date: "2020-01-01" },
+    { season_number: 0, episode_number: 1, air_date: "2020-01-01", runtime: 12 },
     ...[1, 2].flatMap((season_number) =>
       [1, 2].map((episode_number) => ({
         season_number,
         episode_number,
         air_date: "2020-01-01",
+        runtime: 44,
       })),
     ),
     { season_number: 2, episode_number: 3, air_date: "2099-01-01" },
@@ -45,6 +46,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
           rating: null,
           seasonRatings: {},
           statusOverride: null,
+          typicalRuntime: 45,
           episodes,
           seasons: [{ number: 0 }, { number: 1 }, { number: 2 }],
         },
@@ -195,6 +197,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(saved.shows[0].rating, 4.5);
   assert.equal(saved.shows[0].watchlist, true);
   assert.equal(saved.shows[0].tracked, true);
+  assert.equal(saved.shows[0].typicalRuntime, 45);
+  assert.equal(saved.shows[0].episodes[0].runtime, 12);
   result = await patch({ tracked: false });
   assert.equal(result.data.tracked, false);
   assert.equal(result.data.watchlist, true);

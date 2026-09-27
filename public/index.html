@@ -27,7 +27,7 @@
     </header>
     <aside class="sidebar" aria-label="Main navigation">
       <nav class="side-nav">
-        <a class="active" href="#home"
+        <a class="active" href="#home" data-page="home"
           ><span class="side-icon" aria-hidden="true"
             ><svg viewBox="0 0 24 24">
               <path d="m3 11 9-8 9 8" />
@@ -35,7 +35,7 @@
           ></span>
           Home</a
         >
-        <a href="#library"
+        <a href="#library" data-page="library"
           ><span class="side-icon" aria-hidden="true"
             ><svg viewBox="0 0 24 24">
               <path
@@ -43,6 +43,13 @@
               /></svg
           ></span>
           My Shows</a
+        >
+        <a href="#stats" data-page="stats"
+          ><span class="side-icon" aria-hidden="true"
+            ><svg viewBox="0 0 24 24">
+              <path d="M5 20V10M12 20V4M19 20v-7" /></svg
+          ></span>
+          Stats</a
         >
       </nav>
       <div class="side-divider"></div>
@@ -76,6 +83,7 @@
       </div>
     </aside>
     <main id="home">
+      <div id="home-view">
       <section class="page-heading">
         <div>
           <p class="eyebrow">WELCOME BACK</p>
@@ -144,6 +152,15 @@
         <p id="result-count" class="result-count"></p>
         <div id="library-grid" class="poster-grid"></div>
         <div id="empty" class="empty" hidden></div>
+      </section>
+      </div>
+      <section id="stats-view" class="stats-page" aria-labelledby="stats-title" hidden>
+        <header class="stats-header">
+          <p class="eyebrow">YOUR LIBRARY IN NUMBERS</p>
+          <h1 id="stats-title">Stats</h1>
+          <p class="subtitle">A lifetime look at the shows and episodes you have tracked.</p>
+        </header>
+        <div id="stats-content"></div>
       </section>
     </main>
     <footer class="site-footer">

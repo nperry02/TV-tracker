@@ -5,6 +5,7 @@ import {
   watchStatus,
   inWatchlist,
   matchesTab,
+  libraryStats,
 } from "../public/model.js";
 
 const episode = (season, number, date = "2026-01-01") => ({
@@ -150,4 +151,104 @@ test("explicit watchlist flags overlap every status and stay in All without chan
     assert.equal(matchesTab(s, "Watchlist"), false);
     assert.equal(watchStatus(s), statusOverride);
   }
+});
+
+test("library stats aggregate ratings, statuses, progress, specials, seasons, and runtime estimates", () => {
+  const stats = libraryStats(
+    [
+      show({
+        id: 1,
+        name: "Alpha",
+        tracked: true,
+        watchlist: false,
+        rating: 4.5,
+        genres: [
+          { id: 18, name: "Drama" },
+          { id: 80, name: "Crime" },
+        ],
+        episodes: [
+          { ...episode(0, 1), runtime: 30 },
+          { ...episode(1, 1), runtime: 45 },
+          episode(1, 2),
+          episode(2, 1, "2099-01-01"),
+        ],
+        watched: ["0:1", "1:1", "1:2"],
+        typicalRuntime: 50,
+        lastWatchedAt: "2026-09-27T10:00:00.000Z",
+      }),
+      show({
+        id: 2,
+        name: "Beta",
+        tracked: true,
+        watchlist: true,
+        rating: 4.5,
+        genres: [
+          { id: 18, name: "Drama" },
+          { id: 35, name: "Comedy" },
+        ],
+        episodes: [episode(1, 1), episode(1, 2)],
+        watched: ["1:1"],
+        statusOverride: "Completed",
+        lastWatchedAt: "2026-09-27T11:00:00.000Z",
+      }),
+      show({
+        id: 3,
+        name: "Watchlist only",
+        tracked: false,
+        watchlist: true,
+        rating: null,
+        genres: [],
+      }),
+    ],
+    "2026-09-27",
+  );
+  assert.equal(stats.trackedShows, 2);
+  assert.equal(stats.episodesWatched, 4);
+  assert.equal(stats.seasonsCompleted, 1);
+  assert.equal(stats.estimatedMinutes, 170);
+  assert.equal(stats.runtimeCoveredEpisodes, 3);
+  assert.equal(stats.runtimeEstimatedEpisodes, 2);
+  assert.equal(stats.watchedRegularEpisodes, 3);
+  assert.equal(stats.airedRegularEpisodes, 4);
+  assert.equal(stats.progressPercent, 75);
+  assert.equal(stats.statusCounts["Caught Up"], 1);
+  assert.equal(stats.statusCounts.Completed, 1);
+  assert.equal(stats.watchlistShows, 2);
+  assert.equal(stats.averageRating, 4.5);
+  assert.equal(stats.ratedShows, 2);
+  assert.equal(stats.unratedShows, 0);
+  assert.equal(stats.ratingBuckets.length, 10);
+  assert.equal(
+    stats.ratingBuckets.reduce((sum, bucket) => sum + bucket.count, 0),
+    2,
+  );
+  assert.equal(
+    stats.ratingBuckets.find((bucket) => bucket.rating === 4.5).count,
+    2,
+  );
+  assert.deepEqual(stats.topGenres, [
+    { name: "Drama", count: 2 },
+    { name: "Comedy", count: 1 },
+    { name: "Crime", count: 1 },
+  ]);
+  assert.deepEqual(
+    stats.topRated.map((entry) => entry.name),
+    ["Beta", "Alpha"],
+  );
+});
+
+test("library stats handle empty libraries and missing runtime metadata", () => {
+  const stats = libraryStats([
+    show({
+      tracked: true,
+      watchlist: false,
+      rating: null,
+      genres: [],
+      watched: ["1:1"],
+    }),
+  ]);
+  assert.equal(stats.estimatedMinutes, null);
+  assert.equal(stats.unratedShows, 1);
+  assert.equal(stats.runtimeCoveredEpisodes, 0);
+  assert.deepEqual(libraryStats([]).topGenres, []);
 });
