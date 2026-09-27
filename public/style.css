@@ -1527,7 +1527,7 @@ body {
 main {
   max-width: none;
   margin: 0 0 0 240px;
-  padding: 38px 34px 72px;
+  padding: 34px 34px 72px;
   min-height: calc(100vh - 86px);
 }
 .page-heading {
@@ -1535,7 +1535,7 @@ main {
   grid-template-columns: minmax(330px, 0.9fr) minmax(580px, 1.45fr);
   align-items: end;
   gap: 40px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 .eyebrow {
   color: #7f9383;
