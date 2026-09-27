@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Purpose and scope
 
@@ -73,6 +73,15 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.
 - Allow removing a show from All Shows to return it to an unwatched state. Clear viewing status, ratings, and progress; preserve an independent Watchlist flag. If it is not on Watchlist, remove the saved entry entirely so it can be added again from search.
 
+## Stats
+
+- Provide a dedicated Stats view inside the dashboard shell with lifetime library totals.
+- Show tracked shows, episodes watched, completed seasons, estimated watch hours, show-rating distribution, status counts, regular aired-episode progress, top genres, and up to five top-rated shows.
+- Keep Watchlist separate from viewing-status counts because it can overlap any status.
+- Count watched specials in episode and watch-time totals. Exclude specials from completed-season and show-progress calculations.
+- Estimate runtime from episode metadata first, typical show runtime second, and the median known library runtime as a fallback. Label watch time as approximate and let runtime coverage improve through the normal metadata-refresh cycle rather than a bulk backfill.
+- Keep monthly activity, streaks, and time-based trends deferred until dated viewing history exists.
+
 ## Deferred — remember for later
 
 - Dated viewing diary and “when watched” logging.
@@ -86,7 +95,7 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 - Personal library and cached metadata persist in `data/library.json`, with atomic file replacement and a downloadable JSON backup.
 - Show and optional season ratings both ship in the first version.
 - Search offers separate + Add and + Watchlist actions. All-show totals and average ratings use tracked library membership, independently of the watchlist flag.
-- Metadata refreshes on startup when older than six hours, with a manual refresh in show details.
+- Metadata refreshes on startup using status-aware intervals: 24 hours for Watching and Caught Up, seven days for Paused and Watchlist-only shows, and 30 days for Completed and Dropped. Limit automatic work to five stale shows per startup, prioritizing active shows and then the oldest metadata. Keep a manual refresh in show details.
 - All five statuses can be manually set; Automatic returns to progress-based status. Manual status does not change episode progress. Paused returns to automatic status when newly watched progress is added.
 
 ## Still open for later

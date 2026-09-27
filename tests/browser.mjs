@@ -75,6 +75,15 @@ try {
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.sidebarTab)),
     ["All", "Watching", "Paused", "Caught Up", "Completed", "Dropped", "Watchlist"],
   );
+  await page.getByRole("link", { name: "Stats", exact: true }).click();
+  assert.equal(new URL(page.url()).hash, "#stats");
+  await page.locator("#stats-view").waitFor();
+  assert.equal(await page.locator("#stats-view").isVisible(), true);
+  assert.equal(await page.locator("#home-view").isVisible(), false);
+  await page.getByText("No ratings yet.", { exact: true }).waitFor();
+  await page.getByText("Genres will appear as you add shows.", { exact: true }).waitFor();
+  await page.goBack();
+  await page.locator("#home-view").waitFor();
   await page.getByRole("button", { name: /Find your first show/ }).click();
   await page
     .getByRole("searchbox", { name: "Search TMDB", exact: true })
@@ -82,6 +91,9 @@ try {
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.locator('[data-add="1396"]').click();
   await page.locator("#show-rating").waitFor();
+  const runtimeLibrary = await (await page.request.get(`${base}/api/library`)).json();
+  assert.equal(runtimeLibrary.shows[0].typicalRuntime, 45);
+  assert.ok(runtimeLibrary.shows[0].episodes.every((episode) => episode.runtime > 0));
   assert.equal(
     await page.locator(".detail-hero .status-badge").first().textContent(),
     "Watching",
@@ -388,6 +400,23 @@ try {
     await page.unroute("**/api/library");
     await page.reload();
     await page.locator(".show-card").nth(5).waitFor();
+    await page.getByRole("link", { name: "Stats", exact: true }).click();
+    await page.locator("#stats-view").waitFor();
+    assert.equal(new URL(page.url()).hash, "#stats");
+    assert.equal(await page.locator(".stats-overview article").count(), 4);
+    assert.equal(await page.locator(".rating-chart g").count(), 10);
+    await page.getByText("6 rated · 0 unrated", { exact: true }).waitFor();
+    assert.match(
+      await page.locator(".runtime-panel").textContent(),
+      /watched episodes have show or episode runtime data/,
+    );
+    assert.equal(await page.locator(".stats-show").count(), 5);
+    await page.screenshot({ path: "test-results/desktop-stats.png", fullPage: true });
+    await page.locator(".stats-show").first().click();
+    await page.locator("#show-dialog[open]").waitFor();
+    await page.getByRole("button", { name: "Close show", exact: true }).click();
+    await page.goBack();
+    await page.locator("#home-view").waitFor();
     await page.getByRole("button", { name: /List/ }).click();
     assert.equal(
       await page.getByRole("button", { name: /List/ }).getAttribute("aria-pressed"),
@@ -431,6 +460,16 @@ try {
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${base}/#stats`);
+  await page.locator("#stats-view").waitFor();
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    true,
+    "Stats view fits mobile viewport",
+  );
+  await page.screenshot({ path: "test-results/mobile-stats.png", fullPage: true });
+  await page.goto(`${base}/#library`);
+  await page.locator("#home-view").waitFor();
   await page.getByRole("button", { name: /List/ }).click();
   assert.equal(
     await page.evaluate(
@@ -654,7 +693,7 @@ try {
   await page.getByRole("button", { name: "Close credits" }).click();
   assert.deepEqual(errors, []);
   console.log(
-    `${live ? "Live TMDB" : "Fixture"} browser checks passed: search, add, ratings, season progress, overrides, reload persistence, filters, errors, and mobile layout.`,
+    `${live ? "Live TMDB" : "Fixture"} browser checks passed: search, add, ratings, season progress, stats, overrides, reload persistence, filters, errors, and mobile layout.`,
   );
 } finally {
   await browser?.close();

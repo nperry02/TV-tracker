@@ -68,3 +68,151 @@ export function watchStatus(show, date = today()) {
     return "Completed";
   return "Caught Up";
 }
+
+const DAY = 24 * 60 * 60 * 1000;
+export function metadataRefreshInterval(show, date = today()) {
+  if (!inLibrary(show) && inWatchlist(show)) return 7 * DAY;
+  const status = watchStatus(show, date);
+  if (["Watching", "Caught Up"].includes(status)) return DAY;
+  if (status === "Paused") return 7 * DAY;
+  return 30 * DAY;
+}
+export function metadataRefreshQueue(
+  shows,
+  now = new Date(),
+  limit = 5,
+) {
+  const timestamp = now.getTime();
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return shows
+    .filter((show) => {
+      const refreshed = new Date(show.refreshedAt).getTime();
+      return (
+        !Number.isFinite(refreshed) ||
+        timestamp - refreshed > metadataRefreshInterval(show, date)
+      );
+    })
+    .sort(
+      (a, b) =>
+        metadataRefreshInterval(a, date) - metadataRefreshInterval(b, date) ||
+        (a.refreshedAt || "").localeCompare(b.refreshedAt || "") ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, limit);
+}
+
+const positiveRuntime = (value) =>
+  Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null;
+
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+export function libraryStats(shows, date = today()) {
+  const tracked = shows.filter(inLibrary);
+  const statusCounts = Object.fromEntries(
+    statuses.map((status) => [
+      status,
+      tracked.filter((show) => watchStatus(show, date) === status).length,
+    ]),
+  );
+  const ratings = tracked
+    .map((show) => show.rating)
+    .filter((rating) => Number.isFinite(rating));
+  const ratingBuckets = Array.from({ length: 10 }, (_, index) => {
+    const rating = (index + 1) / 2;
+    return { rating, count: ratings.filter((value) => value === rating).length };
+  });
+  const knownRuntimes = tracked.flatMap((show) => [
+    ...show.episodes.map((episode) => positiveRuntime(episode.runtime)),
+    positiveRuntime(show.typicalRuntime),
+  ]).filter(Boolean);
+  const libraryMedianRuntime = median(knownRuntimes);
+  let episodesWatched = 0;
+  let seasonsCompleted = 0;
+  let watchedRegularEpisodes = 0;
+  let airedRegularEpisodes = 0;
+  let estimatedMinutes = 0;
+  let runtimeCoveredEpisodes = 0;
+  let runtimeEstimatedEpisodes = 0;
+  for (const show of tracked) {
+    const watched = new Set(show.watched);
+    const episodesByKey = new Map(
+      show.episodes.map((episode) => [episodeKey(episode), episode]),
+    );
+    episodesWatched += watched.size;
+    const airedRegular = show.episodes.filter(
+      (episode) => episode.season_number > 0 && aired(episode, date),
+    );
+    airedRegularEpisodes += airedRegular.length;
+    watchedRegularEpisodes += airedRegular.filter((episode) =>
+      watched.has(episodeKey(episode)),
+    ).length;
+    const seasons = new Map();
+    for (const episode of airedRegular) {
+      const group = seasons.get(episode.season_number) || [];
+      group.push(episode);
+      seasons.set(episode.season_number, group);
+    }
+    seasonsCompleted += [...seasons.values()].filter(
+      (episodes) =>
+        episodes.length &&
+        episodes.every((episode) => watched.has(episodeKey(episode))),
+    ).length;
+    for (const key of watched) {
+      const episode = episodesByKey.get(key);
+      const exact = positiveRuntime(episode?.runtime);
+      const typical = positiveRuntime(show.typicalRuntime);
+      const runtime = exact || typical || libraryMedianRuntime;
+      if (exact || typical) runtimeCoveredEpisodes += 1;
+      if (!exact && runtime) runtimeEstimatedEpisodes += 1;
+      if (runtime) estimatedMinutes += runtime;
+    }
+  }
+  const genreCounts = new Map();
+  for (const show of tracked)
+    for (const genre of show.genres || [])
+      genreCounts.set(genre.name, (genreCounts.get(genre.name) || 0) + 1);
+  const topGenres = [...genreCounts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 5);
+  const topRated = tracked
+    .filter((show) => Number.isFinite(show.rating))
+    .sort(
+      (a, b) =>
+        b.rating - a.rating ||
+        (b.lastWatchedAt || "").localeCompare(a.lastWatchedAt || "") ||
+        (b.addedAt || "").localeCompare(a.addedAt || "") ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, 5);
+  return {
+    trackedShows: tracked.length,
+    episodesWatched,
+    seasonsCompleted,
+    estimatedMinutes: knownRuntimes.length ? estimatedMinutes : null,
+    runtimeCoveredEpisodes,
+    runtimeEstimatedEpisodes,
+    statusCounts,
+    watchlistShows: shows.filter(inWatchlist).length,
+    averageRating: ratings.length
+      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+      : null,
+    ratedShows: ratings.length,
+    unratedShows: tracked.length - ratings.length,
+    ratingBuckets,
+    watchedRegularEpisodes,
+    airedRegularEpisodes,
+    progressPercent: airedRegularEpisodes
+      ? (watchedRegularEpisodes / airedRegularEpisodes) * 100
+      : 0,
+    topGenres,
+    topRated,
+  };
+}

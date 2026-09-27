@@ -15,6 +15,8 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 ## First version
 
 - Use a dashboard layout with desktop sidebar shortcuts, a global show-search control, summary cards, backdrop-based Continue Watching cards, and a responsive mobile presentation. All existing library tools remain available in the dashboard.
+- Open Stats from the sidebar for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
+- Stats estimate watch time from episode runtimes, each show's typical runtime, and the median known runtime in the library. Specials count toward episodes watched and watch time, but not season-completion or regular-episode progress.
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
 - Switch between All, Watching, Paused, Caught Up, Completed, Dropped, and a separate Watchlist. Only watchlist-only, unstarted shows are excluded from All shows and its count.
 - Combine title search, genre, and personal rating filters. Last updated is the default sort; release date, title, rating, and recently added are also available. “Last updated” uses the most recent newly watched progress and places shows without a recorded update afterward. Unknown premiere dates appear last for release sorting.
@@ -27,7 +29,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Remove an accidentally added show from All Shows. This clears its viewing status, ratings, and progress; a separate Watchlist flag is preserved. Unflagged shows are removed entirely and can be added again from search.
 - Automatic status distinguishes ongoing shows from ended/canceled shows. Paused is a manual status for shows you may resume; adding newly watched progress returns it to Watching automatically. Dropped remains set until changed manually.
 - Specials are optional and do not affect completion. Future episodes and episodes with unknown air dates are not marked watched in bulk.
-- Show information refreshes when opening the app if older than six hours; a manual refresh is available in show details. Saved library data remains usable when TMDB is offline.
+- Show information refreshes when opening the app according to viewing status: daily for Watching and Caught Up, weekly for Paused and Watchlist-only shows, and every 30 days for Completed and Dropped. Each startup refreshes at most five stale shows, with active shows first. A manual refresh remains available in show details, and saved library data remains usable when TMDB is offline.
 - Download a JSON backup from the footer.
 
 Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its status tab. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when assigned a viewing status or marked with watched episodes; there is no separate “Start watching” control in show details. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
@@ -47,7 +49,7 @@ npm install
 npm run test:browser
 ```
 
-The tests cover status transitions, unaired episodes, specials, persistent ratings/progress, invalid inputs, and cross-origin write protection. Tests use temporary data and do not call TMDB.
+The tests cover status transitions, unaired episodes, specials, stats aggregations, runtime estimates, persistent ratings/progress/runtime metadata, invalid inputs, and cross-origin write protection. Tests use temporary data and do not call TMDB.
 
 Browser tests use Playwright with installed Google Chrome, a temporary library, and fixture metadata. `npm run test:live` runs the main browser flow against real TMDB using `.env`; it also uses an isolated temporary library. Screenshots are saved under ignored `test-results/`.
 

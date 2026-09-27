@@ -102,6 +102,8 @@ async function metadata(id) {
           season_number: e.season_number,
           episode_number: e.episode_number,
           air_date: e.air_date,
+          runtime:
+            Number.isFinite(e.runtime) && e.runtime > 0 ? e.runtime : undefined,
         });
   }
   return {
@@ -114,6 +116,10 @@ async function metadata(id) {
     genres: s.genres,
     seriesStatus: s.status,
     episodeCount: s.number_of_episodes,
+    typicalRuntime:
+      s.episode_run_time?.find(
+        (runtime) => Number.isFinite(runtime) && runtime > 0,
+      ) || undefined,
     seasons: s.seasons.map((x) => ({ number: x.season_number, name: x.name })),
     episodes,
     refreshedAt: new Date().toISOString(),

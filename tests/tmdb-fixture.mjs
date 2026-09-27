@@ -82,6 +82,7 @@ globalThis.fetch = async (input) => {
         season_number,
         episode_number: n,
         air_date: "2020-01-01",
+        runtime: 42 + n,
       })),
     });
   }
@@ -94,6 +95,7 @@ globalThis.fetch = async (input) => {
       { id: 80, name: "Crime" },
     ],
     number_of_episodes: 6,
+    episode_run_time: [45],
     seasons: [
       { season_number: 1, name: "Season 1" },
       { season_number: 2, name: "Season 2" },
