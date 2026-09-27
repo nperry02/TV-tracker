@@ -150,6 +150,7 @@ const files = {
   "/app.js": ["app.js", "text/javascript"],
   "/model.js": ["model.js", "text/javascript"],
   "/style.css": ["style.css", "text/css"],
+  "/assets/logo.png": ["assets/logo.png", "image/png"],
 };
 export const server = http.createServer(async (req, res) => {
   const send = (status, value) => {

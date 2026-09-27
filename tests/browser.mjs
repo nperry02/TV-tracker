@@ -66,6 +66,9 @@ try {
     );
   }
   await page.goto(base);
+  await page.waitForFunction(
+    () => document.querySelector(".brand-icon")?.naturalWidth > 0,
+  );
   await page.getByRole("button", { name: /Find your first show/ }).click();
   await page
     .getByRole("searchbox", { name: "Search TMDB", exact: true })

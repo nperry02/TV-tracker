@@ -106,22 +106,19 @@ a:focus-visible {
   gap: 24px;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
   font-size: 24px;
   font-weight: 760;
   letter-spacing: -1px;
   white-space: nowrap;
 }
 .brand-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--bg);
-  background: var(--accent);
-  border-radius: 8px;
-  width: 32px;
-  height: 29px;
+  display: block;
+  width: 34px;
+  height: 34px;
   margin-right: 12px;
-  font-size: 24px;
+  border-radius: 9px;
 }
 .brand-dot,
 h1 > span {
