@@ -252,6 +252,19 @@ export const server = http.createServer(async (req, res) => {
       if (req.method === "PATCH" && !match[2]) {
         const b = await body(req);
         const show = update(id, (s) => {
+          if ("tracked" in b) {
+            if (typeof b.tracked !== "boolean")
+              throw Object.assign(new Error("Tracked must be true or false."), {
+                status: 400,
+              });
+            s.tracked = b.tracked;
+            if (!b.tracked) {
+              s.watched = [];
+              s.rating = null;
+              s.seasonRatings = {};
+              s.statusOverride = null;
+            }
+          }
           if ("watchlist" in b) {
             if (typeof b.watchlist !== "boolean")
               throw Object.assign(

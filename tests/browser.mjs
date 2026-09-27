@@ -469,6 +469,41 @@ try {
       await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
       "true",
     );
+    await page.locator("#show-rating").selectOption("2");
+    await page.waitForFunction(
+      () =>
+        document.querySelector("#show-rating")?.value === "2" &&
+        !document.querySelector("#show-rating").disabled,
+    );
+    page.once("dialog", (dialog) => dialog.accept());
+    await page
+      .getByRole("button", { name: "Remove from All Shows", exact: true })
+      .click();
+    await page.waitForFunction(
+      () => !document.querySelector("#show-dialog").open,
+    );
+    assert.equal(
+      await page.locator('[data-tab="All"] .count').textContent(),
+      "6",
+    );
+    assert.equal(
+      await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+      "1",
+    );
+    await page.locator('#tabs [data-tab="Watchlist"]').click();
+    await page.locator('.show-card[data-show="200022"]').click();
+    assert.equal(await page.locator("#show-rating").inputValue(), "");
+    assert.equal(await page.locator("#show-status").inputValue(), "");
+    assert.equal(
+      await page.locator(".detail-hero .status-badge").first().textContent(),
+      "Not started",
+    );
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Remove saved show", exact: true })
+        .count(),
+      1,
+    );
     await page.getByRole("button", { name: "Close show", exact: true }).click();
     await page.getByRole("button", { name: /Find a show/ }).click();
     await searchFor("Test series 23");

@@ -290,7 +290,7 @@ function renderShow() {
             })
             .join("")
         : '<p class="muted">No episodes announced for this season yet.</p>'
-    }</div><div class="detail-bottom"><small>Show info refreshed ${new Date(s.refreshedAt).toLocaleDateString()}. Refresh to check for new episodes.</small><button class="text-button" id="remove-show">Remove from library</button></div></div>`;
+    }</div><div class="detail-bottom"><small>Show info refreshed ${new Date(s.refreshedAt).toLocaleDateString()}. Refresh to check for new episodes.</small><button class="text-button" id="remove-show">${inLibrary(s) ? "Remove from All Shows" : "Remove saved show"}</button></div></div>`;
   if (p.next) {
     $(".detail-progress").insertAdjacentHTML(
       "beforeend",
@@ -472,19 +472,31 @@ document.addEventListener("click", async (event) => {
   if (button.id === "remove-show") {
     const id = selectedId;
     const show = shows.find((s) => s.id === id);
-    if (
-      !confirm(
-        `Remove ${show.name} and its ratings and progress from your library?`,
-      )
-    )
-      return;
+    const tracked = inLibrary(show);
+    const keepsWatchlist = tracked && inWatchlist(show);
+    const prompt = tracked
+      ? `Remove ${show.name} from All Shows? This clears its status, ratings, and episode progress.${keepsWatchlist ? " It will remain on your Watchlist." : ""}`
+      : `Remove ${show.name} from your saved shows?`;
+    if (!confirm(prompt)) return;
     button.disabled = true;
     try {
-      await api(`/api/shows/${id}`, { method: "DELETE" });
-      shows = shows.filter((s) => s.id !== id);
+      if (keepsWatchlist) {
+        const updated = await api(`/api/shows/${id}`, {
+          method: "PATCH",
+          body: { tracked: false },
+        });
+        shows = shows.map((s) => (s.id === id ? updated : s));
+      } else {
+        await api(`/api/shows/${id}`, { method: "DELETE" });
+        shows = shows.filter((s) => s.id !== id);
+      }
       $("#show-dialog").close();
       render();
-      toast("Show removed from your library.");
+      toast(
+        keepsWatchlist
+          ? "Removed from All Shows and kept on your Watchlist."
+          : "Show removed from your library.",
+      );
     } catch (error) {
       report(error);
       button.disabled = false;

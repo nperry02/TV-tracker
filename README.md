@@ -21,6 +21,7 @@ The existing Letterbox project TMDB credential has been copied into the ignored 
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
 - Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.
 - Correct progress by unchecking episodes or clearing a season.
+- Remove an accidentally added show from All Shows. This clears its viewing status, ratings, and progress; a separate Watchlist flag is preserved. Unflagged shows are removed entirely and can be added again from search.
 - Automatic status distinguishes ongoing shows from ended/canceled shows. Paused is a manual status for shows you may resume; adding newly watched progress returns it to Watching automatically. Dropped remains set until changed manually.
 - Specials are optional and do not affect completion. Future episodes and episodes with unknown air dates are not marked watched in bulk.
 - Show information refreshes when opening the app if older than six hours; a manual refresh is available in show details. Saved library data remains usable when TMDB is offline.

@@ -68,6 +68,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
 - Search TMDB and add shows to this library.
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.
+- Allow removing a show from All Shows to return it to an unwatched state. Clear viewing status, ratings, and progress; preserve an independent Watchlist flag. If it is not on Watchlist, remove the saved entry entirely so it can be added again from search.
 
 ## Deferred — remember for later
 
