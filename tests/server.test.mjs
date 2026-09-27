@@ -21,6 +21,19 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     { season_number: 2, episode_number: 3, air_date: "2099-01-01" },
     { season_number: 2, episode_number: 4, air_date: null },
   ];
+  const untouchedShow = {
+    id: 2,
+    name: "Untouched sentinel",
+    watched: ["1:1"],
+    rating: 5,
+    seasonRatings: { 1: 4.5 },
+    statusOverride: "Completed",
+    tracked: true,
+    watchlist: true,
+    episodes: [{ season_number: 1, episode_number: 1, air_date: "2020-01-01" }],
+    seasons: [{ number: 1 }],
+    customMetadata: { mustRemain: "exactly the same" },
+  };
   writeFileSync(
     file,
     JSON.stringify({
@@ -35,6 +48,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
           episodes,
           seasons: [{ number: 0 }, { number: 1 }, { number: 2 }],
         },
+        untouchedShow,
       ],
     }),
   );
@@ -185,6 +199,10 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(result.data.rating, null);
   assert.deepEqual(result.data.seasonRatings, {});
   assert.deepEqual(result.data.watched, []);
+  assert.deepEqual(
+    JSON.parse(readFileSync(file)).shows.find((show) => show.id === 2),
+    untouchedShow,
+  );
   assert.equal((await patch({ tracked: "no" })).status, 400);
   result = await patch({ statusOverride: "Watching" });
   assert.equal(result.data.tracked, true);
@@ -196,5 +214,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.deepEqual(result.data.watched, []);
   assert.deepEqual(saved.shows[0].watched, ["1:2", "2:1", "2:2"]);
   await fetch(`${base}/api/shows/1`, { method: "DELETE" });
-  assert.equal(JSON.parse(readFileSync(file)).shows.length, 0);
+  const afterDelete = JSON.parse(readFileSync(file));
+  assert.equal(afterDelete.shows.length, 1);
+  assert.deepEqual(afterDelete.shows[0], untouchedShow);
 });
