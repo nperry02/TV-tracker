@@ -120,10 +120,6 @@ a:focus-visible {
   margin-right: 12px;
   border-radius: 9px;
 }
-.brand-dot,
-h1 > span {
-  color: var(--accent);
-}
 .personal {
   font-size: 10px;
   letter-spacing: 2px;
