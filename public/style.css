@@ -1589,7 +1589,10 @@ h1 {
 }
 .continue-list {
   gap: 13px;
-  margin-bottom: 26px;
+  margin-bottom: 0;
+}
+#continue-section {
+  margin-bottom: 20px;
 }
 .continue-card {
   position: relative;
@@ -1657,6 +1660,8 @@ h1 {
   display: none;
 }
 .library {
+  display: grid;
+  gap: 16px;
   scroll-margin-top: 110px;
 }
 .tabs {
@@ -1685,7 +1690,7 @@ h1 {
   background: #aacd60;
 }
 .filterbar {
-  margin-top: 14px;
+  margin-top: 0;
 }
 .library-search {
   max-width: 360px;
@@ -1694,7 +1699,7 @@ h1 {
   order: 4;
 }
 .result-count {
-  margin: 16px 0 12px;
+  margin: 0;
 }
 .poster-grid {
   grid-template-columns: repeat(6, minmax(130px, 1fr));
