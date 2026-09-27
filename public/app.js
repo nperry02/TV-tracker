@@ -40,6 +40,15 @@ let shows = [],
   selectedId = null,
   selectedSeason = null,
   mutationPending = false;
+let viewMode = (() => {
+  try {
+    return localStorage.getItem("next-episode:view") === "list"
+      ? "list"
+      : "gallery";
+  } catch {
+    return "gallery";
+  }
+})();
 let searchRun = 0,
   toastTimer;
 let searchState = {
@@ -87,7 +96,27 @@ function ratingOptions(value, empty = "Not rated") {
       .join("")
   );
 }
+function displayDate(value, includeTime = false) {
+  if (!value) return "Not recorded";
+  const date = new Date(includeTime ? value : `${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "Not recorded";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    ...(includeTime ? { hour: "numeric", minute: "2-digit" } : {}),
+  }).format(date);
+}
+function listProgress(show) {
+  const p = progress(show);
+  if (p.next) return `${code(p.next)} next · ${p.done}/${p.total} watched`;
+  if (p.done) return `${p.done}/${p.total} aired watched`;
+  return "Not started";
+}
 function render() {
+  document.querySelectorAll("[data-view]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.view === viewMode));
+  });
   const counts = Object.fromEntries(
     [...statuses, "Watchlist"].map((status) => [
       status,
@@ -163,12 +192,22 @@ function render() {
   });
   $("#result-count").textContent =
     `${filtered.length} ${filtered.length === 1 ? "show" : "shows"}${activeTab === "All" ? " in your collection" : ` · ${activeTab.toLowerCase()}`}`;
-  $("#library-grid").innerHTML = filtered
-    .map((s) => {
-      const p = progress(s);
-      return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}<span class="card-badges">${badge(watchStatus(s))}${inWatchlist(s) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
-    })
-    .join("");
+  $("#library-grid").className =
+    viewMode === "list" ? "show-list" : "poster-grid";
+  $("#library-grid").innerHTML =
+    viewMode === "list"
+      ? `<div class="list-header" aria-hidden="true"><span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>${filtered
+          .map(
+            (s) =>
+              `<button class="show-card show-row" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><span class="list-title">${poster(s, "list-poster", "w92")}<span><strong>${esc(s.name)}</strong>${inWatchlist(s) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(s.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(s))}</span><span class="list-cell" data-label="Rating">${stars(s.rating)}</span><span class="list-cell" data-label="Progress">${esc(listProgress(s))}</span><span class="list-cell" data-label="Last updated">${s.lastWatchedAt ? displayDate(s.lastWatchedAt, true) : "No updates yet"}</span></button>`,
+          )
+          .join("")}`
+      : filtered
+          .map((s) => {
+            const p = progress(s);
+            return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}<span class="card-badges">${badge(watchStatus(s))}${inWatchlist(s) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
+          })
+          .join("");
   $("#empty").hidden = filtered.length > 0;
   $("#empty").innerHTML = shows.length
     ? '<span class="empty-icon">⌕</span><h2>No shows here just yet.</h2><p>Try another status or adjust your filters to find your shows.</p><button id="reset-filters">Clear filters</button>'
@@ -381,6 +420,16 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
   if (button.dataset.tab) {
     activeTab = button.dataset.tab;
+    render();
+    return;
+  }
+  if (button.dataset.view) {
+    viewMode = button.dataset.view;
+    try {
+      localStorage.setItem("next-episode:view", viewMode);
+    } catch {
+      // The view still changes for this session if browser storage is unavailable.
+    }
     render();
     return;
   }

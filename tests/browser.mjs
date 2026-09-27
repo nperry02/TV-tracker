@@ -84,6 +84,11 @@ try {
   );
   assert.equal(await page.locator(".show-card").count(), 1);
   assert.equal(
+    await page.getByRole("button", { name: /Gallery/ }).getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
+  assert.equal(
     await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
     "0",
   );
@@ -365,6 +370,42 @@ try {
     await page.unroute("**/api/library");
     await page.reload();
     await page.locator(".show-card").nth(5).waitFor();
+    await page.getByRole("button", { name: /List/ }).click();
+    assert.equal(
+      await page.getByRole("button", { name: /List/ }).getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.equal(await page.locator("#library-grid.show-list").count(), 1);
+    assert.equal(await page.locator(".show-row").count(), 6);
+    const breakingBadRow = page.locator('.show-row[data-show="1396"]');
+    await breakingBadRow.getByText("Breaking Bad", { exact: true }).waitFor();
+    assert.equal(await breakingBadRow.locator(".status-completed").count(), 1);
+    assert.equal(await breakingBadRow.locator(".stars").textContent(), "★★★★½");
+    assert.match(
+      await breakingBadRow.locator('[data-label="Progress"]').textContent(),
+      /6\/6 aired watched/,
+    );
+    assert.notEqual(
+      await breakingBadRow.locator('[data-label="Released"]').textContent(),
+      "Not recorded",
+    );
+    assert.notEqual(
+      await breakingBadRow.locator('[data-label="Last updated"]').textContent(),
+      "No updates yet",
+    );
+    await page.reload();
+    await page.locator(".show-row").nth(5).waitFor();
+    assert.equal(
+      await page.getByRole("button", { name: /List/ }).getAttribute("aria-pressed"),
+      "true",
+      "List choice persists after reload",
+    );
+    await page.screenshot({
+      path: "test-results/desktop-list.png",
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: /Gallery/ }).click();
+    assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
   }
   mkdirSync("test-results", { recursive: true });
   await page.screenshot({
@@ -372,12 +413,22 @@ try {
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: /List/ }).click();
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
     true,
-    "Library fits mobile viewport",
+    "List view fits mobile viewport",
+  );
+  await page.screenshot({ path: "test-results/mobile-list.png", fullPage: true });
+  await page.getByRole("button", { name: /Gallery/ }).click();
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    true,
+    "Gallery view fits mobile viewport",
   );
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
   await page.locator('[data-show="1396"]').first().click();
