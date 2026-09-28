@@ -882,7 +882,7 @@ dialog::backdrop {
   line-height: 1.8;
 }
 .detail-body {
-  padding: 0 32px 32px;
+  padding: 0 32px 18px;
 }
 .overview {
   color: var(--muted);
@@ -915,12 +915,9 @@ dialog::backdrop {
 .rating-control select {
   color: var(--accent);
 }
-.detail-controls .refresh-control {
+.detail-controls #toggle-watchlist {
   margin-left: auto;
   align-self: end;
-}
-.detail-controls .refresh-control button {
-  font-size: 11px;
 }
 .detail-progress {
   margin: 24px 0;
@@ -1012,11 +1009,21 @@ dialog::backdrop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 16px;
   gap: 12px;
 }
 .detail-bottom .text-button {
   color: #d7a899;
+}
+.detail-refresh {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.detail-refresh button {
+  padding: 7px 10px;
+  font-size: 10px;
 }
 .detail-bottom small {
   color: #819285;
@@ -1279,12 +1286,12 @@ dialog::backdrop {
     font-size: 12px;
   }
   .detail-body {
-    padding: 0 20px 24px;
+    padding: 0 20px 16px;
   }
   .detail-controls {
     gap: 15px;
   }
-  .detail-controls .refresh-control {
+  .detail-controls #toggle-watchlist {
     margin-left: 0;
   }
   .season-header {
