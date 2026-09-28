@@ -1080,12 +1080,6 @@ dialog::backdrop {
   .tabs {
     gap: 21px;
   }
-  .continue-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .continue-card:nth-child(3) {
-    display: none;
-  }
   .stats {
     gap: 18px;
   }
@@ -1209,20 +1203,6 @@ dialog::backdrop {
   }
   .stat span {
     font-size: 9px;
-  }
-  .continue-list {
-    grid-template-columns: 1fr;
-    margin-bottom: 30px;
-  }
-  .continue-card:nth-child(3) {
-    display: flex;
-  }
-  .continue-card {
-    padding: 10px;
-  }
-  .continue-card img {
-    height: 60px;
-    width: 42px;
   }
   .tabs {
     gap: 20px;
@@ -1621,6 +1601,7 @@ h1 {
   font-weight: 700;
 }
 .continue-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
   margin-bottom: 0;
 }
@@ -1629,7 +1610,8 @@ h1 {
 }
 .continue-card {
   position: relative;
-  min-height: 160px;
+  min-height: 0;
+  aspect-ratio: 1.82 / 1;
   padding: 0;
   border-radius: 10px;
   overflow: hidden;
@@ -2035,6 +2017,12 @@ h1 {
   .stats {
     max-width: 760px;
   }
+  .continue-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .continue-card:nth-child(4) {
+    display: none;
+  }
   .poster-grid {
     grid-template-columns: repeat(5, minmax(125px, 1fr));
   }
@@ -2067,8 +2055,11 @@ h1 {
   .site-footer {
     margin-left: 0;
   }
-  .continue-card:nth-child(3) {
-    display: flex;
+  .continue-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .continue-card:nth-child(n + 3) {
+    display: none;
   }
   .stats-layout {
     grid-template-columns: 1fr;
@@ -2131,6 +2122,9 @@ h1 {
   }
   .continue-list {
     grid-template-columns: 1fr;
+  }
+  .continue-card:nth-child(n + 2) {
+    display: none;
   }
   .continue-card {
     min-height: 145px;
