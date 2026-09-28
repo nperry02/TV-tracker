@@ -153,9 +153,16 @@ async function body(req) {
 }
 const files = {
   "/": ["index.html", "text/html"],
+  "/api.js": ["api.js", "text/javascript"],
   "/app.js": ["app.js", "text/javascript"],
   "/model.js": ["model.js", "text/javascript"],
   "/style.css": ["style.css", "text/css"],
+  "/ui.js": ["ui.js", "text/javascript"],
+  "/views/home.js": ["views/home.js", "text/javascript"],
+  "/views/library.js": ["views/library.js", "text/javascript"],
+  "/views/search-dialog.js": ["views/search-dialog.js", "text/javascript"],
+  "/views/show-dialog.js": ["views/show-dialog.js", "text/javascript"],
+  "/views/stats.js": ["views/stats.js", "text/javascript"],
   "/assets/logo.png": ["assets/logo.png", "image/png"],
 };
 export const server = http.createServer(async (req, res) => {

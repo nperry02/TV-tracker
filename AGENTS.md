@@ -7,7 +7,7 @@ Read PROJECT_BRIEF.md for the product scope and deferred features.
 - Next Episode is a local TV-tracking web app for one user.
 - The server uses Node.js 22 with no runtime dependencies. The client uses plain JavaScript, HTML, and CSS; do not apply React or TypeScript conventions unless the stack changes.
 - `server.mjs` owns the local API, TMDB integration, and persistent JSON storage.
-- `public/app.js` owns browser behavior, `public/model.js` contains pure domain logic, and `public/index.html` and `public/style.css` define the interface.
+- `public/app.js` coordinates browser state, routing, mutations, and events. `public/api.js` handles requests, `public/ui.js` contains shared presentation helpers, `public/views/` contains feature renderers, and `public/model.js` contains pure domain logic. `public/index.html` and `public/style.css` define the interface structure and styling.
 - Personal library data lives in ignored `data/library.json`. Never commit library data, credentials, dependencies, or generated test artifacts.
 
 ## Project commands
