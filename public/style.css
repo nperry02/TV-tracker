@@ -795,9 +795,17 @@ footer > div {
   align-items: center;
 }
 .footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: #c4d0c5;
   font-size: 13px;
   font-weight: 700;
+}
+.footer-brand img {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
 }
 .text-button {
   background: none;
@@ -1436,6 +1444,10 @@ dialog::backdrop {
   .footer-brand {
     font-size: 11px;
   }
+  .footer-brand img {
+    width: 20px;
+    height: 20px;
+  }
   footer a,
   footer .text-button {
     font-size: 9px;
@@ -1873,7 +1885,7 @@ h1 {
 }
 .site-footer {
   margin-left: 240px;
-  padding: 27px 34px;
+  padding: 18px 34px;
 }
 
 [hidden] {
@@ -2231,6 +2243,9 @@ h1 {
   }
   main {
     padding: 28px 18px 50px;
+  }
+  .site-footer {
+    padding: 16px 20px;
   }
   .page-heading {
     display: block;
