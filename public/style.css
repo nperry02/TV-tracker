@@ -1459,7 +1459,7 @@ dialog::backdrop {
 /* Dashboard layout experiment */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 112px;
+  scroll-padding-top: 104px;
 }
 body {
   background: var(--bg);
@@ -1471,7 +1471,7 @@ body {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 34px;
-  height: 86px;
+  height: 78px;
   padding: 0 32px;
   background: #0e1511ee;
   backdrop-filter: blur(18px);
@@ -1531,15 +1531,16 @@ body {
 .top-links a {
   padding: 9px 10px;
   border-radius: 7px;
+  background: #151e18;
 }
 .top-links a:hover {
-  background: #18211b;
+  background: #202b23;
   color: var(--text);
 }
 .sidebar {
   position: fixed;
   z-index: 10;
-  top: 86px;
+  top: 78px;
   bottom: 0;
   left: 0;
   display: flex;
@@ -1662,7 +1663,7 @@ main {
   max-width: none;
   margin: 0 0 0 240px;
   padding: 34px 34px 72px;
-  min-height: calc(100vh - 86px);
+  min-height: calc(100vh - 78px);
 }
 .page-heading {
   display: grid;
