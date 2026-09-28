@@ -513,7 +513,7 @@ try {
     fullPage: true,
   });
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.getByRole("button", { name: /Find a show/ }).click();
+  await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {
     const searchFor = async (query) => {
       await page
@@ -651,7 +651,9 @@ try {
       1,
     );
     await page.getByRole("button", { name: "Close show", exact: true }).click();
-    await page.getByRole("button", { name: /Find a show/ }).click();
+    await page
+      .getByRole("button", { name: "Add a show", exact: true })
+      .click();
     await searchFor("Test series 23");
     assert.equal(
       await page.locator('#search-results [data-show="200022"]').count(),
