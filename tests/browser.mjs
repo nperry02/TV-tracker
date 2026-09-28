@@ -479,6 +479,16 @@ try {
     true,
     "Stats view fits mobile viewport",
   );
+  const mobileNav = page.getByRole("navigation", {
+    name: "Primary navigation",
+    exact: true,
+  });
+  assert.equal(await mobileNav.getByRole("link").count(), 3);
+  await mobileNav.getByRole("link", { name: "My Shows", exact: true }).click();
+  assert.equal(new URL(page.url()).hash, "#library");
+  await mobileNav.getByRole("link", { name: "Stats", exact: true }).click();
+  await page.locator("#stats-view").waitFor();
+  assert.equal(new URL(page.url()).hash, "#stats");
   await page.screenshot({ path: "test-results/mobile-stats.png", fullPage: true });
   await page.goto(`${base}/#library`);
   await page.locator("#home-view").waitFor();
