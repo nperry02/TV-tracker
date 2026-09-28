@@ -125,6 +125,8 @@ const searchDialog = createSearchDialog({
   onOpenShow: openShow,
 });
 document.addEventListener("click", async (event) => {
+  const pageLink = event.target.closest("[data-page], [data-sidebar-tab]");
+  if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
@@ -174,6 +176,7 @@ document.addEventListener("click", async (event) => {
   }
   if (["add-show", "first-show"].includes(button.id))
     return searchDialog.open();
+  if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
   if (button.id === "toggle-watchlist") {
     const show = shows.find((s) => s.id === selectedId);
