@@ -1,42 +1,25 @@
 import {
-  aired,
-  episodeKey,
   progress,
-  statuses,
-  libraryTabs,
-  watchStatus,
   inWatchlist,
-  matchesTab,
   inLibrary,
-  libraryStats,
   metadataRefreshQueue,
 } from "./model.js";
-
-const $ = (selector) => document.querySelector(selector);
-const esc = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
-const image = (path, size = "w342") =>
-  path && /^\/[\w.-]+$/.test(path)
-    ? `https://image.tmdb.org/t/p/${size}${path}`
-    : "";
-const year = (show) => (show.first_air_date || "").slice(0, 4);
-const code = (e) => `S${e.season_number} E${e.episode_number}`;
-const badge = (status) =>
-  `<span class="status-badge status-${status.toLowerCase().replaceAll(" ", "-")}">${status}</span>`;
-const stars = (rating) =>
-  rating
-    ? `<span class="stars" aria-label="${rating} out of 5 stars">${"★".repeat(Math.floor(rating))}${rating % 1 ? "½" : ""}</span>`
-    : '<span class="unrated">Not rated</span>';
-const poster = (s, cls = "", size) =>
-  image(s.poster_path, size)
-    ? `<img class="${cls}" src="${image(s.poster_path, size)}" alt="" loading="lazy">`
-    : `<span class="poster-placeholder ${cls}">${esc(s.name)}</span>`;
+import { api } from "./api.js";
+import {
+  $,
+  episodeCode,
+  esc,
+  report,
+  toast,
+} from "./ui.js";
+import { renderStats } from "./views/stats.js";
+import { createSearchDialog } from "./views/search-dialog.js";
+import { renderHome } from "./views/home.js";
+import { renderLibrary } from "./views/library.js";
+import {
+  initialShowSeason,
+  renderShowDialog,
+} from "./views/show-dialog.js";
 let shows = [],
   activeTab = "All",
   selectedId = null,
@@ -51,152 +34,6 @@ let viewMode = (() => {
     return "gallery";
   }
 })();
-let searchRun = 0,
-  toastTimer;
-let searchState = {
-  query: "",
-  page: 0,
-  totalPages: 0,
-  total: 0,
-  results: [],
-  loading: false,
-  error: "",
-};
-const addingShows = new Set();
-async function api(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: { "Content-Type": "application/json" },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw new Error(data.error || "Something went wrong. Please try again.");
-  return data;
-}
-function toast(message) {
-  clearTimeout(toastTimer);
-  $("#toast").textContent = message;
-  $("#toast").hidden = false;
-  $("#toast").showPopover();
-  toastTimer = setTimeout(() => {
-    $("#toast").hidePopover();
-    $("#toast").hidden = true;
-  }, 6000);
-}
-function report(error) {
-  toast(error.message);
-}
-function ratingOptions(value, empty = "Not rated") {
-  return (
-    `<option value=""${value == null ? " selected" : ""}>${empty}</option>` +
-    Array.from({ length: 10 }, (_, i) => (i + 1) / 2)
-      .map(
-        (n) =>
-          `<option value="${n}"${n === value ? " selected" : ""}>${"★".repeat(Math.floor(n))}${n % 1 ? "½" : ""} · ${n}</option>`,
-      )
-      .join("")
-  );
-}
-function displayDate(value, includeTime = false) {
-  if (!value) return "Not recorded";
-  const date = new Date(includeTime ? value : `${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return "Not recorded";
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    ...(includeTime ? { hour: "numeric", minute: "2-digit" } : {}),
-  }).format(date);
-}
-function listProgress(show) {
-  const p = progress(show);
-  if (p.next) return `${code(p.next)} next · ${p.done}/${p.total} watched`;
-  if (p.done) return `${p.done}/${p.total} aired watched`;
-  return "Not started";
-}
-function formatHours(minutes) {
-  if (minutes == null) return "—";
-  const hours = minutes / 60;
-  return hours >= 10 ? Math.round(hours).toLocaleString() : hours.toFixed(1);
-}
-function ratingChart(buckets) {
-  const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
-  const bars = buckets
-    .map((bucket, index) => {
-      const height = (bucket.count / max) * 112;
-      const x = 18 + index * 49;
-      const y = 132 - height;
-      return `<g tabindex="0" role="listitem" aria-label="${bucket.rating} stars: ${bucket.count} ${bucket.count === 1 ? "show" : "shows"}"><title>${bucket.rating} stars: ${bucket.count}</title><rect x="${x}" y="${y}" width="34" height="${height || 2}" rx="4"></rect><text x="${x + 17}" y="157" text-anchor="middle">${bucket.rating}</text></g>`;
-    })
-    .join("");
-  return `<svg class="rating-chart" viewBox="0 0 520 170" role="list" aria-label="Show ratings from half a star to five stars">${bars}</svg>`;
-}
-function renderStats() {
-  const data = libraryStats(shows);
-  const statusList = statuses
-    .map(
-      (status) =>
-        `<li><span><i class="nav-dot ${status.toLowerCase().replaceAll(" ", "-")}"></i>${status}</span><strong>${data.statusCounts[status]}</strong><progress value="${data.statusCounts[status]}" max="${data.trackedShows || 1}" aria-label="${data.statusCounts[status]} of ${data.trackedShows} tracked shows are ${status.toLowerCase()}"></progress></li>`,
-    )
-    .join("");
-  const genreList = data.topGenres.length
-    ? data.topGenres
-        .map(
-          (genre, index) =>
-            `<li><span><b>${index + 1}</b>${esc(genre.name)}</span><strong>${genre.count}</strong><progress value="${genre.count}" max="${data.topGenres[0].count}" aria-label="${genre.count} shows in ${esc(genre.name)}"></progress></li>`,
-        )
-        .join("")
-    : '<li class="stats-empty">Genres will appear as you add shows.</li>';
-  const topRated = data.topRated.length
-    ? data.topRated
-        .map(
-          (show) =>
-            `<button class="stats-show" data-show="${show.id}" aria-label="Open ${esc(show.name)}, rated ${show.rating} out of 5">${poster(show, "", "w342")}<span><strong>${esc(show.name)}</strong>${stars(show.rating)}</span></button>`,
-        )
-        .join("")
-    : '<div class="stats-empty stats-empty-wide"><strong>No rated shows yet.</strong><span>Rate a show and your favorites will appear here.</span></div>';
-  const runtimeNote =
-    data.estimatedMinutes == null
-      ? "Your estimate will appear as runtime metadata refreshes."
-      : `${data.runtimeCoveredEpisodes.toLocaleString()} of ${data.episodesWatched.toLocaleString()} watched episodes have show or episode runtime data. Missing runtimes use your library median.`;
-  $("#stats-content").innerHTML = `
-    <section class="stats-overview" aria-label="Library overview">
-      <article><i aria-hidden="true">▶</i><strong>${data.trackedShows.toLocaleString()}</strong><span>Tracked shows</span></article>
-      <article><i aria-hidden="true">✓</i><strong>${data.episodesWatched.toLocaleString()}</strong><span>Episodes watched</span></article>
-      <article><i aria-hidden="true">▤</i><strong>${data.seasonsCompleted.toLocaleString()}</strong><span>Seasons completed</span></article>
-      <article><i aria-hidden="true">◷</i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "h"}</strong><span>Estimated hours watched</span></article>
-    </section>
-    <div class="stats-layout">
-      <section class="stats-panel ratings-panel" aria-labelledby="ratings-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">YOUR TASTE</p><h2 id="ratings-heading">Ratings</h2></div><strong>${data.averageRating == null ? "—" : data.averageRating.toFixed(1)} <small>average</small></strong></div>
-        ${data.ratedShows ? ratingChart(data.ratingBuckets) : '<div class="stats-empty"><strong>No ratings yet.</strong><span>Your rating spread will appear here.</span></div>'}
-        <p class="stats-footnote">${data.ratedShows} rated · ${data.unratedShows} unrated</p>
-      </section>
-      <section class="stats-panel" aria-labelledby="library-breakdown-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">CURRENT STATUS</p><h2 id="library-breakdown-heading">Library breakdown</h2></div></div>
-        <ul class="stats-bars">${statusList}</ul>
-        <div class="watchlist-total"><span><i class="nav-dot watchlist"></i>Watchlist <small>can overlap</small></span><strong>${data.watchlistShows}</strong></div>
-      </section>
-      <section class="stats-panel progress-panel" aria-labelledby="progress-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">AIRED EPISODES</p><h2 id="progress-heading">Progress</h2></div><strong>${Math.round(data.progressPercent)}%</strong></div>
-        <progress value="${data.watchedRegularEpisodes}" max="${data.airedRegularEpisodes || 1}" aria-label="${data.watchedRegularEpisodes} of ${data.airedRegularEpisodes} regular aired episodes watched"></progress>
-        <p><strong>${data.watchedRegularEpisodes.toLocaleString()}</strong> of ${data.airedRegularEpisodes.toLocaleString()} regular aired episodes watched</p>
-        <small>Specials are excluded from progress and completed-season totals.</small>
-      </section>
-      <section class="stats-panel" aria-labelledby="genres-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">MOST WATCHED</p><h2 id="genres-heading">Top genres</h2></div></div>
-        <ol class="stats-bars genre-bars">${genreList}</ol>
-      </section>
-    </div>
-    <section class="stats-panel runtime-panel" aria-labelledby="runtime-heading">
-      <div><p class="eyebrow">WATCH TIME</p><h2 id="runtime-heading">About your estimate</h2></div><p>${runtimeNote}</p>
-    </section>
-    <section class="top-rated" aria-labelledby="top-rated-heading">
-      <div class="stats-panel-heading"><div><p class="eyebrow">YOUR FAVORITES</p><h2 id="top-rated-heading">Top-rated shows</h2></div><small>Rating, then recent progress</small></div>
-      <div class="top-rated-grid">${topRated}</div>
-    </section>`;
-}
 function applyRoute({ scroll = false } = {}) {
   const route = location.hash === "#stats" ? "stats" : location.hash === "#library" ? "library" : "home";
   $("#home-view").hidden = route === "stats";
@@ -204,7 +41,7 @@ function applyRoute({ scroll = false } = {}) {
   document.querySelectorAll("[data-page]").forEach((link) =>
     link.classList.toggle("active", link.dataset.page === route),
   );
-  if (route === "stats") renderStats();
+  if (route === "stats") renderStats(shows, $("#stats-content"));
   if (scroll && route === "stats") window.scrollTo({ top: 0, behavior: "auto" });
   if (scroll && route === "library")
     $("#library").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -217,267 +54,22 @@ function render() {
   document.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.sidebarTab === activeTab);
   });
-  const counts = Object.fromEntries(
-    [...statuses, "Watchlist"].map((status) => [
-      status,
-      shows.filter((s) => matchesTab(s, status)).length,
-    ]),
-  );
-  const tracked = shows.filter((s) => matchesTab(s, "All"));
-  const rated = tracked.filter((s) => s.rating);
-  $("#stats").innerHTML =
-    `<div class="stat"><i aria-hidden="true">▶</i><strong>${tracked.length}</strong><span>Tracked shows</span></div><div class="stat"><i aria-hidden="true">◉</i><strong>${counts.Watching}</strong><span>Watching</span></div><div class="stat"><i aria-hidden="true">✓</i><strong>${counts.Completed}</strong><span>Completed</span></div><div class="stat"><i aria-hidden="true">★</i><strong>${rated.length ? (rated.reduce((sum, s) => sum + s.rating, 0) / rated.length).toFixed(1) : "—"}</strong><span>Average rating</span></div>`;
-  $("#tabs").innerHTML = libraryTabs
-    .map(
-      (status) =>
-        `<button class="tab ${activeTab === status ? "active" : ""}" data-tab="${status}" aria-pressed="${activeTab === status}">${status === "All" ? "All shows" : status}<span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`,
-    )
-    .join("");
-  const genre = $("#genre").value;
-  const genres = [
-    ...new Map(
-      shows.flatMap((s) => s.genres).map((g) => [String(g.id), g.name]),
-    ).entries(),
-  ].sort((a, b) => a[1].localeCompare(b[1]));
-  $("#genre").innerHTML =
-    '<option value="">All genres</option>' +
-    genres
-      .map(([id, name]) => `<option value="${id}">${esc(name)}</option>`)
-      .join("");
-  $("#genre").value = genres.some(([id]) => id === genre) ? genre : "";
-  const query = $("#library-query").value.trim().toLowerCase();
-  const rating = $("#rating-filter").value;
-  const filtered = shows.filter(
-    (s) =>
-      matchesTab(s, activeTab) &&
-      s.name.toLowerCase().includes(query) &&
-      (!$("#genre").value ||
-        s.genres.some((g) => String(g.id) === $("#genre").value)) &&
-      (!rating ||
-        (rating === "unrated" ? !s.rating : s.rating >= Number(rating))),
-  );
-  const sort = $("#sort").value;
-  filtered.sort((a, b) => {
-    if (sort === "last-updated") {
-      if (!a.lastWatchedAt || !b.lastWatchedAt)
-        return (
-          Number(!a.lastWatchedAt) - Number(!b.lastWatchedAt) ||
-          (b.addedAt || "").localeCompare(a.addedAt || "") ||
-          a.name.localeCompare(b.name)
-        );
-      return (
-        b.lastWatchedAt.localeCompare(a.lastWatchedAt) ||
-        (b.addedAt || "").localeCompare(a.addedAt || "") ||
-        a.name.localeCompare(b.name)
-      );
-    }
-    if (sort === "release-newest" || sort === "release-oldest") {
-      // TMDB dates use YYYY-MM-DD; unknown premiere dates go last in either direction.
-      if (!a.first_air_date || !b.first_air_date)
-        return (
-          Number(!a.first_air_date) - Number(!b.first_air_date) ||
-          a.name.localeCompare(b.name)
-        );
-      const order = a.first_air_date.localeCompare(b.first_air_date);
-      return (
-        (sort === "release-newest" ? -order : order) ||
-        a.name.localeCompare(b.name)
-      );
-    }
-    return sort === "title"
-      ? a.name.localeCompare(b.name)
-      : sort === "rating"
-        ? (b.rating || 0) - (a.rating || 0) || a.name.localeCompare(b.name)
-        : b.addedAt.localeCompare(a.addedAt);
-  });
-  $("#result-count").textContent =
-    `${filtered.length} ${filtered.length === 1 ? "show" : "shows"}${activeTab === "All" ? " in your collection" : ` · ${activeTab.toLowerCase()}`}`;
-  $("#library-grid").className =
-    viewMode === "list" ? "show-list" : "poster-grid";
-  $("#library-grid").innerHTML =
-    viewMode === "list"
-      ? `<div class="list-header" aria-hidden="true"><span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>${filtered
-          .map(
-            (s) =>
-              `<button class="show-card show-row" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><span class="list-title">${poster(s, "list-poster", "w92")}<span><strong>${esc(s.name)}</strong>${inWatchlist(s) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(s.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(s))}</span><span class="list-cell" data-label="Rating">${stars(s.rating)}</span><span class="list-cell" data-label="Progress">${esc(listProgress(s))}</span><span class="list-cell" data-label="Last updated">${s.lastWatchedAt ? displayDate(s.lastWatchedAt, true) : "No updates yet"}</span></button>`,
-          )
-          .join("")}`
-      : filtered
-          .map((s) => {
-            const p = progress(s);
-            return `<button class="show-card" data-show="${s.id}" aria-label="Open ${esc(s.name)}"><div class="poster-wrap">${poster(s)}<span class="card-badges">${inLibrary(s) ? badge(watchStatus(s)) : ""}${inWatchlist(s) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(s.name)}</h3><small>${year(s)}</small></div><div class="card-meta">${stars(s.rating)}<span>${p.done ? `${p.done} / ${p.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></button>`;
-          })
-          .join("");
-  $("#empty").hidden = filtered.length > 0;
-  $("#empty").innerHTML = shows.length
-    ? '<span class="empty-icon">⌕</span><h2>No shows here just yet.</h2><p>Try another status or adjust your filters to find your shows.</p><button id="reset-filters">Clear filters</button>'
-    : '<span class="empty-icon">▰</span><h2>A new season starts here.</h2><p>Build a home for the shows you love. Find your first show, give it a rating, and pick up right where you left off.</p><button class="primary" id="first-show">Find your first show <span aria-hidden="true">↗</span></button>';
-  if (!filtered.length && activeTab === "Watchlist") {
-    $("#empty").innerHTML =
-      '<span class="empty-icon">＋</span><h2>Your next great show starts here.</h2><p>Save any show here, whether you have started it or not. Add or remove the watchlist flag from its details.</p><button class="primary" id="first-show">Find a show</button>';
-  } else if (!tracked.length && counts.Watchlist && activeTab === "All") {
-    $("#empty").innerHTML =
-      '<span class="empty-icon">▰</span><h2>Your shows are on your watchlist.</h2><p>Start watching a saved show to include it in All shows. You can keep its watchlist flag and viewing status separately.</p><button class="primary" data-tab="Watchlist">View watchlist</button>';
-  }
-  const continuing = shows
-    .filter(
-      (s) => inLibrary(s) && watchStatus(s) === "Watching" && progress(s).next,
-    )
-    .sort(
-      (a, b) =>
-        (b.lastWatchedAt || "").localeCompare(a.lastWatchedAt || "") ||
-        (b.addedAt || "").localeCompare(a.addedAt || "") ||
-        a.name.localeCompare(b.name),
-    )
-    .slice(0, 3);
-  $("#continue-section").hidden = !continuing.length;
-  $("#continue-list").innerHTML = continuing
-    .map((s) => {
-      const p = progress(s);
-      const next = p.next;
-      const backdrop = image(s.backdrop_path, "w780");
-      return `<article class="continue-card"><button class="continue-open" data-show="${s.id}" aria-label="Open ${esc(s.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(s, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(s.name)}</strong><small>${code(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="${p.done} of ${p.total} aired episodes watched"></progress></span></button><button class="next-watched" data-next="${s.id}" aria-label="Mark ${esc(s.name)} ${code(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
-    })
-    .join("");
-  renderStats();
-}
-function openSearch() {
-  renderSearch();
-  $("#search-dialog").showModal();
-  $("#tmdb-query").focus();
-}
-function search(event) {
-  event.preventDefault();
-  const query = $("#tmdb-query").value.trim();
-  if (!query) return;
-  searchState = {
-    query,
-    page: 0,
-    totalPages: 0,
-    total: 0,
-    results: [],
-    loading: false,
-    error: "",
-  };
-  loadSearchPage();
-}
-function renderSearch() {
-  const s = searchState;
-  $("#search-message").textContent =
-    s.error ||
-    (s.loading
-      ? s.page
-        ? "Loading more shows…"
-        : "Searching TV shows…"
-      : !s.query
-        ? "Search for a show to start your collection."
-        : s.results.length
-          ? `Showing ${s.results.length} of ${s.total} results for “${s.query}”`
-          : `No shows found for “${s.query}”. Try a different title.`);
-  $("#search-results").setAttribute("aria-busy", String(s.loading));
-  $("#search-results").innerHTML = s.results
-    .map((show) => {
-      const saved = shows.find((x) => x.id === show.id);
-      const busy = addingShows.has(show.id);
-      return `<article class="search-result">${poster(show, "mini-poster", "w92")}<div class="result-info"><h3>${esc(show.name)} <span class="year">${year(show)}</span></h3><p>${esc(show.overview || "No description available.")}</p></div><div class="search-actions">${saved && inLibrary(saved) ? `<button data-show="${show.id}">Open ↗</button>` : `<button data-add="${show.id}"${busy ? " disabled" : ""}>${busy ? "Adding…" : "＋ Add"}</button>`}<button data-watchlist-add="${show.id}"${busy || (saved && inWatchlist(saved)) ? " disabled" : ""}>${saved && inWatchlist(saved) ? "✓ Watchlist" : "＋ Watchlist"}</button>${saved && !inLibrary(saved) ? `<button data-show="${show.id}">Details ↗</button>` : ""}</div></article>`;
-    })
-    .join("");
-  $("#load-more").hidden = !s.page || s.page >= s.totalPages;
-  $("#load-more").disabled = s.loading;
-  $("#load-more").textContent = s.loading
-    ? "Loading…"
-    : s.error
-      ? "Try loading more again"
-      : "Load more shows";
-}
-async function loadSearchPage() {
-  if (searchState.loading) return;
-  const run = ++searchRun;
-  const query = searchState.query;
-  const page = searchState.page + 1;
-  searchState.loading = true;
-  searchState.error = "";
-  renderSearch();
-  try {
-    const data = await api(
-      `/api/search?q=${encodeURIComponent(query)}&page=${page}`,
-    );
-    if (run !== searchRun) return;
-    searchState.results = [
-      ...new Map(
-        [...searchState.results, ...data.results].map((show) => [
-          show.id,
-          show,
-        ]),
-      ).values(),
-    ];
-    searchState.page = page;
-    searchState.totalPages = Math.min(data.total_pages || 1, 500);
-    searchState.total = data.total_results ?? searchState.results.length;
-  } catch (error) {
-    if (run === searchRun) searchState.error = error.message;
-  } finally {
-    if (run === searchRun) {
-      searchState.loading = false;
-      renderSearch();
-    }
-  }
+  renderHome(shows, mutationPending);
+  renderLibrary(shows, activeTab, viewMode);
+  renderStats(shows, $("#stats-content"));
 }
 function openShow(id) {
   selectedId = Number(id);
   const show = shows.find((s) => s.id === selectedId);
   if (!show) return;
-  selectedSeason =
-    progress(show).next?.season_number ??
-    show.seasons.find((s) => s.number > 0)?.number ??
-    show.seasons[0]?.number;
+  selectedSeason = initialShowSeason(show);
   renderShow();
   if ($("#search-dialog").open) $("#search-dialog").close();
   if (!$("#show-dialog").open) $("#show-dialog").showModal();
 }
 function renderShow() {
-  const s = shows.find((x) => x.id === selectedId);
-  if (!s) return;
-  const p = progress(s);
-  const episodes = s.episodes.filter((e) => e.season_number === selectedSeason);
-  $("#show-content").innerHTML =
-    `<div class="detail-hero">${image(s.backdrop_path) ? `<img class="detail-backdrop" src="${image(s.backdrop_path, "w1280")}" alt="">` : ""}${poster(s, "detail-poster")}<div class="detail-heading">${badge(watchStatus(s))}${inWatchlist(s) ? badge("Watchlist") : ""}<h2>${esc(s.name)}</h2><p>${year(s)} · ${esc(s.seriesStatus)} · ${s.seasons.filter((x) => x.number > 0).length} seasons<br>${s.genres.map((g) => esc(g.name)).join(" · ")}</p></div><button class="icon-button" data-close="show-dialog" aria-label="Close show">×</button></div><div class="detail-body"><p class="overview">${esc(s.overview || "No description available.")}</p><div class="detail-controls"><label class="rating-control"><span class="field-label">Your show rating</span><select id="show-rating">${ratingOptions(s.rating)}</select></label><label class="status-control"><span class="field-label">Watch status</span><select id="show-status"><option value=""${!s.statusOverride ? " selected" : ""}>Automatic · ${watchStatus({ ...s, statusOverride: null })}</option>${statuses.map((status) => `<option${s.statusOverride === status ? " selected" : ""}>${status}</option>`).join("")}</select></label><div class="refresh-control"><button id="refresh-show">↻ Refresh show info</button></div></div><div class="detail-progress"><div class="detail-progress-top"><strong>${p.done ? `Last watched ${code(p.last)}` : "Ready when you are"}</strong><span>${p.done} of ${p.total} aired episodes watched</span></div><progress class="progress-track" value="${p.done}" max="${p.total || 1}" aria-label="Show progress"></progress><p>${p.next ? `Up next: ${code(p.next)} · ${esc(p.next.name)}` : p.upcoming ? `Next episode: ${code(p.upcoming)} · ${esc(p.upcoming.air_date)}` : p.done ? "You have watched every currently available episode." : "Choose an episode below to set your progress."}${s.statusOverride ? " Your status is set manually; choose Automatic to follow episode progress." : ""}</p></div><div class="season-header"><label><span class="sr-only">Season</span><select id="season-select">${s.seasons.map((season) => `<option value="${season.number}"${season.number === selectedSeason ? " selected" : ""}>${esc(season.name)}</option>`).join("")}</select></label><div class="season-actions"><label><span class="sr-only">Season rating</span><select id="season-rating">${ratingOptions(s.seasonRatings[selectedSeason], "Rate season")}</select></label><button id="mark-season">✓ Mark season watched</button><button id="clear-season">Clear season</button></div></div>${selectedSeason === 0 ? '<p class="muted">Specials are optional and do not affect show completion.</p>' : ""}<div class="episode-list">${
-      episodes.length
-        ? episodes
-            .map((e) => {
-              const watched = s.watched.includes(episodeKey(e));
-              const available = aired(e);
-              return `<div class="episode ${watched ? "watched" : ""}"><input type="checkbox" data-episode="${e.episode_number}" aria-label="Mark ${esc(e.name)} watched"${watched ? " checked" : ""}${!available && !watched ? " disabled" : ""}><div class="episode-name"><strong>${e.episode_number}. ${esc(e.name)}</strong><small>${available ? e.air_date : e.air_date ? `Airs ${e.air_date}` : "Air date to be announced"}</small></div>${available ? `<button class="through" data-through="${e.episode_number}">Watched through here</button>` : ""}</div>`;
-            })
-            .join("")
-        : '<p class="muted">No episodes announced for this season yet.</p>'
-    }</div><div class="detail-bottom"><small>Show info refreshed ${new Date(s.refreshedAt).toLocaleDateString()}. Refresh to check for new episodes.</small><button class="text-button" id="remove-show">${inLibrary(s) ? "Remove from All Shows" : "Remove saved show"}</button></div></div>`;
-  if (p.next) {
-    $(".detail-progress").insertAdjacentHTML(
-      "beforeend",
-      `<button class="next-watched-detail" data-next="${s.id}">✓ Mark ${code(p.next)} watched</button>`,
-    );
-  }
-  $(".detail-controls").insertAdjacentHTML(
-    "beforeend",
-    `<button id="toggle-watchlist" aria-pressed="${inWatchlist(s)}" aria-label="${inWatchlist(s) ? "Remove from watchlist" : "Add to watchlist"}">${inWatchlist(s) ? "✓ Watchlist" : "＋ Watchlist"}</button>`,
-  );
-  const lastAired = episodes
-    .filter((e) => aired(e))
-    .sort((a, b) => a.episode_number - b.episode_number)
-    .at(-1);
-  if (selectedSeason > 0 && lastAired) {
-    $("#mark-season").insertAdjacentHTML(
-      "afterend",
-      `<button data-through="${lastAired.episode_number}">Watched through this season</button>`,
-    );
-  }
-  if (mutationPending)
-    $("#show-content")
-      .querySelectorAll("button:not([data-close]), input, select")
-      .forEach((el) => {
-        el.disabled = true;
-      });
+  const show = shows.find((entry) => entry.id === selectedId);
+  if (show) renderShowDialog(show, selectedSeason, mutationPending);
 }
 async function save(body, message, id = selectedId) {
   if (mutationPending) return;
@@ -517,6 +109,16 @@ async function refreshShow(id, notify = true) {
   if (selectedId === id && $("#show-dialog").open) renderShow();
   if (notify) toast("Show information is up to date.");
 }
+const searchDialog = createSearchDialog({
+  getShows: () => shows,
+  onShowAdded: (show) => {
+    if (shows.some((entry) => entry.id === show.id))
+      shows = shows.map((entry) => (entry.id === show.id ? show : entry));
+    else shows.push(show);
+    render();
+  },
+  onOpenShow: openShow,
+});
 document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
@@ -561,11 +163,12 @@ document.addEventListener("click", async (event) => {
           watched: true,
         },
       },
-      `${show.name} · ${code(next)} marked watched.`,
+      `${show.name} · ${episodeCode(next)} marked watched.`,
       id,
     );
   }
-  if (["add-show", "first-show"].includes(button.id)) return openSearch();
+  if (["add-show", "first-show"].includes(button.id))
+    return searchDialog.open();
   if (button.id === "credits") return $("#credits-dialog").showModal();
   if (button.id === "toggle-watchlist") {
     const show = shows.find((s) => s.id === selectedId);
@@ -577,7 +180,7 @@ document.addEventListener("click", async (event) => {
         : "Removed from watchlist. Status and progress kept.",
     );
   }
-  if (button.id === "load-more") return loadSearchPage();
+  if (button.id === "load-more") return searchDialog.loadMore();
   if (button.id === "reset-filters") {
     activeTab = "All";
     $("#library-query").value = "";
@@ -589,30 +192,7 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.add || button.dataset.watchlistAdd) {
     const id = Number(button.dataset.add || button.dataset.watchlistAdd);
     const watchlistOnly = Boolean(button.dataset.watchlistAdd);
-    if (addingShows.has(id)) return;
-    addingShows.add(id);
-    button.disabled = true;
-    button.textContent = "Adding…";
-    try {
-      const show = await api(`/api/shows/${id}`, {
-        method: "POST",
-        body: { destination: watchlistOnly ? "watchlist" : "library" },
-      });
-      if (shows.some((s) => s.id === show.id))
-        shows = shows.map((s) => (s.id === show.id ? show : s));
-      else shows.push(show);
-      render();
-      if (!watchlistOnly) openShow(show.id);
-      toast(
-        `${show.name} added to your ${watchlistOnly ? "watchlist" : "shows"}.`,
-      );
-    } catch (error) {
-      report(error);
-    } finally {
-      addingShows.delete(id);
-      renderSearch();
-    }
-    return;
+    return searchDialog.add(id, watchlistOnly);
   }
   if (button.dataset.through)
     return save(
@@ -717,11 +297,10 @@ document.addEventListener("change", (event) => {
     });
 });
 $("#library-query").addEventListener("input", render);
-$("#search-form").addEventListener("submit", search);
 document.addEventListener("keydown", (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
-    openSearch();
+    searchDialog.open();
   }
 });
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
