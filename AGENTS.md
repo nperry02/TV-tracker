@@ -37,6 +37,7 @@ Read PROJECT_BRIEF.md for the product scope and deferred features.
 - Name branches `<user>/<number>/<brief-description>`, using the contributor's GitHub username and lowercase words separated by hyphens, for example `nperry02/1/workflow`.
 - Increase the work number for each new body of work. Use the next number after the highest branch in this format or `num-XXX` PR title; GitHub's automatic PR number is unrelated.
 - Title pull requests `num-XXX: Brief description`, zero-padding the same work number, for example `num-001: Add workflow guidelines`.
+- Write descriptive commit messages with a concise subject followed by a body for any substantive change. The body should summarize what changed and explain the relevant rationale, tradeoffs, and edge cases; keep that long-form context in the commit and pull request instead of source comments.
 - Include a concise summary and test plan in every pull request body.
 - Create pull requests with `gh` or the GitHub integration when requested.
 

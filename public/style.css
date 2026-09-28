@@ -824,13 +824,16 @@ dialog::backdrop {
 }
 .detail-hero {
   position: relative;
-  min-height: 225px;
+  min-height: 430px;
   overflow: hidden;
   padding: 32px;
+  background: #253328;
+}
+.detail-hero-main {
+  position: relative;
   display: flex;
   align-items: end;
   gap: 24px;
-  background: #253328;
 }
 .detail-backdrop {
   position: absolute;
@@ -838,11 +841,18 @@ dialog::backdrop {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 30%;
   opacity: 0.24;
-  mask-image: linear-gradient(black, transparent);
+  mask-image: linear-gradient(black 0%, black 45%, transparent 100%);
 }
 .detail-hero > *:not(.detail-backdrop) {
   position: relative;
+}
+.detail-hero > .detail-hero-content {
+  position: absolute;
+  right: 32px;
+  bottom: 28px;
+  left: 32px;
 }
 .detail-hero > .icon-button {
   position: absolute;
@@ -850,7 +860,7 @@ dialog::backdrop {
   top: 16px;
 }
 .detail-poster {
-  width: 105px;
+  width: 130px;
   aspect-ratio: 2/3;
   object-fit: cover;
   border-radius: 6px;
@@ -860,13 +870,13 @@ dialog::backdrop {
   flex: 1;
 }
 .detail-heading h2 {
-  font-size: 34px;
+  font-size: 40px;
   letter-spacing: -1px;
   margin: 13px 0 8px;
   font-weight: 600;
 }
 .detail-heading p {
-  font-size: 12px;
+  font-size: 13px;
   color: #c5cfc4;
   margin: 0;
   line-height: 1.8;
@@ -876,10 +886,10 @@ dialog::backdrop {
 }
 .overview {
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.8;
-  margin: 0 0 25px;
-  max-width: 770px;
+  font-size: 14px;
+  line-height: 1.75;
+  margin: 26px 0 0;
+  max-width: 850px;
 }
 .detail-controls {
   display: flex;
@@ -1070,12 +1080,6 @@ dialog::backdrop {
   .tabs {
     gap: 21px;
   }
-  .continue-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .continue-card:nth-child(3) {
-    display: none;
-  }
   .stats {
     gap: 18px;
   }
@@ -1200,20 +1204,6 @@ dialog::backdrop {
   .stat span {
     font-size: 9px;
   }
-  .continue-list {
-    grid-template-columns: 1fr;
-    margin-bottom: 30px;
-  }
-  .continue-card:nth-child(3) {
-    display: flex;
-  }
-  .continue-card {
-    padding: 10px;
-  }
-  .continue-card img {
-    height: 60px;
-    width: 42px;
-  }
   .tabs {
     gap: 20px;
   }
@@ -1268,7 +1258,15 @@ dialog::backdrop {
     -webkit-line-clamp: 1;
   }
   .detail-hero {
+    min-height: 320px;
     padding: 45px 20px 25px;
+  }
+  .detail-hero > .detail-hero-content {
+    right: 20px;
+    bottom: 25px;
+    left: 20px;
+  }
+  .detail-hero-main {
     gap: 16px;
   }
   .detail-poster {
@@ -1276,6 +1274,9 @@ dialog::backdrop {
   }
   .detail-heading h2 {
     font-size: 25px;
+  }
+  .overview {
+    font-size: 12px;
   }
   .detail-body {
     padding: 0 20px 24px;
@@ -1600,6 +1601,7 @@ h1 {
   font-weight: 700;
 }
 .continue-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
   margin-bottom: 0;
 }
@@ -1608,7 +1610,8 @@ h1 {
 }
 .continue-card {
   position: relative;
-  min-height: 160px;
+  min-height: 0;
+  aspect-ratio: 1.82 / 1;
   padding: 0;
   border-radius: 10px;
   overflow: hidden;
@@ -2014,6 +2017,12 @@ h1 {
   .stats {
     max-width: 760px;
   }
+  .continue-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .continue-card:nth-child(4) {
+    display: none;
+  }
   .poster-grid {
     grid-template-columns: repeat(5, minmax(125px, 1fr));
   }
@@ -2046,8 +2055,11 @@ h1 {
   .site-footer {
     margin-left: 0;
   }
-  .continue-card:nth-child(3) {
-    display: flex;
+  .continue-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .continue-card:nth-child(n + 3) {
+    display: none;
   }
   .stats-layout {
     grid-template-columns: 1fr;
@@ -2110,6 +2122,9 @@ h1 {
   }
   .continue-list {
     grid-template-columns: 1fr;
+  }
+  .continue-card:nth-child(n + 2) {
+    display: none;
   }
   .continue-card {
     min-height: 145px;

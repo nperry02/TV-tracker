@@ -22,7 +22,7 @@ export function renderHome(shows, mutationPending) {
         (b.addedAt || "").localeCompare(a.addedAt || "") ||
         a.name.localeCompare(b.name),
     )
-    .slice(0, 3);
+    .slice(0, 4);
   $("#continue-section").hidden = !continuing.length;
   $("#continue-list").innerHTML = continuing
     .map((show) => {
