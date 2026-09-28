@@ -7,6 +7,7 @@ import {
 import { api } from "./api.js";
 import {
   $,
+  enhanceSelects,
   episodeCode,
   esc,
   report,
@@ -57,6 +58,7 @@ function render() {
   renderHome(shows, mutationPending);
   renderLibrary(shows, activeTab, viewMode);
   renderStats(shows, $("#stats-content"));
+  enhanceSelects();
 }
 function openShow(id) {
   selectedId = Number(id);
@@ -69,7 +71,10 @@ function openShow(id) {
 }
 function renderShow() {
   const show = shows.find((entry) => entry.id === selectedId);
-  if (show) renderShowDialog(show, selectedSeason, mutationPending);
+  if (show) {
+    renderShowDialog(show, selectedSeason, mutationPending);
+    enhanceSelects($("#show-content"));
+  }
 }
 async function save(body, message, id = selectedId) {
   if (mutationPending) return;

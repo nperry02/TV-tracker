@@ -81,6 +81,91 @@ select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+.custom-select {
+  position: relative;
+  display: inline-block;
+  min-width: 0;
+}
+.custom-select-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.custom-select-trigger {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  text-align: left;
+  white-space: nowrap;
+}
+.custom-select-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.custom-select-trigger > i {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 140ms ease;
+}
+.custom-select.open .custom-select-trigger > i {
+  transform: translateY(2px) rotate(225deg);
+}
+.custom-select-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(320px, calc(100vw - 32px));
+  max-height: min(320px, 55vh);
+  padding: 6px;
+  overflow: auto;
+  border: 1px solid #435246;
+  border-radius: 10px;
+  background: #1b251e;
+  box-shadow: 0 16px 40px #0009;
+}
+.custom-select-option {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+.custom-select-option:hover,
+.custom-select-option:focus-visible {
+  border: 0;
+  outline: 0;
+  background: var(--panel2);
+  color: var(--accent);
+}
+.custom-select-option[aria-selected="true"] {
+  color: var(--accent);
+  background: #293522;
+}
+.custom-select-option i {
+  color: var(--accent);
+  font-style: normal;
+}
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);
@@ -377,6 +462,22 @@ h1 {
     right 16px center,
     right 11px center;
   background-size: 5px 5px;
+}
+.filters .custom-select {
+  width: 145px;
+  max-width: 175px;
+}
+.filters .custom-select:has(#rating-filter) {
+  width: 115px;
+}
+.filters .custom-select:has(#sort) {
+  width: 175px;
+}
+.filters .custom-select-trigger {
+  padding: 11px 12px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
 }
 .result-count {
   font-size: 11px;
@@ -694,9 +795,17 @@ footer > div {
   align-items: center;
 }
 .footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: #c4d0c5;
   font-size: 13px;
   font-weight: 700;
+}
+.footer-brand img {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
 }
 .text-button {
   background: none;
@@ -882,7 +991,7 @@ dialog::backdrop {
   line-height: 1.8;
 }
 .detail-body {
-  padding: 0 32px 32px;
+  padding: 0 32px 18px;
 }
 .overview {
   color: var(--muted);
@@ -915,12 +1024,16 @@ dialog::backdrop {
 .rating-control select {
   color: var(--accent);
 }
-.detail-controls .refresh-control {
+.rating-control .custom-select-trigger,
+.status-control .custom-select-trigger {
+  font-size: 12px;
+}
+.rating-control .custom-select-trigger {
+  color: var(--accent);
+}
+.detail-controls #toggle-watchlist {
   margin-left: auto;
   align-self: end;
-}
-.detail-controls .refresh-control button {
-  font-size: 11px;
 }
 .detail-progress {
   margin: 24px 0;
@@ -949,6 +1062,9 @@ dialog::backdrop {
 .season-header select {
   font-size: 12px;
 }
+.season-header .custom-select-trigger {
+  font-size: 12px;
+}
 .season-actions {
   display: flex;
   gap: 7px;
@@ -962,6 +1078,10 @@ dialog::backdrop {
 .season-actions select {
   font-size: 10px;
   padding: 8px;
+}
+.season-actions .custom-select-trigger {
+  padding: 8px;
+  font-size: 10px;
 }
 .episode-list {
   border: 1px solid var(--border);
@@ -1012,11 +1132,21 @@ dialog::backdrop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 16px;
   gap: 12px;
 }
 .detail-bottom .text-button {
   color: #d7a899;
+}
+.detail-refresh {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.detail-refresh button {
+  padding: 7px 10px;
+  font-size: 10px;
 }
 .detail-bottom small {
   color: #819285;
@@ -1111,7 +1241,7 @@ dialog::backdrop {
   .filters label {
     flex: 1;
   }
-  .filters select {
+  .filters .custom-select {
     width: 100%;
     max-width: none;
   }
@@ -1230,12 +1360,9 @@ dialog::backdrop {
   .view-toggle button {
     flex: 1;
   }
-  .filters select {
+  .filters .custom-select-trigger {
     font-size: 10px;
-    padding: 10px 30px 10px 7px;
-    background-position:
-      right 14px center,
-      right 9px center;
+    padding: 10px 7px;
   }
   .filterbar {
     gap: 10px;
@@ -1279,12 +1406,12 @@ dialog::backdrop {
     font-size: 12px;
   }
   .detail-body {
-    padding: 0 20px 24px;
+    padding: 0 20px 16px;
   }
   .detail-controls {
     gap: 15px;
   }
-  .detail-controls .refresh-control {
+  .detail-controls #toggle-watchlist {
     margin-left: 0;
   }
   .season-header {
@@ -1317,6 +1444,10 @@ dialog::backdrop {
   .footer-brand {
     font-size: 11px;
   }
+  .footer-brand img {
+    width: 20px;
+    height: 20px;
+  }
   footer a,
   footer .text-button {
     font-size: 9px;
@@ -1340,7 +1471,7 @@ dialog::backdrop {
 /* Dashboard layout experiment */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 112px;
+  scroll-padding-top: 104px;
 }
 body {
   background: var(--bg);
@@ -1350,9 +1481,9 @@ body {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: 208px minmax(320px, 620px) 1fr;
+  grid-template-columns: auto 1fr;
   gap: 34px;
-  height: 86px;
+  height: 78px;
   padding: 0 32px;
   background: #0e1511ee;
   backdrop-filter: blur(18px);
@@ -1369,44 +1500,59 @@ body {
 }
 .top-search {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto auto;
   align-items: center;
-  width: 100%;
-  padding: 12px 14px;
-  color: var(--muted);
-  background: #141d18;
-  border-color: #314138;
+  gap: 7px;
+  width: auto;
+  min-width: 0;
+  padding: 9px 11px;
+  color: var(--text);
+  background: #1d2a1e;
+  border-color: #526c40;
   text-align: left;
 }
+.top-search:hover {
+  background: #253423;
+  border-color: #779652;
+}
 .top-search > span:first-child {
-  font-size: 20px;
+  color: var(--accent);
+  font-size: 17px;
   line-height: 1;
 }
 .top-search > span:nth-child(2) {
-  padding-left: 10px;
   font-weight: 450;
 }
 .top-search kbd {
-  padding: 3px 6px;
-  color: #a8b4aa;
-  background: #202b24;
-  border: 1px solid #334039;
-  border-radius: 5px;
+  padding: 0 0 0 8px;
+  color: #91a095;
+  border: 0;
+  border-left: 1px solid #435246;
+  background: transparent;
   font: inherit;
-  font-size: 10px;
+  font-size: 9px;
 }
 .top-links {
   display: flex;
-  gap: 25px;
+  gap: 6px;
   align-items: center;
   font-size: 12px;
   color: #c8d0c9;
   justify-self: end;
 }
+.top-links a {
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: #151e18;
+}
+.top-links a:hover {
+  background: #202b23;
+  color: var(--text);
+}
 .sidebar {
   position: fixed;
   z-index: 10;
-  top: 86px;
+  top: 78px;
   bottom: 0;
   left: 0;
   display: flex;
@@ -1529,7 +1675,7 @@ main {
   max-width: none;
   margin: 0 0 0 240px;
   padding: 34px 34px 72px;
-  min-height: calc(100vh - 86px);
+  min-height: calc(100vh - 78px);
 }
 .page-heading {
   display: grid;
@@ -1739,7 +1885,7 @@ h1 {
 }
 .site-footer {
   margin-left: 240px;
-  padding: 27px 34px;
+  padding: 18px 34px;
 }
 
 [hidden] {
@@ -2008,7 +2154,7 @@ h1 {
 }
 
 @media (max-width: 1250px) {
-  .top-links {
+  .top-links a {
     display: none;
   }
   .page-heading {
@@ -2042,7 +2188,7 @@ h1 {
     flex-basis: auto;
   }
   .top-search {
-    width: min(440px, 55vw);
+    width: auto;
     justify-self: end;
   }
   .sidebar {
@@ -2083,6 +2229,7 @@ h1 {
   .top-search {
     display: grid;
     width: 42px;
+    min-width: 42px;
     height: 42px;
     padding: 0;
     place-items: center;
@@ -2096,6 +2243,9 @@ h1 {
   }
   main {
     padding: 28px 18px 50px;
+  }
+  .site-footer {
+    padding: 16px 20px;
   }
   .page-heading {
     display: block;

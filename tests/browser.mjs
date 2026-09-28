@@ -354,32 +354,44 @@ try {
     assert.equal(await page.locator(".show-card").count(), 1);
     await page.locator("#library-query").fill("");
     await page.locator("#rating-filter").selectOption("");
+    const ratingDropdown = page.locator(
+      ".custom-select:has(#rating-filter)",
+    );
+    await ratingDropdown.locator(".custom-select-trigger").click();
+    await ratingDropdown
+      .locator(".custom-select-menu")
+      .getByRole("option", { name: "4+ stars", exact: true })
+      .click();
+    assert.equal(await page.locator("#rating-filter").inputValue(), "4");
+    assert.equal(await page.locator(".show-card").count(), 5);
+    await ratingDropdown.locator(".custom-select-trigger").press("Enter");
+    await ratingDropdown.locator(".custom-select-menu").waitFor();
+    await ratingDropdown.locator(".custom-select-trigger").press("Escape");
+    assert.equal(
+      await ratingDropdown.locator(".custom-select-menu").isHidden(),
+      true,
+    );
+    await page.locator("#rating-filter").selectOption("");
     const showOrder = () =>
       page
         .locator(".show-card")
         .evaluateAll((cards) => cards.map((card) => Number(card.dataset.show)));
     assert.equal(
-      await page.getByLabel("Sort shows", { exact: true }).inputValue(),
+      await page.locator("#sort").inputValue(),
       "last-updated",
     );
     assert.deepEqual(
       (await showOrder()).slice(0, 1),
       [60059],
     );
-    await page
-      .getByLabel("Sort shows", { exact: true })
-      .selectOption("last-updated");
+    await page.locator("#sort").selectOption("last-updated");
     assert.equal((await showOrder()).at(0), 60059);
-    await page
-      .getByLabel("Sort shows", { exact: true })
-      .selectOption("release-newest");
+    await page.locator("#sort").selectOption("release-newest");
     assert.deepEqual(
       await showOrder(),
       [95396, 85552, 76331, 60059, 1396, 1438],
     );
-    await page
-      .getByLabel("Sort shows", { exact: true })
-      .selectOption("release-oldest");
+    await page.locator("#sort").selectOption("release-oldest");
     assert.deepEqual(
       await showOrder(),
       [1438, 1396, 60059, 76331, 85552, 95396],
@@ -394,7 +406,7 @@ try {
     await page.reload();
     await page.locator(".show-card").nth(5).waitFor();
     for (const sort of ["release-newest", "release-oldest"]) {
-      await page.getByLabel("Sort shows", { exact: true }).selectOption(sort);
+      await page.locator("#sort").selectOption(sort);
       assert.equal((await showOrder()).at(-1), 1438);
     }
     await page.unroute("**/api/library");
@@ -501,7 +513,7 @@ try {
     fullPage: true,
   });
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.getByRole("button", { name: /Find a show/ }).click();
+  await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {
     const searchFor = async (query) => {
       await page
@@ -639,7 +651,9 @@ try {
       1,
     );
     await page.getByRole("button", { name: "Close show", exact: true }).click();
-    await page.getByRole("button", { name: /Find a show/ }).click();
+    await page
+      .getByRole("button", { name: "Add a show", exact: true })
+      .click();
     await searchFor("Test series 23");
     assert.equal(
       await page.locator('#search-results [data-show="200022"]').count(),
