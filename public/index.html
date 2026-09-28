@@ -21,6 +21,13 @@
           <span>Add a show</span>
           <kbd>⌘ K</kbd>
         </button>
+        <button
+          class="nav-menu-toggle"
+          id="nav-menu-toggle"
+          aria-label="Open navigation"
+        >
+          <span aria-hidden="true"></span>
+        </button>
         <a href="#library">My Shows</a>
         <a href="/api/export" download>Backup</a>
       </nav>
@@ -82,32 +89,6 @@
         <span>Everything stays private on this Mac.</span>
       </div>
     </aside>
-    <nav class="mobile-nav" aria-label="Primary navigation">
-      <a class="active" href="#home" data-page="home"
-        ><span class="side-icon" aria-hidden="true"
-          ><svg viewBox="0 0 24 24">
-            <path d="m3 11 9-8 9 8" />
-            <path d="M5 10v10h14V10M9 20v-6h6v6" /></svg
-        ></span>
-        Home</a
-      >
-      <a href="#library" data-page="library"
-        ><span class="side-icon" aria-hidden="true"
-          ><svg viewBox="0 0 24 24">
-            <path
-              d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"
-            /></svg
-        ></span>
-        My Shows</a
-      >
-      <a href="#stats" data-page="stats"
-        ><span class="side-icon" aria-hidden="true"
-          ><svg viewBox="0 0 24 24">
-            <path d="M5 20V10M12 20V4M19 20v-7" /></svg
-        ></span>
-        Stats</a
-      >
-    </nav>
     <main id="home">
       <div id="home-view">
       <section class="page-heading">
@@ -200,6 +181,60 @@
         ><button class="text-button" id="credits">About & credits</button>
       </div>
     </footer>
+    <dialog id="nav-drawer" class="nav-drawer" aria-labelledby="nav-drawer-title">
+      <div class="nav-drawer-header">
+        <span id="nav-drawer-title"
+          ><img src="/assets/logo.png" alt="" />Next Episode</span
+        >
+        <button
+          class="icon-button"
+          data-close="nav-drawer"
+          aria-label="Close navigation"
+        >
+          ×
+        </button>
+      </div>
+      <div class="nav-drawer-body">
+        <nav class="side-nav" aria-label="Pages">
+          <a class="active" href="#home" data-page="home"
+            ><span class="side-icon" aria-hidden="true"
+              ><svg viewBox="0 0 24 24">
+                <path d="m3 11 9-8 9 8" />
+                <path d="M5 10v10h14V10M9 20v-6h6v6" /></svg
+            ></span>
+            Home</a
+          >
+          <a href="#library" data-page="library"
+            ><span class="side-icon" aria-hidden="true"
+              ><svg viewBox="0 0 24 24">
+                <path
+                  d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"
+                /></svg
+            ></span>
+            My Shows</a
+          >
+          <a href="#stats" data-page="stats"
+            ><span class="side-icon" aria-hidden="true"
+              ><svg viewBox="0 0 24 24">
+                <path d="M5 20V10M12 20V4M19 20v-7" /></svg
+            ></span>
+            Stats</a
+          >
+        </nav>
+        <div class="side-divider"></div>
+        <p class="side-label">Library</p>
+        <nav class="side-nav side-statuses" aria-label="Library shortcuts">
+          <button type="button" data-sidebar-tab="All"><span class="nav-dot all"></span>All Shows</button>
+          <button type="button" data-sidebar-tab="Watching"><span class="nav-dot watching"></span>Watching</button>
+          <button type="button" data-sidebar-tab="Paused"><span class="nav-dot paused"></span>Paused</button>
+          <button type="button" data-sidebar-tab="Caught Up"><span class="nav-dot caught-up"></span>Caught Up</button>
+          <button type="button" data-sidebar-tab="Completed"><span class="nav-dot completed"></span>Completed</button>
+          <button type="button" data-sidebar-tab="Dropped"><span class="nav-dot dropped"></span>Dropped</button>
+          <button type="button" data-sidebar-tab="Watchlist"><span class="nav-dot watchlist"></span>Watchlist</button>
+        </nav>
+        <a class="nav-drawer-backup" href="/api/export" download>Back up library ↗</a>
+      </div>
+    </dialog>
     <dialog id="search-dialog" class="search-dialog">
       <div class="dialog-top">
         <div>

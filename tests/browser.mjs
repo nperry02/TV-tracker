@@ -71,7 +71,7 @@ try {
   );
   assert.deepEqual(
     await page
-      .locator(".side-statuses [data-sidebar-tab]")
+      .locator(".sidebar .side-statuses [data-sidebar-tab]")
       .evaluateAll((buttons) => buttons.map((button) => button.dataset.sidebarTab)),
     ["All", "Watching", "Paused", "Caught Up", "Completed", "Dropped", "Watchlist"],
   );
@@ -172,12 +172,12 @@ try {
     "1",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.locator('[data-sidebar-tab="Watching"]').click();
+  await page.locator('.sidebar [data-sidebar-tab="Watching"]').click();
   assert.equal(await page.locator(".show-card").count(), 1);
-  await page.locator('[data-sidebar-tab="Watchlist"]').click();
+  await page.locator('.sidebar [data-sidebar-tab="Watchlist"]').click();
   assert.equal(await page.locator(".show-card").count(), 1);
   await page.reload();
-  await page.locator('[data-sidebar-tab="Watchlist"]').click();
+  await page.locator('.sidebar [data-sidebar-tab="Watchlist"]').click();
   await page.locator('.show-card[data-show="1396"]').click();
   assert.equal(
     await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
@@ -335,18 +335,18 @@ try {
           .querySelector("#continue-list .continue-open")
           ?.getAttribute("data-show") === "60059",
     );
-    await page.locator('[data-sidebar-tab="Completed"]').click();
+    await page.locator('.sidebar [data-sidebar-tab="Completed"]').click();
     assert.equal(await page.locator(".show-card").count(), 2);
-    await page.locator('[data-sidebar-tab="All"]').click();
-    await page.locator('[data-sidebar-tab="Completed"]').click();
+    await page.locator('.sidebar [data-sidebar-tab="All"]').click();
+    await page.locator('.sidebar [data-sidebar-tab="Completed"]').click();
     assert.equal(await page.locator(".show-card").count(), 2);
     assert.equal(
       await page
-        .locator('[data-sidebar-tab="Completed"]')
+        .locator('.sidebar [data-sidebar-tab="Completed"]')
         .evaluate((button) => button.classList.contains("active")),
       true,
     );
-    await page.locator('[data-sidebar-tab="All"]').click();
+    await page.locator('.sidebar [data-sidebar-tab="All"]').click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);
     await page.locator("#genre").selectOption("18");
@@ -479,14 +479,19 @@ try {
     true,
     "Stats view fits mobile viewport",
   );
-  const mobileNav = page.getByRole("navigation", {
-    name: "Primary navigation",
-    exact: true,
-  });
-  assert.equal(await mobileNav.getByRole("link").count(), 3);
-  await mobileNav.getByRole("link", { name: "My Shows", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Open navigation", exact: true })
+    .click();
+  const navDrawer = page.locator("#nav-drawer");
+  await navDrawer.waitFor();
+  assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 3);
+  await navDrawer.getByRole("link", { name: "My Shows", exact: true }).click();
   assert.equal(new URL(page.url()).hash, "#library");
-  await mobileNav.getByRole("link", { name: "Stats", exact: true }).click();
+  assert.equal(await navDrawer.evaluate((dialog) => dialog.open), false);
+  await page
+    .getByRole("button", { name: "Open navigation", exact: true })
+    .click();
+  await navDrawer.getByRole("link", { name: "Stats", exact: true }).click();
   await page.locator("#stats-view").waitFor();
   assert.equal(new URL(page.url()).hash, "#stats");
   await page.screenshot({ path: "test-results/mobile-stats.png", fullPage: true });
