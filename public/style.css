@@ -2104,14 +2104,43 @@ h1 {
   order: 5;
 }
 .view-toggle {
-  width: 140px;
+  width: 150px;
   height: var(--library-control-height);
   border-radius: 10px;
   order: 6;
 }
 .view-toggle button {
+  display: flex;
   flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding-block: 0;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.view-toggle button[data-view="gallery"] {
+  flex: 1.15;
+}
+.view-toggle button[data-view="list"] {
+  flex: 0.85;
+}
+.view-toggle button span {
+  font-size: 11px;
+}
+.view-toggle .view-icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+.view-toggle .gallery-view-icon {
+  fill: currentColor;
+  stroke: none;
 }
 .library-controls .custom-select-trigger {
   height: var(--library-control-height);
@@ -2688,7 +2717,7 @@ h1 {
     max-width: none;
   }
   .view-toggle {
-    width: 140px;
+    width: 150px;
     flex-basis: auto;
     order: 6;
   }
