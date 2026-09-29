@@ -1,5 +1,6 @@
 export const $ = (selector) => document.querySelector(selector);
 
+// Accessible custom-select enhancement
 let openSelect;
 let selectId = 0;
 
@@ -22,6 +23,7 @@ function syncSelect(wrapper) {
   trigger.querySelector("span").textContent = selectedText;
   trigger.setAttribute("aria-label", `${trigger.dataset.label}: ${selectedText}`);
   trigger.disabled = select.disabled;
+  // Rebuild from the native options so programmatic updates remain authoritative.
   menu.replaceChildren(
     ...Array.from(select.options, (option) => {
       const item = document.createElement("button");
@@ -57,6 +59,7 @@ function openCustomSelect(wrapper) {
 
 export function enhanceSelects(root = document) {
   root.querySelectorAll("select").forEach((select) => {
+    // Render cycles reuse existing wrappers and only resynchronize their contents.
     const existing = select.closest(".custom-select");
     if (existing) return syncSelect(existing);
     const wrapper = document.createElement("span");
@@ -102,6 +105,7 @@ export function enhanceSelects(root = document) {
         return openCustomSelect(wrapper);
       }
       if (!menu.hidden && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        // Keyboard movement wraps between enabled options like a native listbox.
         event.preventDefault();
         const items = [...menu.querySelectorAll(".custom-select-option:not(:disabled)")];
         const current = items.indexOf(document.activeElement);
@@ -116,6 +120,7 @@ document.addEventListener("click", (event) => {
   if (openSelect && !event.target.closest(".custom-select")) closeSelect(openSelect);
 });
 
+// Safe display and media formatting
 export const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -151,6 +156,7 @@ export const poster = (show, className = "", size) =>
     ? `<img class="${className}" src="${image(show.poster_path, size)}" alt="" loading="lazy">`
     : `<span class="poster-placeholder ${className}">${esc(show.name)}</span>`;
 
+// Dates without a time are interpreted locally to avoid timezone date shifts.
 export function displayDate(value, includeTime = false) {
   if (!value) return "Not recorded";
   const date = new Date(includeTime ? value : `${value}T00:00:00`);
@@ -163,6 +169,7 @@ export function displayDate(value, includeTime = false) {
   }).format(date);
 }
 
+// Transient feedback
 let toastTimer;
 export function toast(message) {
   clearTimeout(toastTimer);

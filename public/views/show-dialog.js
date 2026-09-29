@@ -17,6 +17,7 @@ import {
   year,
 } from "../ui.js";
 
+// Rating and initial-season helpers
 function ratingOptions(value, empty = "Not rated") {
   return (
     `<option value=""${value == null ? " selected" : ""}>${empty}</option>` +
@@ -30,6 +31,7 @@ function ratingOptions(value, empty = "Not rated") {
 }
 
 export function initialShowSeason(show) {
+  // Prefer the season containing the next episode, then the first regular season.
   return (
     progress(show).next?.season_number ??
     show.seasons.find((season) => season.number > 0)?.number ??
@@ -38,6 +40,7 @@ export function initialShowSeason(show) {
 }
 
 export function renderShowDialog(show, selectedSeason, mutationPending) {
+  // Rebuild the dialog from the latest saved show snapshot after each mutation.
   const showProgress = progress(show);
   const episodes = show.episodes.filter(
     (episode) => episode.season_number === selectedSeason,
@@ -49,11 +52,14 @@ export function renderShowDialog(show, selectedSeason, mutationPending) {
             .map((episode) => {
               const watched = show.watched.includes(episodeKey(episode));
               const available = aired(episode);
+              // Future episodes remain visible but cannot be newly marked watched.
               return `<div class="episode ${watched ? "watched" : ""}"><input type="checkbox" data-episode="${episode.episode_number}" aria-label="Mark ${esc(episode.name)} watched"${watched ? " checked" : ""}${!available && !watched ? " disabled" : ""}><div class="episode-name"><strong>${episode.episode_number}. ${esc(episode.name)}</strong><small>${available ? episode.air_date : episode.air_date ? `Airs ${episode.air_date}` : "Air date to be announced"}</small></div>${available ? `<button class="through" data-through="${episode.episode_number}">Watched through here</button>` : ""}</div>`;
             })
             .join("")
         : '<p class="muted">No episodes announced for this season yet.</p>'
     }</div><div class="detail-bottom"><div class="detail-refresh"><small>Show info refreshed ${new Date(show.refreshedAt).toLocaleDateString()}.</small><button id="refresh-show">↻ Refresh show info</button><small>to update the show's details and check for new episodes.</small></div><button class="text-button" id="remove-show">${inLibrary(show) ? "Remove from All Shows" : "Remove saved show"}</button></div></div>`;
+
+  // Contextual actions are inserted only when their underlying progress exists.
   if (showProgress.next) {
     $(".detail-progress").insertAdjacentHTML(
       "beforeend",
@@ -74,6 +80,8 @@ export function renderShowDialog(show, selectedSeason, mutationPending) {
       `<button data-through="${lastAired.episode_number}">Watched through this season</button>`,
     );
   }
+
+  // Prevent overlapping writes while leaving the close control available.
   if (mutationPending)
     $("#show-content")
       .querySelectorAll("button:not([data-close]), input, select")

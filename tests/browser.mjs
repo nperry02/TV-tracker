@@ -7,6 +7,8 @@ import { join, resolve } from "node:path";
 import { once } from "node:events";
 
 const live = process.env.LIVE_TMDB === "1";
+
+// Run against an isolated library and deterministic TMDB fixture by default.
 const directory = mkdtempSync(join(tmpdir(), "next-episode-browser-"));
 const args = live
   ? ["--env-file=.env", "server.mjs"]
@@ -27,6 +29,7 @@ child.stderr.on("data", (chunk) => {
   stderr += chunk;
 });
 try {
+  // Wait for the local server before creating shared page helpers.
   const base = await new Promise((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error(`Server start timed out: ${stderr}`)),
@@ -66,6 +69,8 @@ try {
       await filter.locator("summary").click();
     await filter.locator(`[data-genre="${genre}"]`).click();
   };
+
+  // Live mode performs a small pagination contract check before the UI flow.
   if (live) {
     const first = await (
       await page.request.get(`${base}/api/search?q=Star&page=1`)
@@ -81,6 +86,8 @@ try {
       second.results.map((s) => s.id),
     );
   }
+
+  // Navigation, empty states, and the first library addition
   await page.goto(base);
   await page.waitForFunction(
     () => document.querySelector(".brand-icon")?.naturalWidth > 0,
@@ -138,6 +145,8 @@ try {
     await page.locator('#watchlist-filter .count').textContent(),
     "0",
   );
+
+  // Ratings, progress, membership, and manual status persistence
   assert.equal(
     await page.locator('#continue-list [data-show="1396"]').count(),
     1,
@@ -294,6 +303,7 @@ try {
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   if (!live) {
+    // Fixture-only flows build a varied library for filters, stats, and sorting.
     await page.getByRole("link", { name: "Home", exact: true }).click();
     // Quick progress works from Home without opening a dialog.
     await page.locator('#continue-list [data-next="1396"]').click();
@@ -564,6 +574,8 @@ try {
     await page.getByRole("button", { name: /Gallery/ }).click();
     assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
   }
+
+  // Responsive navigation and overflow checks
   mkdirSync("test-results", { recursive: true });
   await page.screenshot({
     path: `test-results/${live ? "live" : "desktop"}.png`,
@@ -659,6 +671,7 @@ try {
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {
+    // Search pagination covers recovery, Watchlist-only records, and stale responses.
     const searchFor = async (query) => {
       await page
         .getByRole("searchbox", { name: "Search TMDB", exact: true })
@@ -853,6 +866,7 @@ try {
     `${live ? "Live TMDB" : "Fixture"} browser checks passed: search, add, ratings, season progress, stats, overrides, reload persistence, filters, errors, and mobile layout.`,
   );
 } finally {
+  // Always stop the child server and remove its temporary library.
   await browser?.close();
   if (child.exitCode === null) {
     const done = once(child, "exit");

@@ -10,6 +10,7 @@
     <script type="module" src="/app.js"></script>
   </head>
   <body>
+    <!-- Persistent application header and primary navigation -->
     <header class="topbar">
       <a class="brand" href="/" aria-label="Next Episode home"
         ><img class="brand-icon" src="/assets/logo.png" alt="" />
@@ -36,6 +37,7 @@
       </nav>
     </header>
     <main id="home">
+      <!-- Home overview and Continue Watching -->
       <div id="home-view">
       <section class="page-heading">
         <div>
@@ -53,6 +55,7 @@
         <div id="continue-list" class="continue-list"></div>
       </section>
       </div>
+      <!-- My Shows collection and filter controls -->
       <section id="library-view" hidden>
         <header class="library-header">
           <p class="eyebrow">YOUR COLLECTION</p>
@@ -133,6 +136,7 @@
         </div>
       </section>
       </section>
+      <!-- Library statistics -->
       <section id="stats-view" class="stats-page" aria-labelledby="stats-title" hidden>
         <header class="stats-header">
           <p class="eyebrow">YOUR LIBRARY IN NUMBERS</p>
@@ -142,6 +146,7 @@
         <div id="stats-content"></div>
       </section>
     </main>
+    <!-- Secondary actions and project information -->
     <footer class="site-footer">
       <div>
         <span class="footer-brand"
@@ -153,6 +158,7 @@
         ><button class="text-button" id="credits">About & credits</button>
       </div>
     </footer>
+    <!-- Responsive navigation and application dialogs -->
     <dialog id="nav-drawer" class="nav-drawer" aria-labelledby="nav-drawer-title">
       <div class="nav-drawer-header">
         <span id="nav-drawer-title"

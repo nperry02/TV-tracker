@@ -1,3 +1,4 @@
+/* Theme, reset, and shared controls */
 :root {
   color-scheme: dark;
   --bg: #101612;
@@ -181,6 +182,8 @@ a:focus-visible {
   background: #ddff9a;
   border-color: #ddff9a;
 }
+
+/* Base page shell and home content */
 .topbar {
   height: 94px;
   border-bottom: 1px solid var(--border);
@@ -395,6 +398,7 @@ h1 {
   margin-left: 7px;
   color: var(--muted);
 }
+/* Library controls and collection views */
 .filterbar {
   display: flex;
   justify-content: space-between;
@@ -818,6 +822,7 @@ footer > div {
   background: none;
   color: var(--accent);
 }
+/* Dialog foundations and search results */
 dialog {
   background: #172019;
   border: 1px solid #42533f;
@@ -931,6 +936,7 @@ dialog::backdrop {
   max-width: 960px;
   padding: 0;
 }
+/* Show details and episode controls */
 .detail-hero {
   position: relative;
   min-height: 430px;
@@ -1193,6 +1199,7 @@ dialog::backdrop {
 [hidden] {
   display: none !important;
 }
+/* Base responsive behavior */
 @media (min-width: 1550px) {
   .topbar,
   footer {
@@ -1468,7 +1475,7 @@ dialog::backdrop {
   width: max-content;
 }
 
-/* Dashboard layout experiment */
+/* Application shell and primary navigation */
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 104px;
@@ -1565,6 +1572,7 @@ body {
 .nav-menu-toggle {
   display: none;
 }
+/* Narrow-screen navigation drawer */
 .nav-drawer {
   width: min(360px, 88vw);
   max-width: none;
@@ -1807,6 +1815,7 @@ h1 {
 .next-watched span {
   display: none;
 }
+/* My Shows filters and results */
 .library {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -2226,6 +2235,7 @@ h1 {
 [hidden] {
   display: none !important;
 }
+/* Stats dashboard */
 .stats-page {
   max-width: 1380px;
   margin: 0 auto;
@@ -2482,6 +2492,7 @@ h1 {
   grid-column: 1 / -1;
 }
 
+/* Application responsive layout */
 @media (max-width: 1250px) {
   .top-pages {
     display: none;

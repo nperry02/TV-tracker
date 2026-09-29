@@ -2,6 +2,7 @@ import { inLibrary, matchesTab, progress, watchStatus } from "../model.js";
 import { $, episodeCode, esc, image, poster } from "../ui.js";
 
 export function renderHome(shows, mutationPending) {
+  // Overview cards summarize tracked membership rather than Watchlist overlap.
   const tracked = shows.filter((show) => matchesTab(show, "All"));
   const watching = shows.filter((show) => matchesTab(show, "Watching")).length;
   const completed = shows.filter((show) => matchesTab(show, "Completed")).length;
@@ -9,6 +10,7 @@ export function renderHome(shows, mutationPending) {
   $("#stats").innerHTML =
     `<div class="stat"><i aria-hidden="true">▶</i><strong>${tracked.length}</strong><span>Tracked shows</span></div><div class="stat"><i aria-hidden="true">◉</i><strong>${watching}</strong><span>Watching</span></div><div class="stat"><i aria-hidden="true">✓</i><strong>${completed}</strong><span>Completed</span></div><div class="stat"><i aria-hidden="true">★</i><strong>${rated.length ? (rated.reduce((sum, show) => sum + show.rating, 0) / rated.length).toFixed(1) : "—"}</strong><span>Average rating</span></div>`;
 
+  // Continue Watching favors recent progress, then recently added shows.
   const continuing = shows
     .filter(
       (show) =>
@@ -23,6 +25,8 @@ export function renderHome(shows, mutationPending) {
         a.name.localeCompare(b.name),
     )
     .slice(0, 4);
+
+  // Each card resolves its next aired episode and current completion ratio.
   $("#continue-section").hidden = !continuing.length;
   $("#continue-list").innerHTML = continuing
     .map((show) => {

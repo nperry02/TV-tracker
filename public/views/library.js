@@ -19,6 +19,7 @@ import {
   year,
 } from "../ui.js";
 
+// Card and list presentation helpers
 function progressLabel(show) {
   const showProgress = progress(show);
   if (showProgress.next)
@@ -29,6 +30,7 @@ function progressLabel(show) {
 }
 
 function sortShows(shows, sort) {
+  // Missing dates stay after dated shows; names make every ordering deterministic.
   shows.sort((a, b) => {
     if (sort === "last-updated") {
       if (!a.lastWatchedAt || !b.lastWatchedAt)
@@ -64,6 +66,7 @@ function sortShows(shows, sort) {
 }
 
 export function renderLibrary(shows, libraryFilters, viewMode) {
+  // Preserve native details state because rendering replaces both filter menus.
   const { selectedStatuses, selectedGenres, watchlistOnly } = libraryFilters;
   const allSelected = !selectedStatuses.size && !watchlistOnly;
   const statusMenuOpen = $("#status-filter")?.open;
@@ -74,6 +77,8 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
       shows.filter((show) => matchesTab(show, status)).length,
     ]),
   );
+
+  // Watch statuses share one multi-select menu; Watchlist remains independent.
   const tracked = shows.filter((show) => matchesTab(show, "All"));
   const selectedLabels = [...selectedStatuses];
   const statusDots = selectedLabels
@@ -99,6 +104,8 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   $("#watchlist-filter").classList.toggle("active", watchlistOnly);
   $("#watchlist-filter").setAttribute("aria-pressed", String(watchlistOnly));
   $("#watchlist-filter").innerHTML = `<span><i class="status-filter-dot watchlist" aria-hidden="true"></i>Watchlist</span><span class="count">${counts.Watchlist}</span>`;
+
+  // Derive available genres from current library metadata and retain ID-based state.
   const genres = [
     ...new Map(
       shows
@@ -121,6 +128,8 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
         .join("")}
     </div>
   </details>`;
+
+  // Statuses use OR, selected genres use AND, and Watchlist intersects both.
   const query = $("#library-query").value.trim().toLowerCase();
   const rating = $("#rating-filter").value;
   const filtered = shows.filter(
@@ -140,6 +149,8 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   ];
   $("#result-count").textContent =
     `${filtered.length} ${filtered.length === 1 ? "show" : "shows"}${filterLabels.length ? ` · ${filterLabels.join(" + ").toLowerCase()}` : " in your collection"}`;
+
+  // Gallery and list views share the filtered collection but expose different detail.
   $("#library-grid").className =
     viewMode === "list" ? "show-list" : "poster-grid";
   $("#library-grid").innerHTML =
@@ -156,6 +167,8 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
             return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${poster(show)}<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></button>`;
           })
           .join("");
+
+  // Empty states distinguish no results, an empty Watchlist, and Watchlist-only saves.
   $("#empty").hidden = filtered.length > 0;
   $("#empty").innerHTML = shows.length
     ? '<span class="empty-icon">⌕</span><h2>No shows here just yet.</h2><p>Try another status or adjust your filters to find your shows.</p><button id="reset-filters">Clear filters</button>'

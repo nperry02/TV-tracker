@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { once } from "node:events";
 
 test("local API preserves progress, ratings, and overrides across restarts", async (t) => {
+  // Build an isolated library with regular, future, unknown, and special episodes.
   const directory = mkdtempSync(join(tmpdir(), "tv-tracker-test-"));
   const file = join(directory, "library.json");
   const episodes = [
@@ -87,6 +88,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
       await done;
     }
   }
+
+  // Cleanup runs even when an assertion or server request fails.
   t.after(async () => {
     await stop();
     rmSync(directory, { recursive: true, force: true });
@@ -100,6 +103,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     });
     return { status: res.status, data: await res.json() };
   }
+
+  // Exercise independent membership before adding progress and ratings.
   let result = await patch({ watchlist: false });
   assert.equal(result.data.tracked, false);
   assert.equal(result.data.watchlist, false);
@@ -171,6 +176,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     ).status,
     400,
   );
+
+  // Reject cross-origin writes, private files, missing credentials, and bad pages.
   const hostile = await fetch(`${base}/api/shows/1`, {
     method: "PATCH",
     headers: {
@@ -190,6 +197,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   }
   const exported = await (await fetch(`${base}/api/export`)).json();
   assert.equal(exported.shows[0].rating, 4.5);
+
+  // Restart from disk before verifying persistence and destructive membership changes.
   await stop();
   base = await start();
   const saved = await (await fetch(`${base}/api/library`)).json();

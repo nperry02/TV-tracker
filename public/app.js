@@ -22,10 +22,14 @@ import {
   initialShowSeason,
   renderShowDialog,
 } from "./views/show-dialog.js";
+
+// Shared application and dialog state
 let shows = [],
   selectedId = null,
   selectedSeason = null,
   mutationPending = false;
+
+// Library selections survive page navigation and reloads within the current tab.
 const libraryFilters = (() => {
   try {
     const saved = JSON.parse(
@@ -58,6 +62,8 @@ function saveLibraryFilters() {
     );
   } catch {}
 }
+
+// View mode persists across browser sessions when storage is available.
 let viewMode = (() => {
   try {
     return localStorage.getItem("next-episode:view") === "list"
@@ -67,6 +73,8 @@ let viewMode = (() => {
     return "gallery";
   }
 })();
+
+// Hash routing and top-level rendering
 function applyRoute({ scroll = false } = {}) {
   const route = location.hash === "#stats" ? "stats" : location.hash === "#library" ? "library" : "home";
   $("#home-view").hidden = route !== "home";
@@ -103,6 +111,8 @@ function renderShow() {
     enhanceSelects($("#show-content"));
   }
 }
+
+// Mutations redraw disabled controls immediately, then restore dialog context.
 async function save(body, message, id = selectedId) {
   if (mutationPending) return;
   mutationPending = true;
@@ -126,6 +136,7 @@ async function save(body, message, id = selectedId) {
     if ($("#show-dialog").open) renderShow();
     if (!isCurrentDialog()) return;
     $("#show-dialog").scrollTop = scroll;
+    // Recreated dialog markup receives focus by stable ID or episode number.
     const target = focusId
       ? document.getElementById(focusId)
       : episode
@@ -141,6 +152,8 @@ async function refreshShow(id, notify = true) {
   if (selectedId === id && $("#show-dialog").open) renderShow();
   if (notify) toast("Show information is up to date.");
 }
+
+// Search owns its paging state while the app supplies library updates and routing.
 const searchDialog = createSearchDialog({
   getShows: () => shows,
   onShowAdded: (show) => {
@@ -151,7 +164,10 @@ const searchDialog = createSearchDialog({
   },
   onOpenShow: openShow,
 });
+
+// Delegated button actions cover content that renderers replace after each change.
 document.addEventListener("click", async (event) => {
+  // Native details filters close when interaction moves elsewhere on the page.
   for (const selector of ["#status-filter", "#genre-filter"])
     if (!event.target.closest(selector)) {
       const filter = $(selector);
@@ -163,6 +179,7 @@ document.addEventListener("click", async (event) => {
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
   if (button.dataset.tab) {
+    // Statuses combine with OR; Watchlist is an independent intersecting filter.
     const tab = button.dataset.tab;
     if (tab === "All") {
       libraryFilters.selectedStatuses.clear();
@@ -181,6 +198,7 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.dataset.genre !== undefined) {
+    // Genre selections combine with AND in the model layer.
     const genre = button.dataset.genre;
     if (!genre) libraryFilters.selectedGenres.clear();
     else if (libraryFilters.selectedGenres.has(genre))
@@ -202,6 +220,7 @@ document.addEventListener("click", async (event) => {
   }
   if (button.dataset.show) return openShow(button.dataset.show);
   if (button.dataset.next) {
+    // Continue Watching always resolves the next aired episode at click time.
     const id = Number(button.dataset.next);
     const show = shows.find((s) => s.id === id);
     const next = show && progress(show).next;
@@ -295,6 +314,7 @@ document.addEventListener("click", async (event) => {
     const show = shows.find((s) => s.id === id);
     const tracked = inLibrary(show);
     const keepsWatchlist = tracked && inWatchlist(show);
+    // Removing All Shows data keeps the record only when Watchlist still needs it.
     const prompt = tracked
       ? `Remove ${show.name} from All Shows? This clears its status, ratings, and episode progress.${keepsWatchlist ? " It will remain on your Watchlist." : ""}`
       : `Remove ${show.name} from your saved shows?`;
@@ -324,6 +344,8 @@ document.addEventListener("click", async (event) => {
     }
   }
 });
+
+// Native control changes update filters or persist show-level fields.
 document.addEventListener("change", (event) => {
   const el = event.target;
   if (["rating-filter", "sort"].includes(el.id)) render();
@@ -357,6 +379,8 @@ document.addEventListener("change", (event) => {
     });
 });
 $("#library-query").addEventListener("input", render);
+
+// Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
   const openFilter = $("#status-filter[open], #genre-filter[open]");
   if (event.key === "Escape" && openFilter) {
@@ -370,6 +394,8 @@ document.addEventListener("keydown", (event) => {
   }
 });
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
+
+// A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;
@@ -382,12 +408,14 @@ for (const dialog of document.querySelectorAll("dialog"))
     )
       dialog.close();
   });
+
+// Startup renders saved data first, then refreshes a bounded stale-metadata queue.
 async function boot() {
   try {
     ({ shows } = await api("/api/library"));
     render();
     applyRoute({ scroll: true });
-    // Refresh stale metadata without blocking access to saved progress and ratings.
+    // Refresh failures stop the batch while leaving saved progress and ratings usable.
     for (const show of metadataRefreshQueue(shows)) {
       try {
         await refreshShow(show.id, false);

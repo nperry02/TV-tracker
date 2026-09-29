@@ -25,6 +25,8 @@ const show = (changes) => ({
   statusOverride: null,
   ...changes,
 });
+
+// Progress and automatic status rules
 test("progress distinguishes not started, partially watched, and caught up", () => {
   assert.equal(watchStatus(show(), "2026-09-26"), "Not started");
   assert.equal(
@@ -95,6 +97,8 @@ test("dropped and manual corrections persist over automatic status", () => {
   );
   assert.equal(watchStatus(show({ statusOverride: "Completed" })), "Completed");
 });
+
+// Library membership and combined filters
 test("legacy show membership is preserved before normalization", () => {
   assert.equal(inWatchlist(show()), true);
   assert.equal(matchesTab(show(), "All"), false);
@@ -189,6 +193,7 @@ test("genre filters require every selected genre", () => {
   assert.equal(matchesGenres(drama, new Set(["18", "80"])), false);
 });
 
+// Statistics and refresh scheduling
 test("library stats aggregate ratings, statuses, progress, specials, seasons, and runtime estimates", () => {
   const stats = libraryStats(
     [
