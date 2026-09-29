@@ -1607,12 +1607,6 @@ body {
   padding: 18px;
   overflow-y: auto;
 }
-.nav-drawer-backup {
-  display: block;
-  margin: 18px 14px 0;
-  color: var(--muted);
-  font-size: 11px;
-}
 .nav-drawer-add {
   width: calc(100% - 28px);
   margin: 18px 14px 0;
@@ -2485,8 +2479,7 @@ h1 {
 }
 
 @media (max-width: 1250px) {
-  .top-pages,
-  .top-backup {
+  .top-pages {
     display: none;
   }
   .nav-menu-toggle {

@@ -578,6 +578,10 @@ try {
   );
   assert.equal(
     await navDrawer.getByRole("link", { name: "Back up library ↗", exact: true }).count(),
+    0,
+  );
+  assert.equal(
+    await page.locator(".site-footer").getByRole("link", { name: "Back up library ↗", exact: true }).count(),
     1,
   );
   await navDrawer.getByRole("link", { name: "My Shows", exact: true }).click();
