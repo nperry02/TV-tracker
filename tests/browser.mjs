@@ -92,6 +92,17 @@ try {
   await page.waitForFunction(
     () => document.querySelector(".brand-icon")?.naturalWidth > 0,
   );
+  const desktopAlignment = await page.evaluate(() => {
+    const heading = document.querySelector(".page-heading").getBoundingClientRect();
+    const brand = document.querySelector(".brand").getBoundingClientRect();
+    const links = document.querySelector(".top-links").getBoundingClientRect();
+    return {
+      left: Math.abs(brand.left - heading.left),
+      right: Math.abs(links.right - heading.right),
+    };
+  });
+  assert.ok(desktopAlignment.left < 1);
+  assert.ok(desktopAlignment.right < 1);
   assert.deepEqual(
     await page.locator(".top-pages [data-page]").evaluateAll((links) =>
       links.map((link) => link.dataset.page),

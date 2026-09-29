@@ -12,29 +12,31 @@
   <body>
     <!-- Persistent application header and primary navigation -->
     <header class="topbar">
-      <a class="brand" href="/" aria-label="Next Episode home"
-        ><img class="brand-icon" src="/assets/logo.png" alt="" />
-        Next Episode</a
-      >
-      <nav class="top-links" aria-label="Main navigation">
-        <div class="top-pages">
-          <a class="active" href="#home" data-page="home">Home</a>
-          <a href="#library" data-page="library">My Shows</a>
-          <a href="#stats" data-page="stats">Stats</a>
-        </div>
-        <button class="top-search" id="add-show" aria-label="Add a show">
-          <span aria-hidden="true">＋</span>
-          <span>Add a show</span>
-          <kbd>⌘ K</kbd>
-        </button>
-        <button
-          class="nav-menu-toggle"
-          id="nav-menu-toggle"
-          aria-label="Open navigation"
+      <div class="topbar-inner">
+        <a class="brand" href="/" aria-label="Next Episode home"
+          ><img class="brand-icon" src="/assets/logo.png" alt="" />
+          Next Episode</a
         >
-          <span aria-hidden="true"></span>
-        </button>
-      </nav>
+        <nav class="top-links" aria-label="Main navigation">
+          <div class="top-pages">
+            <a class="active" href="#home" data-page="home">Home</a>
+            <a href="#library" data-page="library">My Shows</a>
+            <a href="#stats" data-page="stats">Stats</a>
+          </div>
+          <button class="top-search" id="add-show" aria-label="Add a show">
+            <span aria-hidden="true">＋</span>
+            <span>Add a show</span>
+            <kbd>⌘ K</kbd>
+          </button>
+          <button
+            class="nav-menu-toggle"
+            id="nav-menu-toggle"
+            aria-label="Open navigation"
+          >
+            <span aria-hidden="true"></span>
+          </button>
+        </nav>
+      </div>
     </header>
     <main id="home">
       <!-- Home overview and Continue Watching -->
