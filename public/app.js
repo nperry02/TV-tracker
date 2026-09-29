@@ -35,10 +35,15 @@ const libraryFilters = (() => {
       selectedStatuses: new Set(
         (saved?.statuses || []).filter((status) => statuses.includes(status)),
       ),
+      selectedGenres: new Set(saved?.genres || []),
       watchlistOnly: Boolean(saved?.watchlist),
     };
   } catch {
-    return { selectedStatuses: new Set(), watchlistOnly: false };
+    return {
+      selectedStatuses: new Set(),
+      selectedGenres: new Set(),
+      watchlistOnly: false,
+    };
   }
 })();
 function saveLibraryFilters() {
@@ -47,6 +52,7 @@ function saveLibraryFilters() {
       "next-episode:library-filters",
       JSON.stringify({
         statuses: [...libraryFilters.selectedStatuses],
+        genres: [...libraryFilters.selectedGenres],
         watchlist: libraryFilters.watchlistOnly,
       }),
     );
@@ -146,10 +152,11 @@ const searchDialog = createSearchDialog({
   onOpenShow: openShow,
 });
 document.addEventListener("click", async (event) => {
-  if (!event.target.closest("#status-filter")) {
-    const statusFilter = $("#status-filter");
-    if (statusFilter) statusFilter.open = false;
-  }
+  for (const selector of ["#status-filter", "#genre-filter"])
+    if (!event.target.closest(selector)) {
+      const filter = $(selector);
+      if (filter) filter.open = false;
+    }
   const pageLink = event.target.closest("[data-page]");
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
@@ -170,6 +177,16 @@ document.addEventListener("click", async (event) => {
     saveLibraryFilters();
     if (location.hash !== "#library") history.pushState(null, "", "#library");
     applyRoute();
+    render();
+    return;
+  }
+  if (button.dataset.genre !== undefined) {
+    const genre = button.dataset.genre;
+    if (!genre) libraryFilters.selectedGenres.clear();
+    else if (libraryFilters.selectedGenres.has(genre))
+      libraryFilters.selectedGenres.delete(genre);
+    else libraryFilters.selectedGenres.add(genre);
+    saveLibraryFilters();
     render();
     return;
   }
@@ -224,10 +241,10 @@ document.addEventListener("click", async (event) => {
   if (button.id === "load-more") return searchDialog.loadMore();
   if (button.id === "reset-filters") {
     libraryFilters.selectedStatuses.clear();
+    libraryFilters.selectedGenres.clear();
     libraryFilters.watchlistOnly = false;
     saveLibraryFilters();
     $("#library-query").value = "";
-    $("#genre").value = "";
     $("#rating-filter").value = "";
     render();
     return;
@@ -309,7 +326,7 @@ document.addEventListener("click", async (event) => {
 });
 document.addEventListener("change", (event) => {
   const el = event.target;
-  if (["genre", "rating-filter", "sort"].includes(el.id)) render();
+  if (["rating-filter", "sort"].includes(el.id)) render();
   if (el.id === "season-select") {
     selectedSeason = Number(el.value);
     renderShow();
@@ -341,9 +358,10 @@ document.addEventListener("change", (event) => {
 });
 $("#library-query").addEventListener("input", render);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && $("#status-filter")?.open) {
-    $("#status-filter").open = false;
-    $("#status-filter summary").focus();
+  const openFilter = $("#status-filter[open], #genre-filter[open]");
+  if (event.key === "Escape" && openFilter) {
+    openFilter.open = false;
+    openFilter.querySelector("summary").focus();
     return;
   }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {

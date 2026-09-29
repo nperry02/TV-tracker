@@ -63,9 +63,10 @@ function sortShows(shows, sort) {
 }
 
 export function renderLibrary(shows, libraryFilters, viewMode) {
-  const { selectedStatuses, watchlistOnly } = libraryFilters;
+  const { selectedStatuses, selectedGenres, watchlistOnly } = libraryFilters;
   const allSelected = !selectedStatuses.size && !watchlistOnly;
   const statusMenuOpen = $("#status-filter")?.open;
+  const genreMenuOpen = $("#genre-filter")?.open;
   const counts = Object.fromEntries(
     [...statuses, "Watchlist"].map((status) => [
       status,
@@ -97,7 +98,6 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   $("#watchlist-filter").classList.toggle("active", watchlistOnly);
   $("#watchlist-filter").setAttribute("aria-pressed", String(watchlistOnly));
   $("#watchlist-filter").innerHTML = `<span><i class="status-filter-dot watchlist" aria-hidden="true"></i>Watchlist</span><span class="count">${counts.Watchlist}</span>`;
-  const selectedGenre = $("#genre").value;
   const genres = [
     ...new Map(
       shows
@@ -105,24 +105,29 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
         .map((genre) => [String(genre.id), genre.name]),
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1]));
-  $("#genre").innerHTML =
-    '<option value="">All genres</option>' +
-    genres
-      .map(([id, name]) => `<option value="${id}">${esc(name)}</option>`)
-      .join("");
-  $("#genre").value = genres.some(([id]) => id === selectedGenre)
-    ? selectedGenre
-    : "";
+  const selectedGenreNames = genres
+    .filter(([id]) => selectedGenres.has(id))
+    .map(([, name]) => name);
+  $("#genre-filter-wrap").innerHTML = `<details class="status-filter genre-filter" id="genre-filter"${genreMenuOpen ? " open" : ""}>
+    <summary><span class="status-filter-selection"><span>${selectedGenreNames.length ? selectedGenreNames.join(" + ") : "All genres"}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary>
+    <div class="status-filter-menu" role="group" aria-label="Filter by genre">
+      <button class="status-filter-option" type="button" data-genre="" aria-pressed="${!selectedGenres.size}"><span>All genres</span></button>
+      ${genres
+        .map(
+          ([id, name]) =>
+            `<button class="status-filter-option" type="button" data-genre="${id}" aria-pressed="${selectedGenres.has(id)}"><span>${esc(name)}</span></button>`,
+        )
+        .join("")}
+    </div>
+  </details>`;
   const query = $("#library-query").value.trim().toLowerCase();
   const rating = $("#rating-filter").value;
   const filtered = shows.filter(
     (show) =>
       matchesLibraryFilters(show, selectedStatuses, watchlistOnly) &&
       show.name.toLowerCase().includes(query) &&
-      (!$("#genre").value ||
-        show.genres.some(
-          (genre) => String(genre.id) === $("#genre").value,
-        )) &&
+      (!selectedGenres.size ||
+        show.genres.some((genre) => selectedGenres.has(String(genre.id)))) &&
       (!rating ||
         (rating === "unrated"
           ? !show.rating

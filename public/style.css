@@ -1918,6 +1918,10 @@ h1 {
   background: #1b251e;
   box-shadow: 0 16px 40px #0009;
 }
+.genre-filter .status-filter-menu {
+  max-height: 290px;
+  overflow-y: auto;
+}
 .status-filter-option {
   display: flex;
   width: 100%;
@@ -2056,6 +2060,7 @@ h1 {
   gap: 9px;
 }
 .filters > label,
+.genre-filter-wrap,
 .filters .custom-select,
 .filters .custom-select:has(#rating-filter),
 .filters .custom-select:has(#sort) {
@@ -2123,6 +2128,9 @@ h1 {
   .filters > label {
     width: auto;
     max-width: none;
+  }
+  .genre-filter-wrap {
+    width: 145px;
   }
   .filters .custom-select {
     width: 145px;

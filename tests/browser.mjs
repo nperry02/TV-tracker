@@ -60,6 +60,12 @@ try {
       await filter.locator("summary").click();
     await filter.locator(`[data-tab="${status}"]`).click();
   };
+  const selectLibraryGenre = async (genre) => {
+    const filter = page.locator("#genre-filter");
+    if (!(await filter.evaluate((details) => details.open)))
+      await filter.locator("summary").click();
+    await filter.locator(`[data-genre="${genre}"]`).click();
+  };
   if (live) {
     const first = await (
       await page.request.get(`${base}/api/search?q=Star&page=1`)
@@ -395,7 +401,20 @@ try {
     await page.locator("#status-filter summary").click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);
-    await page.locator("#genre").selectOption("18");
+    await selectLibraryGenre("18");
+    await selectLibraryGenre("80");
+    assert.match(
+      await page.locator("#genre-filter summary").textContent(),
+      /Crime \+ Drama/,
+    );
+    assert.equal(
+      await page.locator('#genre-filter [data-genre="18"]').getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.equal(
+      await page.locator('#genre-filter [data-genre="80"]').getAttribute("aria-pressed"),
+      "true",
+    );
     await page.locator("#library-query").fill("severance");
     assert.equal(await page.locator(".show-card").count(), 1);
     await page.locator("#library-query").fill("");
