@@ -146,6 +146,10 @@ const searchDialog = createSearchDialog({
   onOpenShow: openShow,
 });
 document.addEventListener("click", async (event) => {
+  if (!event.target.closest("#status-filter")) {
+    const statusFilter = $("#status-filter");
+    if (statusFilter) statusFilter.open = false;
+  }
   const pageLink = event.target.closest("[data-page]");
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
@@ -337,6 +341,11 @@ document.addEventListener("change", (event) => {
 });
 $("#library-query").addEventListener("input", render);
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && $("#status-filter")?.open) {
+    $("#status-filter").open = false;
+    $("#status-filter summary").focus();
+    return;
+  }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     searchDialog.open();

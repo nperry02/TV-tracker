@@ -5,7 +5,6 @@ export const statuses = [
   "Completed",
   "Dropped",
 ];
-export const libraryTabs = ["All", ...statuses, "Watchlist"];
 export function inLibrary(show) {
   // Preserve membership of libraries saved before tracking and watchlist were separate.
   return typeof show.tracked === "boolean"

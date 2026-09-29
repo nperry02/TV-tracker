@@ -50,6 +50,16 @@ try {
   });
   page.on("pageerror", (error) => errors.push(error.message));
   page.setDefaultTimeout(live ? 60000 : 10000);
+  const selectLibraryStatus = async (status) => {
+    if (status === "Watchlist") {
+      await page.locator("#watchlist-filter").click();
+      return;
+    }
+    const filter = page.locator("#status-filter");
+    if (!(await filter.evaluate((details) => details.open)))
+      await filter.locator("summary").click();
+    await filter.locator(`[data-tab="${status}"]`).click();
+  };
   if (live) {
     const first = await (
       await page.request.get(`${base}/api/search?q=Star&page=1`)
@@ -119,7 +129,7 @@ try {
   );
   assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    await page.locator('#watchlist-filter .count').textContent(),
     "0",
   );
   assert.equal(
@@ -156,7 +166,7 @@ try {
     "1",
   );
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    await page.locator('#watchlist-filter .count').textContent(),
     "0",
   );
   await page.locator("#season-select").selectOption("2");
@@ -177,13 +187,13 @@ try {
     "1",
   );
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    await page.locator('#watchlist-filter .count').textContent(),
     "1",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.locator('#tabs [data-tab="Watching"]').click();
+  await selectLibraryStatus("Watching");
   assert.equal(await page.locator(".show-card").count(), 1);
-  await page.locator('#tabs [data-tab="Watchlist"]').click();
+  await selectLibraryStatus("Watchlist");
   assert.equal(await page.locator(".show-card").count(), 1);
   await page.reload();
   assert.equal(
@@ -191,7 +201,7 @@ try {
     "true",
   );
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"]').getAttribute("aria-pressed"),
+    await page.locator('#watchlist-filter').getAttribute("aria-pressed"),
     "true",
   );
   await page.locator('.show-card[data-show="1396"]').click();
@@ -227,7 +237,7 @@ try {
   );
   assert.equal(await page.locator("#show-status").inputValue(), "Dropped");
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.locator('#tabs [data-tab="All"]').click();
+  await selectLibraryStatus("All");
   await page.reload();
   await page.locator('[data-show="1396"]').first().click();
   assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
@@ -356,10 +366,10 @@ try {
           ?.getAttribute("data-show") === "60059",
     );
     await page.getByRole("link", { name: "My Shows", exact: true }).click();
-    await page.locator('#tabs [data-tab="All"]').click();
-    await page.locator('#tabs [data-tab="Completed"]').click();
+    await selectLibraryStatus("All");
+    await selectLibraryStatus("Completed");
     assert.equal(await page.locator(".show-card").count(), 2);
-    await page.locator('#tabs [data-tab="Watching"]').click();
+    await selectLibraryStatus("Watching");
     assert.equal(
       await page.locator('#tabs [data-tab="Completed"]').getAttribute("aria-pressed"),
       "true",
@@ -368,8 +378,21 @@ try {
       await page.locator('#tabs [data-tab="Watching"]').getAttribute("aria-pressed"),
       "true",
     );
+    assert.match(
+      await page.locator("#status-filter summary").textContent(),
+      /Completed \+ Watching/,
+    );
+    assert.equal(
+      await page.locator("#status-filter summary .status-filter-dot").count(),
+      2,
+    );
     assert.ok(await page.locator(".show-card").count() > 2);
-    await page.locator('#tabs [data-tab="All"]').click();
+    await selectLibraryStatus("All");
+    assert.match(
+      await page.locator("#status-filter summary").textContent(),
+      /All shows/,
+    );
+    await page.locator("#status-filter summary").click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);
     await page.locator("#genre").selectOption("18");
@@ -617,14 +640,14 @@ try {
       "6",
     );
     assert.equal(
-      await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+      await page.locator('#watchlist-filter .count').textContent(),
       "1",
     );
     await page
       .getByRole("button", { name: "Close search", exact: true })
       .click();
     await page.reload();
-    await page.locator('#tabs [data-tab="Watchlist"]').click();
+    await selectLibraryStatus("Watchlist");
     await page.locator('.show-card[data-show="200022"]').click();
     assert.equal(
       await page.locator(".detail-hero .status-badge").first().textContent(),
@@ -688,7 +711,7 @@ try {
       "6",
     );
     assert.equal(
-      await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+      await page.locator('#watchlist-filter .count').textContent(),
       "1",
     );
     await page.locator('.show-card[data-show="200022"]').click();

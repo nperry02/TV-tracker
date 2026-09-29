@@ -61,58 +61,73 @@
           <p class="subtitle">Find, filter, and organize everything you watch.</p>
         </header>
       <section class="library" id="library" aria-label="Your show library">
-        <div class="tabs" id="tabs" aria-label="Filter by watch status"></div>
-        <div class="filterbar">
-          <label class="library-search"
-            ><span aria-hidden="true">⌕</span
-            ><input
-              id="library-query"
-              type="search"
-              placeholder="Search your shows…"
-              aria-label="Search your library"
-          /></label>
-          <div class="filters">
-            <div class="view-toggle" role="group" aria-label="Library view">
-              <button type="button" data-view="gallery" aria-pressed="true">
-                ▦ <span>Gallery</span>
-              </button>
-              <button type="button" data-view="list" aria-pressed="false">
-                ☷ <span>List</span>
-              </button>
-            </div>
-            <label
-              ><span class="sr-only">Genre</span
-              ><select id="genre">
-                <option value="">All genres</option>
-              </select></label
-            >
-            <label
-              ><span class="sr-only">Your rating</span
-              ><select id="rating-filter">
-                <option value="">All ratings</option>
-                <option value="unrated">Unrated</option>
-                <option value="4">4+ stars</option>
-                <option value="3">3+ stars</option>
-                <option value="2">2+ stars</option>
-                <option value="1">1+ stars</option>
-              </select></label
-            >
-            <label
-              ><span class="sr-only">Sort shows</span
-              ><select id="sort" aria-label="Sort shows">
-                <option value="last-updated" selected>Last updated</option>
-                <option value="release-newest">Release date: newest</option>
-                <option value="added">Recently added</option>
-                <option value="rating">Highest rated</option>
-                <option value="title">Title A–Z</option>
-                <option value="release-oldest">Release date: oldest</option>
-              </select></label
-            >
+        <aside class="library-controls" aria-label="Library filters and sorting">
+          <p class="library-controls-label">Filter and sort</p>
+          <div class="status-filter-wrap">
+            <span>Watch status</span>
+            <div class="tabs" id="tabs"></div>
           </div>
+          <button
+            class="watchlist-filter"
+            id="watchlist-filter"
+            type="button"
+            data-tab="Watchlist"
+            aria-pressed="false"
+          ></button>
+          <div class="filterbar">
+            <label class="library-search"
+              ><span aria-hidden="true">⌕</span
+              ><input
+                id="library-query"
+                type="search"
+                placeholder="Search your shows…"
+                aria-label="Search your library"
+            /></label>
+            <div class="filters">
+              <div class="view-toggle" role="group" aria-label="Library view">
+                <button type="button" data-view="gallery" aria-pressed="true">
+                  ▦ <span>Gallery</span>
+                </button>
+                <button type="button" data-view="list" aria-pressed="false">
+                  ☷ <span>List</span>
+                </button>
+              </div>
+              <label
+                ><span class="sr-only">Genre</span
+                ><select id="genre">
+                  <option value="">All genres</option>
+                </select></label
+              >
+              <label
+                ><span class="sr-only">Your rating</span
+                ><select id="rating-filter">
+                  <option value="">All ratings</option>
+                  <option value="unrated">Unrated</option>
+                  <option value="4">4+ stars</option>
+                  <option value="3">3+ stars</option>
+                  <option value="2">2+ stars</option>
+                  <option value="1">1+ stars</option>
+                </select></label
+              >
+              <label
+                ><span class="sr-only">Sort shows</span
+                ><select id="sort" aria-label="Sort shows">
+                  <option value="last-updated" selected>Last updated</option>
+                  <option value="release-newest">Release date: newest</option>
+                  <option value="added">Recently added</option>
+                  <option value="rating">Highest rated</option>
+                  <option value="title">Title A–Z</option>
+                  <option value="release-oldest">Release date: oldest</option>
+                </select></label
+              >
+            </div>
+          </div>
+        </aside>
+        <div class="library-results">
+          <p id="result-count" class="result-count"></p>
+          <div id="library-grid" class="poster-grid"></div>
+          <div id="empty" class="empty" hidden></div>
         </div>
-        <p id="result-count" class="result-count"></p>
-        <div id="library-grid" class="poster-grid"></div>
-        <div id="empty" class="empty" hidden></div>
       </section>
       </section>
       <section id="stats-view" class="stats-page" aria-labelledby="stats-title" hidden>

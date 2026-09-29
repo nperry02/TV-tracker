@@ -1,7 +1,6 @@
 import {
   inLibrary,
   inWatchlist,
-  libraryTabs,
   matchesLibraryFilters,
   matchesTab,
   progress,
@@ -66,6 +65,7 @@ function sortShows(shows, sort) {
 export function renderLibrary(shows, libraryFilters, viewMode) {
   const { selectedStatuses, watchlistOnly } = libraryFilters;
   const allSelected = !selectedStatuses.size && !watchlistOnly;
+  const statusMenuOpen = $("#status-filter")?.open;
   const counts = Object.fromEntries(
     [...statuses, "Watchlist"].map((status) => [
       status,
@@ -73,12 +73,30 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
     ]),
   );
   const tracked = shows.filter((show) => matchesTab(show, "All"));
-  $("#tabs").innerHTML = libraryTabs
+  const selectedLabels = [...selectedStatuses];
+  const statusDots = selectedLabels
     .map(
       (status) =>
-        `<button class="tab ${status === "All" ? (allSelected ? "active" : "") : status === "Watchlist" ? (watchlistOnly ? "active" : "") : (selectedStatuses.has(status) ? "active" : "")}" data-tab="${status}" aria-pressed="${status === "All" ? allSelected : status === "Watchlist" ? watchlistOnly : selectedStatuses.has(status)}">${status === "All" ? "All shows" : status}<span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`,
+        `<i class="status-filter-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>`,
     )
     .join("");
+  $("#tabs").innerHTML = `<details class="status-filter" id="status-filter"${statusMenuOpen ? " open" : ""}>
+    <summary><span class="status-filter-selection">${statusDots}<span>${selectedLabels.length ? selectedLabels.join(" + ") : "All shows"}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary>
+    <div class="status-filter-menu" role="group" aria-label="Filter by watch status">${["All", ...statuses]
+      .map((status) => {
+        const active =
+          status === "All"
+            ? allSelected
+            : status === "Watchlist"
+              ? watchlistOnly
+              : selectedStatuses.has(status);
+        return `<button class="status-filter-option" type="button" data-tab="${status}" aria-pressed="${active}"><span><i class="status-filter-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>${status === "All" ? "All shows" : status}</span><span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`;
+      })
+      .join("")}</div>
+  </details>`;
+  $("#watchlist-filter").classList.toggle("active", watchlistOnly);
+  $("#watchlist-filter").setAttribute("aria-pressed", String(watchlistOnly));
+  $("#watchlist-filter").innerHTML = `<span><i class="status-filter-dot watchlist" aria-hidden="true"></i>Watchlist</span><span class="count">${counts.Watchlist}</span>`;
   const selectedGenre = $("#genre").value;
   const genres = [
     ...new Map(
@@ -112,7 +130,7 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   );
   sortShows(filtered, $("#sort").value);
   const filterLabels = [
-    ...selectedStatuses,
+    ...selectedLabels,
     ...(watchlistOnly ? ["Watchlist"] : []),
   ];
   $("#result-count").textContent =
