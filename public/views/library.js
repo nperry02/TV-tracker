@@ -2,6 +2,7 @@ import {
   inLibrary,
   inWatchlist,
   matchesLibraryFilters,
+  matchesGenres,
   matchesTab,
   progress,
   statuses,
@@ -126,8 +127,7 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
     (show) =>
       matchesLibraryFilters(show, selectedStatuses, watchlistOnly) &&
       show.name.toLowerCase().includes(query) &&
-      (!selectedGenres.size ||
-        show.genres.some((genre) => selectedGenres.has(String(genre.id)))) &&
+      matchesGenres(show, selectedGenres) &&
       (!rating ||
         (rating === "unrated"
           ? !show.rating

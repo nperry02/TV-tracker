@@ -1824,6 +1824,7 @@ h1 {
   position: sticky;
   top: 22px;
   display: grid;
+  min-width: 0;
   gap: 16px;
   padding: 18px;
   border: 1px solid var(--border);
@@ -2047,6 +2048,7 @@ h1 {
 }
 .filterbar {
   display: grid;
+  min-width: 0;
   gap: 10px;
   margin-top: 0;
 }
@@ -2057,6 +2059,7 @@ h1 {
 .filters {
   display: grid;
   width: 100%;
+  min-width: 0;
   gap: 9px;
 }
 .filters > label,
@@ -2065,6 +2068,7 @@ h1 {
 .filters .custom-select:has(#rating-filter),
 .filters .custom-select:has(#sort) {
   width: 100%;
+  min-width: 0;
   max-width: none;
 }
 .view-toggle {
@@ -2620,7 +2624,20 @@ h1 {
   .filters {
     width: 100%;
   }
+  .genre-filter-wrap,
+  .filters > label {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 calc(50% - 5px);
+  }
+  .filters .custom-select,
+  .filters .custom-select:has(#rating-filter),
+  .filters .custom-select:has(#sort) {
+    width: 100%;
+    max-width: none;
+  }
   .view-toggle {
+    flex-basis: 100%;
     order: 0;
   }
   .poster-grid {

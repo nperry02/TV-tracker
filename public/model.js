@@ -28,6 +28,11 @@ export function matchesLibraryFilters(show, selectedStatuses, watchlistOnly) {
   if (!selectedStatuses.size) return watchlistOnly || inLibrary(show);
   return inLibrary(show) && selectedStatuses.has(watchStatus(show));
 }
+export function matchesGenres(show, selectedGenres) {
+  return [...selectedGenres].every((selectedGenre) =>
+    show.genres.some((genre) => String(genre.id) === selectedGenre),
+  );
+}
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 export function today() {
   const d = new Date();

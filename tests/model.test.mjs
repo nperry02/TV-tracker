@@ -6,6 +6,7 @@ import {
   inWatchlist,
   matchesTab,
   matchesLibraryFilters,
+  matchesGenres,
   libraryStats,
   metadataRefreshInterval,
   metadataRefreshQueue,
@@ -171,6 +172,21 @@ test("library filters combine statuses and intersect them with watchlist", () =>
   assert.equal(matchesLibraryFilters(dropped, selected, false), false);
   assert.equal(matchesLibraryFilters(watching, selected, true), true);
   assert.equal(matchesLibraryFilters(paused, selected, true), false);
+});
+
+test("genre filters require every selected genre", () => {
+  const crimeDrama = show({
+    genres: [
+      { id: 18, name: "Drama" },
+      { id: 80, name: "Crime" },
+    ],
+  });
+  const drama = show({ genres: [{ id: 18, name: "Drama" }] });
+
+  assert.equal(matchesGenres(crimeDrama, new Set()), true);
+  assert.equal(matchesGenres(crimeDrama, new Set(["18"])), true);
+  assert.equal(matchesGenres(crimeDrama, new Set(["18", "80"])), true);
+  assert.equal(matchesGenres(drama, new Set(["18", "80"])), false);
 });
 
 test("library stats aggregate ratings, statuses, progress, specials, seasons, and runtime estimates", () => {

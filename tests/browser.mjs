@@ -415,6 +415,19 @@ try {
       await page.locator('#genre-filter [data-genre="80"]').getAttribute("aria-pressed"),
       "true",
     );
+    assert.equal(
+      await page.locator(".library-controls").evaluate((panel) => {
+        const summary = panel.querySelector("#genre-filter summary span span");
+        summary.textContent = "Animation + Crime + Drama + Family + Kids";
+        return [...panel.querySelectorAll("summary, input, .view-toggle, .custom-select")]
+          .every((control) => control.getBoundingClientRect().right <= panel.getBoundingClientRect().right + 1);
+      }),
+      true,
+      "Long filter labels stay inside the filter panel",
+    );
+    await page.evaluate(() => window.dispatchEvent(new Event("resize")));
+    await selectLibraryGenre("18");
+    await selectLibraryGenre("18");
     await page.locator("#library-query").fill("severance");
     assert.equal(await page.locator(".show-card").count(), 1);
     await page.locator("#library-query").fill("");
@@ -580,12 +593,22 @@ try {
   await page.goto(`${base}/#library`);
   await page.locator("#library-view").waitFor();
   await page.getByRole("button", { name: /List/ }).click();
+  const mobileListLayout = await page.evaluate(() => ({
+    viewport: innerWidth,
+    document: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll("body *")]
+      .filter((element) => element.getBoundingClientRect().right > innerWidth + 1)
+      .slice(0, 8)
+      .map((element) => ({
+        className: element.className,
+        id: element.id,
+        right: Math.round(element.getBoundingClientRect().right),
+      })),
+  }));
   assert.equal(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
+    mobileListLayout.document <= mobileListLayout.viewport,
     true,
-    "List view fits mobile viewport",
+    `List view fits mobile viewport: ${JSON.stringify(mobileListLayout)}`,
   );
   await page.screenshot({ path: "test-results/mobile-list.png", fullPage: true });
   await page.getByRole("button", { name: /Gallery/ }).click();
