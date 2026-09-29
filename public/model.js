@@ -1,3 +1,4 @@
+// Library membership and filter rules
 export const statuses = [
   "Watching",
   "Paused",
@@ -14,6 +15,7 @@ export function inLibrary(show) {
       );
 }
 export function inWatchlist(show) {
+  // Older saves implied Watchlist when a show had no progress or manual status.
   return typeof show.watchlist === "boolean"
     ? show.watchlist
     : !show.watched.length && !show.statusOverride;
@@ -24,15 +26,19 @@ export function matchesTab(show, tab) {
   return inLibrary(show) && watchStatus(show) === tab;
 }
 export function matchesLibraryFilters(show, selectedStatuses, watchlistOnly) {
+  // Watchlist intersects selected statuses because it is independent membership.
   if (watchlistOnly && !inWatchlist(show)) return false;
   if (!selectedStatuses.size) return watchlistOnly || inLibrary(show);
   return inLibrary(show) && selectedStatuses.has(watchStatus(show));
 }
 export function matchesGenres(show, selectedGenres) {
+  // Multiple genre selections use AND behavior.
   return [...selectedGenres].every((selectedGenre) =>
     show.genres.some((genre) => String(genre.id) === selectedGenre),
   );
 }
+
+// Episode ordering, availability, and progress
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 export function today() {
   const d = new Date();
@@ -53,6 +59,8 @@ export function progress(show, date = today()) {
   const episodes = regularEpisodes(show);
   const available = episodes.filter((e) => aired(e, date));
   const watched = new Set(show.watched);
+
+  // Upcoming follows the full timeline while next is limited to aired episodes.
   return {
     total: available.length,
     done: available.filter((e) => watched.has(episodeKey(e))).length,
@@ -62,6 +70,7 @@ export function progress(show, date = today()) {
   };
 }
 export function watchStatus(show, date = today()) {
+  // Explicit corrections always take precedence over derived progress.
   if (show.statusOverride) return show.statusOverride;
   if (!show.watched.length) return inLibrary(show) ? "Watching" : "Not started";
   const p = progress(show, date);
@@ -78,8 +87,14 @@ export function watchStatus(show, date = today()) {
   return "Caught Up";
 }
 
+// Metadata refresh scheduling
+
+// App startup builds this queue after rendering saved data, then refreshes up to
+// five overdue shows sequentially. There is no background timer; later starts or
+// reloads continue through the remaining eligible shows.
 const DAY = 24 * 60 * 60 * 1000;
 export function metadataRefreshInterval(show, date = today()) {
+  // Active shows refresh most often; stable library states back off gradually.
   if (!inLibrary(show) && inWatchlist(show)) return 7 * DAY;
   const status = watchStatus(show, date);
   if (["Watching", "Caught Up"].includes(status)) return DAY;
@@ -93,6 +108,8 @@ export function metadataRefreshQueue(
 ) {
   const timestamp = now.getTime();
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  // Prioritize shorter refresh intervals, then the stalest metadata.
   return shows
     .filter((show) => {
       const refreshed = new Date(show.refreshedAt).getTime();
@@ -110,6 +127,7 @@ export function metadataRefreshQueue(
     .slice(0, limit);
 }
 
+// Statistics helpers
 const positiveRuntime = (value) =>
   Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null;
 
@@ -123,6 +141,7 @@ function median(values) {
 }
 
 export function libraryStats(shows, date = today()) {
+  // Overview and ratings include tracked shows; Watchlist is counted separately.
   const tracked = shows.filter(inLibrary);
   const statusCounts = Object.fromEntries(
     statuses.map((status) => [
@@ -137,6 +156,8 @@ export function libraryStats(shows, date = today()) {
     const rating = (index + 1) / 2;
     return { rating, count: ratings.filter((value) => value === rating).length };
   });
+
+  // The library median is the final fallback when episode and show runtimes are absent.
   const knownRuntimes = tracked.flatMap((show) => [
     ...show.episodes.map((episode) => positiveRuntime(episode.runtime)),
     positiveRuntime(show.typicalRuntime),
@@ -149,6 +170,8 @@ export function libraryStats(shows, date = today()) {
   let estimatedMinutes = 0;
   let runtimeCoveredEpisodes = 0;
   let runtimeEstimatedEpisodes = 0;
+
+  // Aggregate progress, completed seasons, and watch-time coverage per show.
   for (const show of tracked) {
     const watched = new Set(show.watched);
     const episodesByKey = new Map(
@@ -162,6 +185,8 @@ export function libraryStats(shows, date = today()) {
     watchedRegularEpisodes += airedRegular.filter((episode) =>
       watched.has(episodeKey(episode)),
     ).length;
+
+    // A season is complete only when every currently aired regular episode is watched.
     const seasons = new Map();
     for (const episode of airedRegular) {
       const group = seasons.get(episode.season_number) || [];
@@ -173,6 +198,8 @@ export function libraryStats(shows, date = today()) {
         episodes.length &&
         episodes.every((episode) => watched.has(episodeKey(episode))),
     ).length;
+
+    // Specials contribute to watch time even though they do not affect show progress.
     for (const key of watched) {
       const episode = episodesByKey.get(key);
       const exact = positiveRuntime(episode?.runtime);
@@ -183,6 +210,8 @@ export function libraryStats(shows, date = today()) {
       if (runtime) estimatedMinutes += runtime;
     }
   }
+
+  // Rankings use deterministic alphabetical fallbacks for equal counts or ratings.
   const genreCounts = new Map();
   for (const show of tracked)
     for (const genre of show.genres || [])
