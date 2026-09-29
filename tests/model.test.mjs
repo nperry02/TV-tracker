@@ -5,6 +5,7 @@ import {
   watchStatus,
   inWatchlist,
   matchesTab,
+  matchesLibraryFilters,
   libraryStats,
   metadataRefreshInterval,
   metadataRefreshQueue,
@@ -153,6 +154,23 @@ test("explicit watchlist flags overlap every status and stay in All without chan
     assert.equal(matchesTab(s, "Watchlist"), false);
     assert.equal(watchStatus(s), statusOverride);
   }
+});
+
+test("library filters combine statuses and intersect them with watchlist", () => {
+  const watching = show({ tracked: true, watchlist: true });
+  const paused = show({ tracked: true, watchlist: false, statusOverride: "Paused" });
+  const dropped = show({ tracked: true, watchlist: true, statusOverride: "Dropped" });
+  const watchlistOnly = show({ tracked: false, watchlist: true });
+  const selected = new Set(["Watching", "Paused"]);
+
+  assert.equal(matchesLibraryFilters(watching, new Set(), false), true);
+  assert.equal(matchesLibraryFilters(watchlistOnly, new Set(), false), false);
+  assert.equal(matchesLibraryFilters(watchlistOnly, new Set(), true), true);
+  assert.equal(matchesLibraryFilters(watching, selected, false), true);
+  assert.equal(matchesLibraryFilters(paused, selected, false), true);
+  assert.equal(matchesLibraryFilters(dropped, selected, false), false);
+  assert.equal(matchesLibraryFilters(watching, selected, true), true);
+  assert.equal(matchesLibraryFilters(paused, selected, true), false);
 });
 
 test("library stats aggregate ratings, statuses, progress, specials, seasons, and runtime estimates", () => {

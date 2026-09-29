@@ -24,6 +24,11 @@ export function matchesTab(show, tab) {
   if (tab === "All") return inLibrary(show);
   return inLibrary(show) && watchStatus(show) === tab;
 }
+export function matchesLibraryFilters(show, selectedStatuses, watchlistOnly) {
+  if (watchlistOnly && !inWatchlist(show)) return false;
+  if (!selectedStatuses.size) return watchlistOnly || inLibrary(show);
+  return inLibrary(show) && selectedStatuses.has(watchStatus(show));
+}
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 export function today() {
   const d = new Date();

@@ -2,6 +2,7 @@ import {
   inLibrary,
   inWatchlist,
   libraryTabs,
+  matchesLibraryFilters,
   matchesTab,
   progress,
   statuses,
@@ -62,7 +63,9 @@ function sortShows(shows, sort) {
   });
 }
 
-export function renderLibrary(shows, activeTab, viewMode) {
+export function renderLibrary(shows, libraryFilters, viewMode) {
+  const { selectedStatuses, watchlistOnly } = libraryFilters;
+  const allSelected = !selectedStatuses.size && !watchlistOnly;
   const counts = Object.fromEntries(
     [...statuses, "Watchlist"].map((status) => [
       status,
@@ -73,7 +76,7 @@ export function renderLibrary(shows, activeTab, viewMode) {
   $("#tabs").innerHTML = libraryTabs
     .map(
       (status) =>
-        `<button class="tab ${activeTab === status ? "active" : ""}" data-tab="${status}" aria-pressed="${activeTab === status}">${status === "All" ? "All shows" : status}<span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`,
+        `<button class="tab ${status === "All" ? (allSelected ? "active" : "") : status === "Watchlist" ? (watchlistOnly ? "active" : "") : (selectedStatuses.has(status) ? "active" : "")}" data-tab="${status}" aria-pressed="${status === "All" ? allSelected : status === "Watchlist" ? watchlistOnly : selectedStatuses.has(status)}">${status === "All" ? "All shows" : status}<span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`,
     )
     .join("");
   const selectedGenre = $("#genre").value;
@@ -96,7 +99,7 @@ export function renderLibrary(shows, activeTab, viewMode) {
   const rating = $("#rating-filter").value;
   const filtered = shows.filter(
     (show) =>
-      matchesTab(show, activeTab) &&
+      matchesLibraryFilters(show, selectedStatuses, watchlistOnly) &&
       show.name.toLowerCase().includes(query) &&
       (!$("#genre").value ||
         show.genres.some(
@@ -108,8 +111,12 @@ export function renderLibrary(shows, activeTab, viewMode) {
           : show.rating >= Number(rating))),
   );
   sortShows(filtered, $("#sort").value);
+  const filterLabels = [
+    ...selectedStatuses,
+    ...(watchlistOnly ? ["Watchlist"] : []),
+  ];
   $("#result-count").textContent =
-    `${filtered.length} ${filtered.length === 1 ? "show" : "shows"}${activeTab === "All" ? " in your collection" : ` · ${activeTab.toLowerCase()}`}`;
+    `${filtered.length} ${filtered.length === 1 ? "show" : "shows"}${filterLabels.length ? ` · ${filterLabels.join(" + ").toLowerCase()}` : " in your collection"}`;
   $("#library-grid").className =
     viewMode === "list" ? "show-list" : "poster-grid";
   $("#library-grid").innerHTML =
@@ -130,10 +137,10 @@ export function renderLibrary(shows, activeTab, viewMode) {
   $("#empty").innerHTML = shows.length
     ? '<span class="empty-icon">⌕</span><h2>No shows here just yet.</h2><p>Try another status or adjust your filters to find your shows.</p><button id="reset-filters">Clear filters</button>'
     : '<span class="empty-icon">▰</span><h2>A new season starts here.</h2><p>Build a home for the shows you love. Find your first show, give it a rating, and pick up right where you left off.</p><button class="primary" id="first-show">Find your first show <span aria-hidden="true">↗</span></button>';
-  if (!filtered.length && activeTab === "Watchlist") {
+  if (!filtered.length && watchlistOnly && !selectedStatuses.size) {
     $("#empty").innerHTML =
       '<span class="empty-icon">＋</span><h2>Your next great show starts here.</h2><p>Save any show here, whether you have started it or not. Add or remove the watchlist flag from its details.</p><button class="primary" id="first-show">Find a show</button>';
-  } else if (!tracked.length && counts.Watchlist && activeTab === "All") {
+  } else if (!tracked.length && counts.Watchlist && allSelected) {
     $("#empty").innerHTML =
       '<span class="empty-icon">▰</span><h2>Your shows are on your watchlist.</h2><p>Start watching a saved show to include it in All shows. You can keep its watchlist flag and viewing status separately.</p><button class="primary" data-tab="Watchlist">View watchlist</button>';
   }

@@ -3,6 +3,7 @@ import {
   inWatchlist,
   inLibrary,
   metadataRefreshQueue,
+  statuses,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -22,10 +23,35 @@ import {
   renderShowDialog,
 } from "./views/show-dialog.js";
 let shows = [],
-  activeTab = "All",
   selectedId = null,
   selectedSeason = null,
   mutationPending = false;
+const libraryFilters = (() => {
+  try {
+    const saved = JSON.parse(
+      sessionStorage.getItem("next-episode:library-filters"),
+    );
+    return {
+      selectedStatuses: new Set(
+        (saved?.statuses || []).filter((status) => statuses.includes(status)),
+      ),
+      watchlistOnly: Boolean(saved?.watchlist),
+    };
+  } catch {
+    return { selectedStatuses: new Set(), watchlistOnly: false };
+  }
+})();
+function saveLibraryFilters() {
+  try {
+    sessionStorage.setItem(
+      "next-episode:library-filters",
+      JSON.stringify({
+        statuses: [...libraryFilters.selectedStatuses],
+        watchlist: libraryFilters.watchlistOnly,
+      }),
+    );
+  } catch {}
+}
 let viewMode = (() => {
   try {
     return localStorage.getItem("next-episode:view") === "list"
@@ -37,26 +63,21 @@ let viewMode = (() => {
 })();
 function applyRoute({ scroll = false } = {}) {
   const route = location.hash === "#stats" ? "stats" : location.hash === "#library" ? "library" : "home";
-  $("#home-view").hidden = route === "stats";
+  $("#home-view").hidden = route !== "home";
+  $("#library-view").hidden = route !== "library";
   $("#stats-view").hidden = route !== "stats";
   document.querySelectorAll("[data-page]").forEach((link) =>
     link.classList.toggle("active", link.dataset.page === route),
   );
   if (route === "stats") renderStats(shows, $("#stats-content"));
-  if (scroll && route === "stats") window.scrollTo({ top: 0, behavior: "auto" });
-  if (scroll && route === "library")
-    $("#library").scrollIntoView({ behavior: "smooth", block: "start" });
-  if (scroll && route === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
 function render() {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.view === viewMode));
   });
-  document.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.sidebarTab === activeTab);
-  });
   renderHome(shows, mutationPending);
-  renderLibrary(shows, activeTab, viewMode);
+  renderLibrary(shows, libraryFilters, viewMode);
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
@@ -125,24 +146,27 @@ const searchDialog = createSearchDialog({
   onOpenShow: openShow,
 });
 document.addEventListener("click", async (event) => {
-  const pageLink = event.target.closest("[data-page], [data-sidebar-tab]");
+  const pageLink = event.target.closest("[data-page]");
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
   if (button.dataset.tab) {
-    activeTab = button.dataset.tab;
+    const tab = button.dataset.tab;
+    if (tab === "All") {
+      libraryFilters.selectedStatuses.clear();
+      libraryFilters.watchlistOnly = false;
+    } else if (tab === "Watchlist") {
+      libraryFilters.watchlistOnly = !libraryFilters.watchlistOnly;
+    } else if (libraryFilters.selectedStatuses.has(tab)) {
+      libraryFilters.selectedStatuses.delete(tab);
+    } else {
+      libraryFilters.selectedStatuses.add(tab);
+    }
+    saveLibraryFilters();
     if (location.hash !== "#library") history.pushState(null, "", "#library");
     applyRoute();
     render();
-    return;
-  }
-  if (button.dataset.sidebarTab) {
-    activeTab = button.dataset.sidebarTab;
-    if (location.hash !== "#library") history.pushState(null, "", "#library");
-    applyRoute();
-    render();
-    $("#library").scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
   if (button.dataset.view) {
@@ -174,8 +198,13 @@ document.addEventListener("click", async (event) => {
       id,
     );
   }
-  if (["add-show", "first-show"].includes(button.id))
+  if (
+    ["add-show", "first-show"].includes(button.id) ||
+    button.dataset.addShow !== undefined
+  ) {
+    if ($("#nav-drawer").open) $("#nav-drawer").close();
     return searchDialog.open();
+  }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
   if (button.id === "toggle-watchlist") {
@@ -190,7 +219,9 @@ document.addEventListener("click", async (event) => {
   }
   if (button.id === "load-more") return searchDialog.loadMore();
   if (button.id === "reset-filters") {
-    activeTab = "All";
+    libraryFilters.selectedStatuses.clear();
+    libraryFilters.watchlistOnly = false;
+    saveLibraryFilters();
     $("#library-query").value = "";
     $("#genre").value = "";
     $("#rating-filter").value = "";
