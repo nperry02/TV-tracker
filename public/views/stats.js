@@ -1,12 +1,14 @@
 import { libraryStats, statuses } from "../model.js";
 import { esc, poster, stars } from "../ui.js";
 
+// Compact display formatting
 function formatHours(minutes) {
   if (minutes == null) return "—";
   const hours = minutes / 60;
   return hours >= 10 ? Math.round(hours).toLocaleString() : hours.toFixed(1);
 }
 
+// SVG keeps the histogram dependency-free while exposing each bucket to assistive tech.
 function ratingChart(buckets) {
   const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
   const bars = buckets
@@ -21,6 +23,7 @@ function ratingChart(buckets) {
 }
 
 export function renderStats(shows, container) {
+  // The model owns all calculations; this renderer only shapes accessible sections.
   const data = libraryStats(shows);
   const statusList = statuses
     .map(
@@ -44,6 +47,8 @@ export function renderStats(shows, container) {
         )
         .join("")
     : '<div class="stats-empty stats-empty-wide"><strong>No rated shows yet.</strong><span>Rate a show and your favorites will appear here.</span></div>';
+
+  // Coverage distinguishes metadata-backed runtimes from the median fallback.
   const runtimeNote =
     data.estimatedMinutes == null
       ? "Your estimate will appear as runtime metadata refreshes."

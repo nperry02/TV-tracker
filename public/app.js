@@ -3,6 +3,7 @@ import {
   inWatchlist,
   inLibrary,
   metadataRefreshQueue,
+  statuses,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -21,11 +22,48 @@ import {
   initialShowSeason,
   renderShowDialog,
 } from "./views/show-dialog.js";
+
+// Shared application and dialog state
 let shows = [],
-  activeTab = "All",
   selectedId = null,
   selectedSeason = null,
   mutationPending = false;
+
+// Library selections survive page navigation and reloads within the current tab.
+const libraryFilters = (() => {
+  try {
+    const saved = JSON.parse(
+      sessionStorage.getItem("next-episode:library-filters"),
+    );
+    return {
+      selectedStatuses: new Set(
+        (saved?.statuses || []).filter((status) => statuses.includes(status)),
+      ),
+      selectedGenres: new Set(saved?.genres || []),
+      watchlistOnly: Boolean(saved?.watchlist),
+    };
+  } catch {
+    return {
+      selectedStatuses: new Set(),
+      selectedGenres: new Set(),
+      watchlistOnly: false,
+    };
+  }
+})();
+function saveLibraryFilters() {
+  try {
+    sessionStorage.setItem(
+      "next-episode:library-filters",
+      JSON.stringify({
+        statuses: [...libraryFilters.selectedStatuses],
+        genres: [...libraryFilters.selectedGenres],
+        watchlist: libraryFilters.watchlistOnly,
+      }),
+    );
+  } catch {}
+}
+
+// View mode persists across browser sessions when storage is available.
 let viewMode = (() => {
   try {
     return localStorage.getItem("next-episode:view") === "list"
@@ -35,28 +73,25 @@ let viewMode = (() => {
     return "gallery";
   }
 })();
+
+// Hash routing and top-level rendering
 function applyRoute({ scroll = false } = {}) {
   const route = location.hash === "#stats" ? "stats" : location.hash === "#library" ? "library" : "home";
-  $("#home-view").hidden = route === "stats";
+  $("#home-view").hidden = route !== "home";
+  $("#library-view").hidden = route !== "library";
   $("#stats-view").hidden = route !== "stats";
   document.querySelectorAll("[data-page]").forEach((link) =>
     link.classList.toggle("active", link.dataset.page === route),
   );
   if (route === "stats") renderStats(shows, $("#stats-content"));
-  if (scroll && route === "stats") window.scrollTo({ top: 0, behavior: "auto" });
-  if (scroll && route === "library")
-    $("#library").scrollIntoView({ behavior: "smooth", block: "start" });
-  if (scroll && route === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
 function render() {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.view === viewMode));
   });
-  document.querySelectorAll("[data-sidebar-tab]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.sidebarTab === activeTab);
-  });
   renderHome(shows, mutationPending);
-  renderLibrary(shows, activeTab, viewMode);
+  renderLibrary(shows, libraryFilters, viewMode);
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
@@ -76,6 +111,8 @@ function renderShow() {
     enhanceSelects($("#show-content"));
   }
 }
+
+// Mutations redraw disabled controls immediately, then restore dialog context.
 async function save(body, message, id = selectedId) {
   if (mutationPending) return;
   mutationPending = true;
@@ -99,6 +136,7 @@ async function save(body, message, id = selectedId) {
     if ($("#show-dialog").open) renderShow();
     if (!isCurrentDialog()) return;
     $("#show-dialog").scrollTop = scroll;
+    // Recreated dialog markup receives focus by stable ID or episode number.
     const target = focusId
       ? document.getElementById(focusId)
       : episode
@@ -114,6 +152,8 @@ async function refreshShow(id, notify = true) {
   if (selectedId === id && $("#show-dialog").open) renderShow();
   if (notify) toast("Show information is up to date.");
 }
+
+// Search owns its paging state while the app supplies library updates and routing.
 const searchDialog = createSearchDialog({
   getShows: () => shows,
   onShowAdded: (show) => {
@@ -124,25 +164,48 @@ const searchDialog = createSearchDialog({
   },
   onOpenShow: openShow,
 });
+
+// Delegated button actions cover content that renderers replace after each change.
 document.addEventListener("click", async (event) => {
-  const pageLink = event.target.closest("[data-page], [data-sidebar-tab]");
+  // Native details filters close when interaction moves elsewhere on the page.
+  for (const selector of ["#status-filter", "#genre-filter"])
+    if (!event.target.closest(selector)) {
+      const filter = $(selector);
+      if (filter) filter.open = false;
+    }
+  const pageLink = event.target.closest("[data-page]");
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
   if (button.dataset.tab) {
-    activeTab = button.dataset.tab;
+    // Statuses combine with OR; Watchlist is an independent intersecting filter.
+    const tab = button.dataset.tab;
+    if (tab === "All") {
+      libraryFilters.selectedStatuses.clear();
+      libraryFilters.watchlistOnly = false;
+    } else if (tab === "Watchlist") {
+      libraryFilters.watchlistOnly = !libraryFilters.watchlistOnly;
+    } else if (libraryFilters.selectedStatuses.has(tab)) {
+      libraryFilters.selectedStatuses.delete(tab);
+    } else {
+      libraryFilters.selectedStatuses.add(tab);
+    }
+    saveLibraryFilters();
     if (location.hash !== "#library") history.pushState(null, "", "#library");
     applyRoute();
     render();
     return;
   }
-  if (button.dataset.sidebarTab) {
-    activeTab = button.dataset.sidebarTab;
-    if (location.hash !== "#library") history.pushState(null, "", "#library");
-    applyRoute();
+  if (button.dataset.genre !== undefined) {
+    // Genre selections combine with AND in the model layer.
+    const genre = button.dataset.genre;
+    if (!genre) libraryFilters.selectedGenres.clear();
+    else if (libraryFilters.selectedGenres.has(genre))
+      libraryFilters.selectedGenres.delete(genre);
+    else libraryFilters.selectedGenres.add(genre);
+    saveLibraryFilters();
     render();
-    $("#library").scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
   if (button.dataset.view) {
@@ -157,6 +220,7 @@ document.addEventListener("click", async (event) => {
   }
   if (button.dataset.show) return openShow(button.dataset.show);
   if (button.dataset.next) {
+    // Continue Watching always resolves the next aired episode at click time.
     const id = Number(button.dataset.next);
     const show = shows.find((s) => s.id === id);
     const next = show && progress(show).next;
@@ -174,8 +238,13 @@ document.addEventListener("click", async (event) => {
       id,
     );
   }
-  if (["add-show", "first-show"].includes(button.id))
+  if (
+    ["add-show", "first-show"].includes(button.id) ||
+    button.dataset.addShow !== undefined
+  ) {
+    if ($("#nav-drawer").open) $("#nav-drawer").close();
     return searchDialog.open();
+  }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
   if (button.id === "toggle-watchlist") {
@@ -190,9 +259,11 @@ document.addEventListener("click", async (event) => {
   }
   if (button.id === "load-more") return searchDialog.loadMore();
   if (button.id === "reset-filters") {
-    activeTab = "All";
+    libraryFilters.selectedStatuses.clear();
+    libraryFilters.selectedGenres.clear();
+    libraryFilters.watchlistOnly = false;
+    saveLibraryFilters();
     $("#library-query").value = "";
-    $("#genre").value = "";
     $("#rating-filter").value = "";
     render();
     return;
@@ -243,6 +314,7 @@ document.addEventListener("click", async (event) => {
     const show = shows.find((s) => s.id === id);
     const tracked = inLibrary(show);
     const keepsWatchlist = tracked && inWatchlist(show);
+    // Removing All Shows data keeps the record only when Watchlist still needs it.
     const prompt = tracked
       ? `Remove ${show.name} from All Shows? This clears its status, ratings, and episode progress.${keepsWatchlist ? " It will remain on your Watchlist." : ""}`
       : `Remove ${show.name} from your saved shows?`;
@@ -272,9 +344,11 @@ document.addEventListener("click", async (event) => {
     }
   }
 });
+
+// Native control changes update filters or persist show-level fields.
 document.addEventListener("change", (event) => {
   const el = event.target;
-  if (["genre", "rating-filter", "sort"].includes(el.id)) render();
+  if (["rating-filter", "sort"].includes(el.id)) render();
   if (el.id === "season-select") {
     selectedSeason = Number(el.value);
     renderShow();
@@ -305,13 +379,23 @@ document.addEventListener("change", (event) => {
     });
 });
 $("#library-query").addEventListener("input", render);
+
+// Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
+  const openFilter = $("#status-filter[open], #genre-filter[open]");
+  if (event.key === "Escape" && openFilter) {
+    openFilter.open = false;
+    openFilter.querySelector("summary").focus();
+    return;
+  }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     searchDialog.open();
   }
 });
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
+
+// A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;
@@ -324,12 +408,14 @@ for (const dialog of document.querySelectorAll("dialog"))
     )
       dialog.close();
   });
+
+// Startup renders saved data first, then refreshes a bounded stale-metadata queue.
 async function boot() {
   try {
     ({ shows } = await api("/api/library"));
     render();
     applyRoute({ scroll: true });
-    // Refresh stale metadata without blocking access to saved progress and ratings.
+    // Refresh failures stop the batch while leaving saved progress and ratings usable.
     for (const show of metadataRefreshQueue(shows)) {
       try {
         await refreshShow(show.id, false);

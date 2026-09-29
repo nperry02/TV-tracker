@@ -3,6 +3,7 @@ import { inLibrary, inWatchlist } from "../model.js";
 import { $, esc, poster, report, toast, year } from "../ui.js";
 
 export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
+  // Incrementing runs prevent stale search responses from replacing newer results.
   let searchRun = 0;
   let state = {
     query: "",
@@ -13,8 +14,10 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
     loading: false,
     error: "",
   };
+  // IDs stay locked while either library or Watchlist addition is in flight.
   const addingShows = new Set();
 
+  // Render search status, result actions, and pagination from the local state snapshot.
   function render() {
     $("#search-message").textContent =
       state.error ||
@@ -57,6 +60,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
         `/api/search?q=${encodeURIComponent(query)}&page=${page}`,
       );
       if (run !== searchRun) return;
+      // TMDB pages can overlap, so merge results by stable show ID.
       state.results = [
         ...new Map(
           [...state.results, ...data.results].map((show) => [show.id, show]),
@@ -75,6 +79,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
     }
   }
 
+  // A new query resets pagination before loading its first page.
   function search(event) {
     event.preventDefault();
     const query = $("#tmdb-query").value.trim();
@@ -101,6 +106,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
         body: { destination: watchlistOnly ? "watchlist" : "library" },
       });
       onShowAdded(show);
+      // Library additions open details; Watchlist additions keep search context.
       if (!watchlistOnly) onOpenShow(show.id);
       toast(
         `${show.name} added to your ${watchlistOnly ? "watchlist" : "shows"}.`,

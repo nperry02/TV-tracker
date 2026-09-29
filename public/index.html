@@ -10,86 +10,36 @@
     <script type="module" src="/app.js"></script>
   </head>
   <body>
+    <!-- Persistent application header and primary navigation -->
     <header class="topbar">
-      <a class="brand" href="/" aria-label="Next Episode home"
-        ><img class="brand-icon" src="/assets/logo.png" alt="" />
-        Next Episode</a
-      >
-      <nav class="top-links" aria-label="Quick links">
-        <button class="top-search" id="add-show" aria-label="Add a show">
-          <span aria-hidden="true">＋</span>
-          <span>Add a show</span>
-          <kbd>⌘ K</kbd>
-        </button>
-        <button
-          class="nav-menu-toggle"
-          id="nav-menu-toggle"
-          aria-label="Open navigation"
+      <div class="topbar-inner">
+        <a class="brand" href="/" aria-label="Next Episode home"
+          ><img class="brand-icon" src="/assets/logo.png" alt="" />
+          Next Episode</a
         >
-          <span aria-hidden="true"></span>
-        </button>
-        <a href="#library">My Shows</a>
-        <a href="/api/export" download>Backup</a>
-      </nav>
-    </header>
-    <aside class="sidebar" aria-label="Main navigation">
-      <nav class="side-nav">
-        <a class="active" href="#home" data-page="home"
-          ><span class="side-icon" aria-hidden="true"
-            ><svg viewBox="0 0 24 24">
-              <path d="m3 11 9-8 9 8" />
-              <path d="M5 10v10h14V10M9 20v-6h6v6" /></svg
-          ></span>
-          Home</a
-        >
-        <a href="#library" data-page="library"
-          ><span class="side-icon" aria-hidden="true"
-            ><svg viewBox="0 0 24 24">
-              <path
-                d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"
-              /></svg
-          ></span>
-          My Shows</a
-        >
-        <a href="#stats" data-page="stats"
-          ><span class="side-icon" aria-hidden="true"
-            ><svg viewBox="0 0 24 24">
-              <path d="M5 20V10M12 20V4M19 20v-7" /></svg
-          ></span>
-          Stats</a
-        >
-      </nav>
-      <div class="side-divider"></div>
-      <p class="side-label">Library</p>
-      <nav class="side-nav side-statuses" aria-label="Library shortcuts">
-        <button type="button" data-sidebar-tab="All">
-          <span class="nav-dot all"></span>All Shows
-        </button>
-        <button type="button" data-sidebar-tab="Watching">
-          <span class="nav-dot watching"></span>Watching
-        </button>
-        <button type="button" data-sidebar-tab="Paused">
-          <span class="nav-dot paused"></span>Paused
-        </button>
-        <button type="button" data-sidebar-tab="Caught Up">
-          <span class="nav-dot caught-up"></span>Caught Up
-        </button>
-        <button type="button" data-sidebar-tab="Completed">
-          <span class="nav-dot completed"></span>Completed
-        </button>
-        <button type="button" data-sidebar-tab="Dropped">
-          <span class="nav-dot dropped"></span>Dropped
-        </button>
-        <button type="button" data-sidebar-tab="Watchlist">
-          <span class="nav-dot watchlist"></span>Watchlist
-        </button>
-      </nav>
-      <div class="sidebar-note">
-        <strong>Your library, your pace.</strong>
-        <span>Everything stays private on this Mac.</span>
+        <nav class="top-links" aria-label="Main navigation">
+          <div class="top-pages">
+            <a class="active" href="#home" data-page="home">Home</a>
+            <a href="#library" data-page="library">My Shows</a>
+            <a href="#stats" data-page="stats">Stats</a>
+          </div>
+          <button class="top-search" id="add-show" aria-label="Add a show">
+            <span aria-hidden="true">＋</span>
+            <span>Add a show</span>
+            <kbd>⌘ K</kbd>
+          </button>
+          <button
+            class="nav-menu-toggle"
+            id="nav-menu-toggle"
+            aria-label="Open navigation"
+          >
+            <span aria-hidden="true"></span>
+          </button>
+        </nav>
       </div>
-    </aside>
+    </header>
     <main id="home">
+      <!-- Home overview and Continue Watching -->
       <div id="home-view">
       <section class="page-heading">
         <div>
@@ -106,61 +56,89 @@
         </div>
         <div id="continue-list" class="continue-list"></div>
       </section>
-      <section class="library" id="library" aria-label="Your show library">
-        <div class="tabs" id="tabs" aria-label="Filter by watch status"></div>
-        <div class="filterbar">
-          <label class="library-search"
-            ><span aria-hidden="true">⌕</span
-            ><input
-              id="library-query"
-              type="search"
-              placeholder="Search your shows…"
-              aria-label="Search your library"
-          /></label>
-          <div class="filters">
-            <div class="view-toggle" role="group" aria-label="Library view">
-              <button type="button" data-view="gallery" aria-pressed="true">
-                ▦ <span>Gallery</span>
-              </button>
-              <button type="button" data-view="list" aria-pressed="false">
-                ☷ <span>List</span>
-              </button>
-            </div>
-            <label
-              ><span class="sr-only">Genre</span
-              ><select id="genre">
-                <option value="">All genres</option>
-              </select></label
-            >
-            <label
-              ><span class="sr-only">Your rating</span
-              ><select id="rating-filter">
-                <option value="">All ratings</option>
-                <option value="unrated">Unrated</option>
-                <option value="4">4+ stars</option>
-                <option value="3">3+ stars</option>
-                <option value="2">2+ stars</option>
-                <option value="1">1+ stars</option>
-              </select></label
-            >
-            <label
-              ><span class="sr-only">Sort shows</span
-              ><select id="sort" aria-label="Sort shows">
-                <option value="last-updated" selected>Last updated</option>
-                <option value="release-newest">Release date: newest</option>
-                <option value="added">Recently added</option>
-                <option value="rating">Highest rated</option>
-                <option value="title">Title A–Z</option>
-                <option value="release-oldest">Release date: oldest</option>
-              </select></label
-            >
-          </div>
-        </div>
-        <p id="result-count" class="result-count"></p>
-        <div id="library-grid" class="poster-grid"></div>
-        <div id="empty" class="empty" hidden></div>
-      </section>
       </div>
+      <!-- My Shows collection and filter controls -->
+      <section id="library-view" hidden>
+        <header class="library-header">
+          <p class="eyebrow">YOUR COLLECTION</p>
+          <h1>My Shows</h1>
+          <p class="subtitle">Find, filter, and organize everything you watch.</p>
+        </header>
+      <section class="library" id="library" aria-label="Your show library">
+        <aside class="library-controls" aria-label="Library filters and sorting">
+          <p class="library-controls-label">Filter and sort</p>
+          <div class="status-filter-wrap">
+            <span>Watch status</span>
+            <div class="tabs" id="tabs"></div>
+          </div>
+          <button
+            class="watchlist-filter"
+            id="watchlist-filter"
+            type="button"
+            data-tab="Watchlist"
+            aria-pressed="false"
+          ></button>
+          <div class="filterbar">
+            <label class="library-search"
+              ><span aria-hidden="true">⌕</span
+              ><input
+                id="library-query"
+                type="search"
+                placeholder="Search your shows…"
+                aria-label="Search your library"
+            /></label>
+            <div class="filters">
+              <div class="view-toggle" role="group" aria-label="Library view">
+                <button type="button" data-view="gallery" aria-pressed="true">
+                  <svg class="view-icon gallery-view-icon" viewBox="0 0 15 15" aria-hidden="true">
+                    <rect x="2" y="0.5" width="4.5" height="6" rx="0.6"></rect>
+                    <rect x="8.5" y="0.5" width="4.5" height="6" rx="0.6"></rect>
+                    <rect x="2" y="8.5" width="4.5" height="6" rx="0.6"></rect>
+                    <rect x="8.5" y="8.5" width="4.5" height="6" rx="0.6"></rect>
+                  </svg>
+                  <span>Gallery</span>
+                </button>
+                <button type="button" data-view="list" aria-pressed="false">
+                  <svg class="view-icon" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5"></path>
+                  </svg>
+                  <span>List</span>
+                </button>
+              </div>
+              <div class="genre-filter-wrap" id="genre-filter-wrap"></div>
+              <label
+                ><span class="sr-only">Your rating</span
+                ><select id="rating-filter">
+                  <option value="">All ratings</option>
+                  <option value="unrated">Unrated</option>
+                  <option value="4">4+ stars</option>
+                  <option value="3">3+ stars</option>
+                  <option value="2">2+ stars</option>
+                  <option value="1">1+ stars</option>
+                </select></label
+              >
+              <label
+                ><span class="sr-only">Sort shows</span
+                ><select id="sort" aria-label="Sort shows">
+                  <option value="last-updated" selected>Last updated</option>
+                  <option value="release-newest">Release date: newest</option>
+                  <option value="added">Recently added</option>
+                  <option value="rating">Highest rated</option>
+                  <option value="title">Title A–Z</option>
+                  <option value="release-oldest">Release date: oldest</option>
+                </select></label
+              >
+            </div>
+          </div>
+        </aside>
+        <div class="library-results">
+          <p id="result-count" class="result-count"></p>
+          <div id="library-grid" class="poster-grid"></div>
+          <div id="empty" class="empty" hidden></div>
+        </div>
+      </section>
+      </section>
+      <!-- Library statistics -->
       <section id="stats-view" class="stats-page" aria-labelledby="stats-title" hidden>
         <header class="stats-header">
           <p class="eyebrow">YOUR LIBRARY IN NUMBERS</p>
@@ -170,6 +148,7 @@
         <div id="stats-content"></div>
       </section>
     </main>
+    <!-- Secondary actions and project information -->
     <footer class="site-footer">
       <div>
         <span class="footer-brand"
@@ -181,6 +160,7 @@
         ><button class="text-button" id="credits">About & credits</button>
       </div>
     </footer>
+    <!-- Responsive navigation and application dialogs -->
     <dialog id="nav-drawer" class="nav-drawer" aria-labelledby="nav-drawer-title">
       <div class="nav-drawer-header">
         <span id="nav-drawer-title"
@@ -221,18 +201,14 @@
             Stats</a
           >
         </nav>
-        <div class="side-divider"></div>
-        <p class="side-label">Library</p>
-        <nav class="side-nav side-statuses" aria-label="Library shortcuts">
-          <button type="button" data-sidebar-tab="All"><span class="nav-dot all"></span>All Shows</button>
-          <button type="button" data-sidebar-tab="Watching"><span class="nav-dot watching"></span>Watching</button>
-          <button type="button" data-sidebar-tab="Paused"><span class="nav-dot paused"></span>Paused</button>
-          <button type="button" data-sidebar-tab="Caught Up"><span class="nav-dot caught-up"></span>Caught Up</button>
-          <button type="button" data-sidebar-tab="Completed"><span class="nav-dot completed"></span>Completed</button>
-          <button type="button" data-sidebar-tab="Dropped"><span class="nav-dot dropped"></span>Dropped</button>
-          <button type="button" data-sidebar-tab="Watchlist"><span class="nav-dot watchlist"></span>Watchlist</button>
-        </nav>
-        <a class="nav-drawer-backup" href="/api/export" download>Back up library ↗</a>
+        <button
+          class="nav-drawer-add"
+          type="button"
+          data-add-show
+          aria-label="Add a show"
+        >
+          ＋ Add a show
+        </button>
       </div>
     </dialog>
     <dialog id="search-dialog" class="search-dialog">

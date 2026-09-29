@@ -43,6 +43,8 @@ const catalog = [
     first_air_date: "2002-06-02",
   },
 ];
+
+// Extra records force search pagination while keeping IDs and ordering deterministic.
 catalog.push(
   ...Array.from({ length: 23 }, (_, i) => ({
     id: 200000 + i,
@@ -51,12 +53,15 @@ catalog.push(
     first_air_date: "2020-01-01",
   })),
 );
+
+// Emulate only the TMDB routes exercised by browser tests and reject other traffic.
 globalThis.fetch = async (input) => {
   const url = new URL(input);
   if (url.hostname !== "api.themoviedb.org")
     throw new Error("Unexpected network call in fixture test.");
   const path = url.pathname.replace("/3/", "");
   if (path === "search/tv") {
+    // The offline query provides a deterministic upstream-failure path.
     const query = url.searchParams.get("query").toLowerCase();
     if (query === "offline") return Response.json({}, { status: 503 });
     const page = Number(url.searchParams.get("page") || 1);
@@ -72,6 +77,7 @@ globalThis.fetch = async (input) => {
   const show = catalog.find((s) => s.id === Number(match?.[1]));
   if (!show) return Response.json({}, { status: 404 });
   if (match[2]) {
+    // Every fixture season exposes three aired episodes with runtime metadata.
     const season_number = Number(match[2]);
     return Response.json({
       episodes: [1, 2, 3].map((n) => ({

@@ -16,6 +16,7 @@ import {
   inWatchlist,
 } from "./public/model.js";
 
+// Persistent library setup and compatibility normalization
 const root = dirname(fileURLToPath(import.meta.url));
 const dataFile = resolve(
   process.env.TV_DATA_FILE || resolve(root, "data/library.json"),
@@ -31,6 +32,8 @@ library.shows = library.shows.map((s) => ({
   tracked: inLibrary(s),
   watchlist: inWatchlist(s),
 }));
+
+// Write a complete temporary file before replacing the saved library atomically.
 function commit(next) {
   writeFileSync(`${dataFile}.tmp`, JSON.stringify(next, null, 2), {
     mode: 0o600,
@@ -38,6 +41,8 @@ function commit(next) {
   renameSync(`${dataFile}.tmp`, dataFile);
   library = next;
 }
+
+// Clone mutations keep the in-memory library unchanged when validation fails.
 function update(id, transform) {
   const index = library.shows.findIndex((s) => s.id === id);
   if (index < 0)
@@ -49,6 +54,8 @@ function update(id, transform) {
   commit(next);
   return next.shows[index];
 }
+
+// TMDB requests and metadata shaping
 async function tmdb(path) {
   const token = process.env.TMDB_TOKEN || process.env.TMDB_API_KEY;
   if (!token)
@@ -60,6 +67,7 @@ async function tmdb(path) {
     );
   const url = new URL(`https://api.themoviedb.org/3/${path}`);
   const headers = { Accept: "application/json" };
+  // JWT-style tokens use bearer auth; legacy API keys remain query parameters.
   if (token.includes(".")) headers.Authorization = `Bearer ${token}`;
   else url.searchParams.set("api_key", token);
   let res;
@@ -125,6 +133,8 @@ async function metadata(id) {
     refreshedAt: new Date().toISOString(),
   };
 }
+
+// Request validation and static asset routing
 function validateRating(value) {
   if (
     value !== null &&
@@ -165,6 +175,8 @@ const files = {
   "/views/stats.js": ["views/stats.js", "text/javascript"],
   "/assets/logo.png": ["assets/logo.png", "image/png"],
 };
+
+// Local HTTP API
 export const server = http.createServer(async (req, res) => {
   const send = (status, value) => {
     res.writeHead(status, {
@@ -175,6 +187,7 @@ export const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(value));
   };
   try {
+    // Host and Origin checks prevent other sites from driving this local server.
     const allowedHosts = new Set([
       `127.0.0.1:${server.address().port}`,
       `localhost:${server.address().port}`,
@@ -191,6 +204,8 @@ export const server = http.createServer(async (req, res) => {
       return send(403, { error: "Origin not allowed." });
     const url = new URL(req.url, "http://localhost");
     const path = url.pathname;
+
+    // Static files use a restrictive policy while allowing TMDB-hosted artwork.
     if (req.method === "GET" && files[path]) {
       const [file, type] = files[path];
       res.writeHead(200, {
@@ -224,6 +239,8 @@ export const server = http.createServer(async (req, res) => {
         ),
       );
     }
+
+    // Show routes share an ID matcher; the optional suffix distinguishes refreshes.
     const match = path.match(/^\/api\/shows\/(\d+)(\/refresh)?$/);
     if (match) {
       const id = Number(match[1]);
@@ -237,6 +254,7 @@ export const server = http.createServer(async (req, res) => {
             ? { ...current, watchlist: true }
             : { ...current, tracked: true };
         const existing = library.shows.find((s) => s.id === id);
+        // Existing additions only change membership; refreshes fetch and merge metadata.
         if (existing && !match[2])
           return send(200, update(id, addToDestination));
         if (!existing && match[2])
@@ -267,6 +285,7 @@ export const server = http.createServer(async (req, res) => {
       if (req.method === "PATCH" && !match[2]) {
         const b = await body(req);
         const show = update(id, (s) => {
+          // Removing tracked membership clears progress but can preserve Watchlist.
           if ("tracked" in b) {
             if (typeof b.tracked !== "boolean")
               throw Object.assign(new Error("Tracked must be true or false."), {
@@ -337,6 +356,7 @@ export const server = http.createServer(async (req, res) => {
                 status: 400,
               });
             const keys = new Set(s.watched);
+            // Bulk actions never mark unaired episodes, but clearing can remove any key.
             for (const e of s.episodes) {
               const selected =
                 action === "episode"
@@ -377,6 +397,7 @@ export const server = http.createServer(async (req, res) => {
     }
     send(404, { error: "Not found." });
   } catch (error) {
+    // Expected errors reach the client; unexpected failures keep internals private.
     send(error.status || 500, {
       error: error.status
         ? error.message

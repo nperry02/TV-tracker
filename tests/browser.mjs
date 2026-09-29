@@ -7,6 +7,8 @@ import { join, resolve } from "node:path";
 import { once } from "node:events";
 
 const live = process.env.LIVE_TMDB === "1";
+
+// Run against an isolated library and deterministic TMDB fixture by default.
 const directory = mkdtempSync(join(tmpdir(), "next-episode-browser-"));
 const args = live
   ? ["--env-file=.env", "server.mjs"]
@@ -27,6 +29,7 @@ child.stderr.on("data", (chunk) => {
   stderr += chunk;
 });
 try {
+  // Wait for the local server before creating shared page helpers.
   const base = await new Promise((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error(`Server start timed out: ${stderr}`)),
@@ -50,6 +53,24 @@ try {
   });
   page.on("pageerror", (error) => errors.push(error.message));
   page.setDefaultTimeout(live ? 60000 : 10000);
+  const selectLibraryStatus = async (status) => {
+    if (status === "Watchlist") {
+      await page.locator("#watchlist-filter").click();
+      return;
+    }
+    const filter = page.locator("#status-filter");
+    if (!(await filter.evaluate((details) => details.open)))
+      await filter.locator("summary").click();
+    await filter.locator(`[data-tab="${status}"]`).click();
+  };
+  const selectLibraryGenre = async (genre) => {
+    const filter = page.locator("#genre-filter");
+    if (!(await filter.evaluate((details) => details.open)))
+      await filter.locator("summary").click();
+    await filter.locator(`[data-genre="${genre}"]`).click();
+  };
+
+  // Live mode performs a small pagination contract check before the UI flow.
   if (live) {
     const first = await (
       await page.request.get(`${base}/api/search?q=Star&page=1`)
@@ -65,26 +86,44 @@ try {
       second.results.map((s) => s.id),
     );
   }
+
+  // Navigation, empty states, and the first library addition
   await page.goto(base);
   await page.waitForFunction(
     () => document.querySelector(".brand-icon")?.naturalWidth > 0,
   );
+  const desktopAlignment = await page.evaluate(() => {
+    const heading = document.querySelector(".page-heading").getBoundingClientRect();
+    const brand = document.querySelector(".brand").getBoundingClientRect();
+    const links = document.querySelector(".top-links").getBoundingClientRect();
+    return {
+      left: Math.abs(brand.left - heading.left),
+      right: Math.abs(links.right - heading.right),
+    };
+  });
+  assert.ok(desktopAlignment.left < 1);
+  assert.ok(desktopAlignment.right < 1);
   assert.deepEqual(
-    await page
-      .locator(".sidebar .side-statuses [data-sidebar-tab]")
-      .evaluateAll((buttons) => buttons.map((button) => button.dataset.sidebarTab)),
-    ["All", "Watching", "Paused", "Caught Up", "Completed", "Dropped", "Watchlist"],
+    await page.locator(".top-pages [data-page]").evaluateAll((links) =>
+      links.map((link) => link.dataset.page),
+    ),
+    ["home", "library", "stats"],
   );
+  assert.equal(await page.locator(".sidebar").count(), 0);
+  assert.equal(await page.locator("#home-view").isVisible(), true);
+  assert.equal(await page.locator("#library-view").isVisible(), false);
+  assert.equal(await page.locator("#stats-view").isVisible(), false);
   await page.getByRole("link", { name: "Stats", exact: true }).click();
   assert.equal(new URL(page.url()).hash, "#stats");
   await page.locator("#stats-view").waitFor();
   assert.equal(await page.locator("#stats-view").isVisible(), true);
   assert.equal(await page.locator("#home-view").isVisible(), false);
+  assert.equal(await page.locator("#library-view").isVisible(), false);
   await page.getByText("No ratings yet.", { exact: true }).waitFor();
   await page.getByText("Genres will appear as you add shows.", { exact: true }).waitFor();
   await page.goBack();
   await page.locator("#home-view").waitFor();
-  await page.getByRole("button", { name: /Find your first show/ }).click();
+  await page.getByRole("button", { name: "Add a show", exact: true }).click();
   await page
     .getByRole("searchbox", { name: "Search TMDB", exact: true })
     .fill("Breaking Bad");
@@ -99,6 +138,10 @@ try {
     "Watching",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
+  await page.getByRole("link", { name: "My Shows", exact: true }).click();
+  await page.locator("#library-view").waitFor();
+  assert.equal(await page.locator("#home-view").isVisible(), false);
+  assert.equal(await page.locator("#stats-view").isVisible(), false);
   assert.equal(
     await page.locator('[data-tab="All"] .count').textContent(),
     "1",
@@ -110,9 +153,11 @@ try {
   );
   assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    await page.locator('#watchlist-filter .count').textContent(),
     "0",
   );
+
+  // Ratings, progress, membership, and manual status persistence
   assert.equal(
     await page.locator('#continue-list [data-show="1396"]').count(),
     1,
@@ -147,7 +192,7 @@ try {
     "1",
   );
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    await page.locator('#watchlist-filter .count').textContent(),
     "0",
   );
   await page.locator("#season-select").selectOption("2");
@@ -168,16 +213,23 @@ try {
     "1",
   );
   assert.equal(
-    await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+    await page.locator('#watchlist-filter .count').textContent(),
     "1",
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
-  await page.locator('.sidebar [data-sidebar-tab="Watching"]').click();
+  await selectLibraryStatus("Watching");
   assert.equal(await page.locator(".show-card").count(), 1);
-  await page.locator('.sidebar [data-sidebar-tab="Watchlist"]').click();
+  await selectLibraryStatus("Watchlist");
   assert.equal(await page.locator(".show-card").count(), 1);
   await page.reload();
-  await page.locator('.sidebar [data-sidebar-tab="Watchlist"]').click();
+  assert.equal(
+    await page.locator('#tabs [data-tab="Watching"]').getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(
+    await page.locator('#watchlist-filter').getAttribute("aria-pressed"),
+    "true",
+  );
   await page.locator('.show-card[data-show="1396"]').click();
   assert.equal(
     await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
@@ -211,6 +263,7 @@ try {
   );
   assert.equal(await page.locator("#show-status").inputValue(), "Dropped");
   await page.getByRole("button", { name: "Close show", exact: true }).click();
+  await selectLibraryStatus("All");
   await page.reload();
   await page.locator('[data-show="1396"]').first().click();
   assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
@@ -261,7 +314,9 @@ try {
   );
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   if (!live) {
-    // Quick progress works from the library without opening a dialog.
+    // Fixture-only flows build a varied library for filters, stats, and sorting.
+    await page.getByRole("link", { name: "Home", exact: true }).click();
+    // Quick progress works from Home without opening a dialog.
     await page.locator('#continue-list [data-next="1396"]').click();
     await page.waitForFunction(
       () =>
@@ -270,6 +325,7 @@ try {
           ?.getAttribute("aria-label") === "Mark Breaking Bad S2 E2 watched",
     );
     assert.equal(await page.locator("#show-dialog").isVisible(), false);
+    await page.getByRole("link", { name: "My Shows", exact: true }).click();
     await page.locator('.show-card[data-show="1396"]').click();
     await page.locator('#show-content [data-next="1396"]').click();
     await page.waitForFunction(
@@ -320,7 +376,8 @@ try {
       });
     }
     await page.reload();
-    await page.locator(".show-card").nth(5).waitFor();
+    await page.locator(".show-card").nth(5).waitFor({ state: "attached" });
+    await page.getByRole("link", { name: "Home", exact: true }).click();
     assert.equal(
       await page
         .locator("#continue-list .continue-open")
@@ -335,21 +392,83 @@ try {
           .querySelector("#continue-list .continue-open")
           ?.getAttribute("data-show") === "60059",
     );
-    await page.locator('.sidebar [data-sidebar-tab="Completed"]').click();
+    await page.getByRole("link", { name: "My Shows", exact: true }).click();
+    await page.locator("#library-view").waitFor({ state: "visible" });
+    const toolbarControlTops = () =>
+      page.locator(".library-controls").evaluate((toolbar) =>
+        [
+          "#library-query",
+          "#status-filter summary",
+          "#watchlist-filter",
+          "#genre-filter summary",
+          ".custom-select:has(#rating-filter) .custom-select-trigger",
+          ".custom-select:has(#sort) .custom-select-trigger",
+          ".view-toggle",
+        ].map((selector) => toolbar.querySelector(selector).getBoundingClientRect().top),
+      );
+    const closedToolbarTops = await toolbarControlTops();
+    await page.locator("#status-filter summary").click();
+    assert.deepEqual(await toolbarControlTops(), closedToolbarTops);
+    await page.locator("#status-filter summary").click();
+    await page.locator("#genre-filter summary").click();
+    assert.deepEqual(await toolbarControlTops(), closedToolbarTops);
+    await page.locator("#genre-filter summary").click();
+    await selectLibraryStatus("All");
+    await selectLibraryStatus("Completed");
     assert.equal(await page.locator(".show-card").count(), 2);
-    await page.locator('.sidebar [data-sidebar-tab="All"]').click();
-    await page.locator('.sidebar [data-sidebar-tab="Completed"]').click();
-    assert.equal(await page.locator(".show-card").count(), 2);
+    await selectLibraryStatus("Watching");
     assert.equal(
-      await page
-        .locator('.sidebar [data-sidebar-tab="Completed"]')
-        .evaluate((button) => button.classList.contains("active")),
-      true,
+      await page.locator('#tabs [data-tab="Completed"]').getAttribute("aria-pressed"),
+      "true",
     );
-    await page.locator('.sidebar [data-sidebar-tab="All"]').click();
+    assert.equal(
+      await page.locator('#tabs [data-tab="Watching"]').getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.match(
+      await page.locator("#status-filter summary").textContent(),
+      /Completed \+ Watching/,
+    );
+    assert.equal(
+      await page.locator("#status-filter summary .status-filter-dot").count(),
+      2,
+    );
+    assert.ok(await page.locator(".show-card").count() > 2);
+    await selectLibraryStatus("All");
+    assert.match(
+      await page.locator("#status-filter summary").textContent(),
+      /All shows/,
+    );
+    await page.locator("#status-filter summary").click();
     await page.locator("#rating-filter").selectOption("4");
     assert.equal(await page.locator(".show-card").count(), 5);
-    await page.locator("#genre").selectOption("18");
+    await selectLibraryGenre("18");
+    await selectLibraryGenre("80");
+    assert.match(
+      await page.locator("#genre-filter summary").textContent(),
+      /Crime \+ Drama/,
+    );
+    assert.equal(
+      await page.locator('#genre-filter [data-genre="18"]').getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.equal(
+      await page.locator('#genre-filter [data-genre="80"]').getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.equal(
+      await page.locator(".library-controls").evaluate((panel) => {
+        const summary = panel.querySelector("#genre-filter summary span span");
+        summary.textContent = "Animation + Crime + Drama + Family + Kids";
+        return [...panel.querySelectorAll("summary, input, .view-toggle, .custom-select")]
+          .every((control) => control.getBoundingClientRect().right <= panel.getBoundingClientRect().right + 1);
+      }),
+      true,
+      "Long filter labels stay inside the filter panel",
+    );
+    await page.evaluate(() => window.dispatchEvent(new Event("resize")));
+    await selectLibraryGenre("18");
+    await selectLibraryGenre("18");
     await page.locator("#library-query").fill("severance");
     assert.equal(await page.locator(".show-card").count(), 1);
     await page.locator("#library-query").fill("");
@@ -428,7 +547,7 @@ try {
     await page.locator("#show-dialog[open]").waitFor();
     await page.getByRole("button", { name: "Close show", exact: true }).click();
     await page.goBack();
-    await page.locator("#home-view").waitFor();
+    await page.locator("#library-view").waitFor();
     await page.getByRole("button", { name: /List/ }).click();
     assert.equal(
       await page.getByRole("button", { name: /List/ }).getAttribute("aria-pressed"),
@@ -466,11 +585,22 @@ try {
     await page.getByRole("button", { name: /Gallery/ }).click();
     assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
   }
+
+  // Responsive navigation and overflow checks
   mkdirSync("test-results", { recursive: true });
   await page.screenshot({
     path: `test-results/${live ? "live" : "desktop"}.png`,
     fullPage: true,
   });
+  await page.setViewportSize({ width: 1000, height: 900 });
+  await page.goto(`${base}/#home`);
+  assert.equal(await page.locator(".top-pages").isVisible(), false);
+  assert.equal(await page.locator("#nav-menu-toggle").isVisible(), true);
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    true,
+    "Home view fits tablet viewport",
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${base}/#stats`);
   await page.locator("#stats-view").waitFor();
@@ -485,6 +615,18 @@ try {
   const navDrawer = page.locator("#nav-drawer");
   await navDrawer.waitFor();
   assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 3);
+  assert.equal(
+    await navDrawer.getByRole("button", { name: "Add a show", exact: true }).count(),
+    1,
+  );
+  assert.equal(
+    await navDrawer.getByRole("link", { name: "Back up library ↗", exact: true }).count(),
+    0,
+  );
+  assert.equal(
+    await page.locator(".site-footer").getByRole("link", { name: "Back up library ↗", exact: true }).count(),
+    1,
+  );
   await navDrawer.getByRole("link", { name: "My Shows", exact: true }).click();
   assert.equal(new URL(page.url()).hash, "#library");
   assert.equal(await navDrawer.evaluate((dialog) => dialog.open), false);
@@ -496,14 +638,24 @@ try {
   assert.equal(new URL(page.url()).hash, "#stats");
   await page.screenshot({ path: "test-results/mobile-stats.png", fullPage: true });
   await page.goto(`${base}/#library`);
-  await page.locator("#home-view").waitFor();
+  await page.locator("#library-view").waitFor();
   await page.getByRole("button", { name: /List/ }).click();
+  const mobileListLayout = await page.evaluate(() => ({
+    viewport: innerWidth,
+    document: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll("body *")]
+      .filter((element) => element.getBoundingClientRect().right > innerWidth + 1)
+      .slice(0, 8)
+      .map((element) => ({
+        className: element.className,
+        id: element.id,
+        right: Math.round(element.getBoundingClientRect().right),
+      })),
+  }));
   assert.equal(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
+    mobileListLayout.document <= mobileListLayout.viewport,
     true,
-    "List view fits mobile viewport",
+    `List view fits mobile viewport: ${JSON.stringify(mobileListLayout)}`,
   );
   await page.screenshot({ path: "test-results/mobile-list.png", fullPage: true });
   await page.getByRole("button", { name: /Gallery/ }).click();
@@ -530,6 +682,7 @@ try {
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {
+    // Search pagination covers recovery, Watchlist-only records, and stale responses.
     const searchFor = async (query) => {
       await page
         .getByRole("searchbox", { name: "Search TMDB", exact: true })
@@ -577,14 +730,14 @@ try {
       "6",
     );
     assert.equal(
-      await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+      await page.locator('#watchlist-filter .count').textContent(),
       "1",
     );
     await page
       .getByRole("button", { name: "Close search", exact: true })
       .click();
     await page.reload();
-    await page.locator('#tabs [data-tab="Watchlist"]').click();
+    await selectLibraryStatus("Watchlist");
     await page.locator('.show-card[data-show="200022"]').click();
     assert.equal(
       await page.locator(".detail-hero .status-badge").first().textContent(),
@@ -648,10 +801,9 @@ try {
       "6",
     );
     assert.equal(
-      await page.locator('#tabs [data-tab="Watchlist"] .count').textContent(),
+      await page.locator('#watchlist-filter .count').textContent(),
       "1",
     );
-    await page.locator('#tabs [data-tab="Watchlist"]').click();
     await page.locator('.show-card[data-show="200022"]').click();
     assert.equal(await page.locator("#show-rating").inputValue(), "");
     assert.equal(await page.locator("#show-status").inputValue(), "");
@@ -725,6 +877,7 @@ try {
     `${live ? "Live TMDB" : "Fixture"} browser checks passed: search, add, ratings, season progress, stats, overrides, reload persistence, filters, errors, and mobile layout.`,
   );
 } finally {
+  // Always stop the child server and remove its temporary library.
   await browser?.close();
   if (child.exitCode === null) {
     const done = once(child, "exit");
