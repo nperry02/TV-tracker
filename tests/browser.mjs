@@ -372,6 +372,26 @@ try {
           ?.getAttribute("data-show") === "60059",
     );
     await page.getByRole("link", { name: "My Shows", exact: true }).click();
+    await page.locator("#library-view").waitFor({ state: "visible" });
+    const toolbarControlTops = () =>
+      page.locator(".library-controls").evaluate((toolbar) =>
+        [
+          "#library-query",
+          "#status-filter summary",
+          "#watchlist-filter",
+          "#genre-filter summary",
+          ".custom-select:has(#rating-filter) .custom-select-trigger",
+          ".custom-select:has(#sort) .custom-select-trigger",
+          ".view-toggle",
+        ].map((selector) => toolbar.querySelector(selector).getBoundingClientRect().top),
+      );
+    const closedToolbarTops = await toolbarControlTops();
+    await page.locator("#status-filter summary").click();
+    assert.deepEqual(await toolbarControlTops(), closedToolbarTops);
+    await page.locator("#status-filter summary").click();
+    await page.locator("#genre-filter summary").click();
+    assert.deepEqual(await toolbarControlTops(), closedToolbarTops);
+    await page.locator("#genre-filter summary").click();
     await selectLibraryStatus("All");
     await selectLibraryStatus("Completed");
     assert.equal(await page.locator(".show-card").count(), 2);
