@@ -42,14 +42,16 @@ npm start
 Open **http://localhost:3210**. The server is available only on the computer
 running it. Stop it with Ctrl+C.
 
-## First version
+## Current features
 
-- Use a dashboard layout with desktop sidebar shortcuts, a global show-search control, summary cards, backdrop-based Continue Watching cards, and a responsive mobile presentation. All existing library tools remain available in the dashboard.
-- Open Stats from the sidebar for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
+- Use the header to move between distinct Home, My Shows, and Stats views or open the Add a show dialog. A navigation drawer keeps those actions available in narrow web-browser windows.
+- Home shows library summary cards and up to three backdrop-based Continue Watching cards. My Shows contains the collection, filters, sorting, and gallery/list controls.
+- Open Stats from the header for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
 - Stats estimate watch time from episode runtimes, each show's typical runtime, and the median known runtime in the library. Specials count toward episodes watched and watch time, but not season-completion or regular-episode progress.
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
-- Switch between All, Watching, Paused, Caught Up, Completed, Dropped, and a separate Watchlist. Only watchlist-only, unstarted shows are excluded from All shows and its count.
-- Combine title search, genre, and personal rating filters. Last updated is the default sort; release date, title, rating, and recently added are also available. “Last updated” uses the most recent newly watched progress and places shows without a recorded update afterward. Unknown premiere dates appear last for release sorting.
+- Filter by one or more Watching, Paused, Caught Up, Completed, or Dropped statuses. Multiple statuses use OR behavior; All shows clears status and Watchlist selections. Watchlist remains independent and intersects any selected statuses.
+- Combine title search, personal rating, and one or more genre filters. A show must match every selected genre. Filter selections remain available while navigating or reloading the current browser tab.
+- Sort by last updated, release date, recently added, personal rating, or title. “Last updated” is the default and uses the most recent newly watched progress, with shows lacking a timestamp afterward. Unknown premiere dates appear last for release sorting.
 - Switch between the default poster gallery and a compact list showing each show's name, premiere date, watch status, rating, progress, and last watched update. The browser remembers the selected view.
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
@@ -62,7 +64,7 @@ running it. Stop it with Ctrl+C.
 - Show information refreshes when opening the app according to viewing status: daily for Watching and Caught Up, weekly for Paused and Watchlist-only shows, and every 30 days for Completed and Dropped. Each startup refreshes at most five stale shows, with active shows first. A manual refresh remains available in show details, and saved library data remains usable when TMDB is offline.
 - Download a JSON backup from the footer.
 
-Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its status tab. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when assigned a viewing status or marked with watched episodes; there is no separate “Start watching” control in show details. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
+Watchlist and library membership are independent. In search, + Add puts a show in the tracked library as Watching, while + Watchlist saves it only to Watchlist. A tracked show can also be flagged for Watchlist (for example, for a rewatch) and remains in All shows and its matching status filter. Adding or removing the flag never changes library membership, ratings, progress, or status. A watchlist-only show enters the tracked library when assigned a viewing status or marked with watched episodes; there is no separate “Start watching” control in show details. Its watchlist flag remains until removed. Existing libraries preserve their previous memberships. Diary entries, viewing dates, and reviews are deferred; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
 ## Storage and backups
 
@@ -73,9 +75,9 @@ To restore a downloaded backup, stop the server, preserve your existing file, an
 ## Development and verification
 
 ```sh
+npm install
 npm run dev
 npm run check
-npm install
 npm run test:browser
 ```
 
