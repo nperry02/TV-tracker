@@ -86,6 +86,24 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 - Dated viewing diary and “when watched” logging.
 - Diary entries or written reviews associated with viewing dates.
+- Native mobile app and multi-device access.
+
+When mobile development begins, reorganize the repository around these boundaries,
+adapting the exact layout if the codebase has changed:
+
+```text
+apps/
+  web/          Web app
+  mobile/       Mobile app
+functions/      Cloud Run backend functions
+packages/       Shared client-only utilities used by web and mobile
+  utilities/    General shared utilities
+scripts/        One-off and off-app utilities
+```
+
+Until that work begins, keep implementation scoped to the current web app. Do not
+prematurely introduce the mobile app, shared packages, cloud functions, or a
+multi-device architecture.
 
 Do not build diary or date-entry workflows in the initial version. Current progress is not a dated viewing history, and future diary features must not invent historical viewing dates.
 
@@ -100,6 +118,7 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 
 ## Still open for later
 
-- Whether cross-device access is needed.
+- The mobile technology and deployment model.
+- How authentication, storage, and synchronization should work across devices.
 
 Diary and viewing-date features remain deferred.
