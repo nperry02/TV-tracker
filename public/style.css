@@ -1038,7 +1038,7 @@ dialog::backdrop {
 .star-rating {
   display: flex;
   width: max-content;
-  gap: 3px;
+  gap: 0;
 }
 .rating-star {
   position: relative;

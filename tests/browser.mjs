@@ -183,6 +183,22 @@ try {
     ),
     ["full", "full", "half", "unfilled", "unfilled"],
   );
+  // Adjacent star targets meet so the preview remains continuous between glyphs.
+  const firstStarBox = await page.locator("#show-rating .rating-star").first().boundingBox();
+  await page.locator("#show-rating .star-rating").hover({
+    position: { x: firstStarBox.width + 1, y: firstStarBox.height / 2 },
+  });
+  assert.equal(await page.locator('#show-rating [data-rating-kind]:hover').count(), 1);
+  await page.locator("#show-rating .star-rating").click({
+    position: { x: firstStarBox.width + 1, y: firstStarBox.height / 2 },
+  });
+  await page.waitForFunction(
+    () => document.querySelector("#show-rating").dataset.value === "1.5",
+  );
+  await page.locator('#show-rating input[value="4.5"]').check();
+  await page.waitForFunction(
+    () => document.querySelector("#show-rating").dataset.value === "4.5",
+  );
   // Moving below the stars but remaining inside the fieldset restores the saved value.
   await page.locator("#show-rating .rating-summary").hover();
   assert.equal(await page.locator("#show-rating output").textContent(), "4.5 out of 5");
