@@ -760,6 +760,11 @@ try {
   assert.equal(await seasonOptions.locator(".season-actions").isVisible(), false);
   await seasonOptions.locator("summary").click();
   assert.equal(await seasonOptions.locator(".season-actions").isVisible(), true);
+  await seasonOptions.locator('#season-rating input[value="3.5"]').check();
+  await page.waitForFunction(
+    () => document.querySelector("#season-rating").dataset.value === "3.5",
+  );
+  assert.equal(await page.locator(".season-options").getAttribute("open"), "");
   assert.equal(
     await page
       .locator("#show-dialog")

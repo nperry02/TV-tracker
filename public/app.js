@@ -107,7 +107,12 @@ function openShow(id) {
 function renderShow() {
   const show = shows.find((entry) => entry.id === selectedId);
   if (show) {
+    const keepSeasonOptionsOpen =
+      $("#show-dialog").open && $(".season-options")?.open;
     renderShowDialog(show, selectedSeason, mutationPending);
+    const seasonOptions = $(".season-options");
+    if (seasonOptions && matchMedia("(max-width: 800px)").matches)
+      seasonOptions.open = Boolean(keepSeasonOptionsOpen);
     enhanceSelects($("#show-content"));
   }
 }
