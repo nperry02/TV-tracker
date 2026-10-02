@@ -36,6 +36,7 @@ Read PROJECT_BRIEF.md for the product scope and deferred features.
 - Do not add a paid service, dependency, API, or feature that costs money to implement or use. If requested work would create a cost, explain the cost and why it should not be implemented before making the change.
 - Stay within the requested scope while completing the supporting work needed to make the change functional and testable. Ask for clarification when a product decision cannot be inferred safely.
 - Do not create new Markdown or README files unless the user requests one or a workflow explicitly requires it. Update existing documentation when product behavior, commands, or repository workflow changes.
+- Keep the in-app Help & About page in `public/views/help.js` accurate. When a change affects behavior explained there—such as progress, statuses, filters, statistics, refresh timing, storage, backups, shortcuts, or data attribution—update the page in the same milestone.
 
 ## Branches and pull requests
 

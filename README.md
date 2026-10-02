@@ -46,6 +46,7 @@ running it. Stop it with Ctrl+C.
 
 - Use the header to move between distinct Home, My Shows, and Stats views or open the Add a show dialog. A navigation drawer keeps those actions available in narrow web-browser windows.
 - Home shows library summary cards and up to three backdrop-based Continue Watching cards. My Shows contains the collection, filters, sorting, and gallery/list controls.
+- Open Help & about from the footer for an in-app guide to progress, statuses, filtering, refreshes, local data, backups, and show-data credits.
 - Open Stats from the header for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
 - Stats estimate watch time from episode runtimes, each show's typical runtime, and the median known runtime in the library. Specials count toward episodes watched and watch time, but not season-completion or regular-episode progress.
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.
@@ -84,6 +85,8 @@ npm run test:browser
 The tests cover status transitions, unaired episodes, specials, stats aggregations, runtime estimates, persistent ratings/progress/runtime metadata, invalid inputs, and cross-origin write protection. Tests use temporary data and do not call TMDB.
 
 Browser tests use Playwright with installed Google Chrome, a temporary library, and fixture metadata. `npm run test:live` runs the main browser flow against real TMDB using `.env`; it also uses an isolated temporary library. Screenshots are saved under ignored `test-results/`.
+
+When application behavior described by the in-app Help & about page changes, update `public/views/help.js` as part of the same work so the guide remains accurate.
 
 Optional environment variables: `PORT` (default `3210`) and `TV_DATA_FILE` (alternative library path).
 

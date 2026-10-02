@@ -1292,13 +1292,6 @@ dialog::backdrop {
   color: #819285;
   font-size: 10px;
 }
-.credits-dialog {
-  max-width: 550px;
-}
-.credits-dialog p {
-  font-size: 13px;
-  line-height: 1.8;
-}
 .tmdb-logo {
   width: 105px;
   height: auto;
@@ -2712,6 +2705,181 @@ h1 {
   grid-column: 1 / -1;
 }
 
+/* Help and product guide */
+.help-page {
+  max-width: 1380px;
+  margin: 0 auto;
+}
+.help-hero {
+  position: relative;
+  display: grid;
+  min-height: 350px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 40px;
+  padding: clamp(35px, 5vw, 72px);
+  overflow: hidden;
+  border: 1px solid #344538;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 85% 30%, #4b66364d, transparent 34%),
+    linear-gradient(135deg, #162119, #101713 70%);
+}
+.help-hero::after {
+  position: absolute;
+  right: -120px;
+  bottom: -220px;
+  width: 520px;
+  height: 520px;
+  border: 1px solid #76954a2e;
+  border-radius: 50%;
+  content: "";
+}
+.help-hero > div:first-child {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+.help-hero h1 {
+  margin: 10px 0 20px;
+  font-size: clamp(52px, 6vw, 88px);
+  letter-spacing: -3px;
+}
+.help-hero .subtitle {
+  max-width: 650px;
+  margin: 0;
+  line-height: 1.6;
+}
+.help-hero-mark {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: clamp(120px, 14vw, 190px);
+  aspect-ratio: 1;
+  border: 1px solid #708b515c;
+  border-radius: 34%;
+  background: #0d140f9e;
+  box-shadow: 0 25px 70px #0007;
+  place-items: center;
+  transform: rotate(5deg);
+}
+.help-hero-mark img {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  transform: rotate(-5deg);
+}
+.help-start,
+.help-guide,
+.help-details {
+  margin-top: 58px;
+}
+.help-section-heading {
+  margin-bottom: 22px;
+}
+.help-section-heading h2 {
+  margin: 5px 0 0;
+  font-size: clamp(27px, 3vw, 40px);
+}
+.help-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  list-style: none;
+}
+.help-steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  padding: 28px 28px 28px 0;
+}
+.help-steps li + li {
+  padding-left: 28px;
+  border-left: 1px solid var(--border);
+}
+.help-steps b {
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.help-page h3 {
+  margin: 0 0 9px;
+  font-size: 17px;
+}
+.help-page article p,
+.help-steps p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.help-steps kbd {
+  padding: 2px 6px;
+  border: 1px solid #405045;
+  border-radius: 5px;
+  background: #1b251e;
+  color: #d8e1d9;
+  font: inherit;
+  white-space: nowrap;
+}
+.help-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.help-card-grid article,
+.help-details article {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #111a14;
+}
+.help-card-grid article {
+  min-height: 220px;
+  padding: 25px;
+}
+.help-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 25px;
+  border-radius: 10px;
+  background: #22321d;
+  color: var(--accent);
+  font-size: 19px;
+  font-style: normal;
+  place-items: center;
+}
+.help-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.help-details article {
+  padding: 28px;
+}
+.help-details h2 {
+  margin: 8px 0 15px;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.help-details article p + p {
+  margin-top: 15px;
+}
+.help-details a {
+  color: var(--accent);
+  font-weight: 650;
+}
+.help-details code {
+  color: #cbd8cc;
+}
+.help-credit .tmdb-logo {
+  display: block;
+  margin: 24px 0 18px;
+}
+
 /* Application responsive layout */
 @media (max-width: 1250px) {
   .top-pages {
@@ -2828,6 +2996,19 @@ h1 {
   }
   .stats-layout {
     grid-template-columns: 1fr;
+  }
+  .help-steps,
+  .help-card-grid,
+  .help-details {
+    grid-template-columns: 1fr;
+  }
+  .help-steps li,
+  .help-steps li + li {
+    padding: 22px 0;
+    border-left: 0;
+  }
+  .help-steps li + li {
+    border-top: 1px solid var(--border);
   }
   .top-rated-grid {
     overflow-x: auto;
@@ -2972,6 +3153,26 @@ h1 {
   }
   .stats-header h1 {
     font-size: 45px;
+  }
+  .help-hero {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    padding: 34px 26px;
+  }
+  .help-hero h1 {
+    font-size: 45px;
+    letter-spacing: -2px;
+  }
+  .help-hero-mark {
+    display: none;
+  }
+  .help-start,
+  .help-guide,
+  .help-details {
+    margin-top: 38px;
+  }
+  .help-card-grid article {
+    min-height: 0;
   }
   .stats-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
