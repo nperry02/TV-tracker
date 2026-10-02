@@ -1023,18 +1023,109 @@ dialog::backdrop {
   color: var(--muted);
   margin-bottom: 8px;
 }
-.rating-control select,
 .status-control select {
   font-size: 12px;
 }
-.rating-control select {
-  color: var(--accent);
-}
-.rating-control .custom-select-trigger,
 .status-control .custom-select-trigger {
   font-size: 12px;
 }
-.rating-control .custom-select-trigger {
+.rating-control {
+  min-width: 190px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.star-rating {
+  display: flex;
+  width: max-content;
+  gap: 0;
+}
+.rating-star {
+  position: relative;
+  display: block;
+  width: 29px;
+  height: 29px;
+}
+.rating-star > span {
+  position: relative;
+  display: block;
+  color: #455248;
+  font-size: 27px;
+  line-height: 1;
+}
+.rating-star > span::before,
+.rating-star > span::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  overflow: hidden;
+  color: var(--accent);
+  content: "★";
+}
+.rating-star > span::before {
+  color: #66764f;
+  -webkit-text-stroke: 1px #9db873;
+  paint-order: stroke fill;
+}
+.rating-star.comparison-half > span::before {
+  width: 50%;
+}
+.rating-star.comparison-full > span::before {
+  width: 100%;
+}
+.rating-star.half > span::after {
+  width: 50%;
+}
+.rating-star.full > span::after {
+  width: 100%;
+}
+.rating-star input {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rating-star input:first-of-type {
+  left: 0;
+}
+.rating-star input:last-of-type {
+  right: 0;
+}
+.rating-star:has(input:hover) > span {
+  filter: brightness(1.25);
+  transform: scale(1.06);
+}
+.rating-star:has(input:focus-visible) {
+  border-radius: 5px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.rating-control:disabled {
+  opacity: 0.5;
+}
+.rating-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rating-clear {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #aebbb0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+.rating-clear:hover {
+  border: 0;
+  background: transparent;
   color: var(--accent);
 }
 .detail-controls #toggle-watchlist {
@@ -1042,7 +1133,17 @@ dialog::backdrop {
   align-self: end;
 }
 .detail-progress {
-  margin: 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 24px 0 8px;
+}
+.detail-progress-main {
+  flex: 1;
+  min-width: 0;
+}
+.detail-progress .next-watched-detail {
+  flex: 0 0 auto;
 }
 .detail-progress-top {
   display: flex;
@@ -1055,6 +1156,7 @@ dialog::backdrop {
   color: var(--muted);
 }
 .detail-progress p {
+  margin: 8px 0 0;
   font-size: 11px;
   color: var(--muted);
 }
@@ -1063,7 +1165,7 @@ dialog::backdrop {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  padding: 17px 0;
+  padding: 9px 0 9px;
 }
 .season-header select {
   font-size: 12px;
@@ -1076,6 +1178,38 @@ dialog::backdrop {
   gap: 7px;
   align-items: center;
   flex-wrap: wrap;
+}
+.season-options {
+  display: contents;
+}
+.season-options > summary {
+  display: none;
+}
+.season-actions .rating-control {
+  width: 133px;
+  min-width: 133px;
+  flex: 0 0 133px;
+  margin-right: 4px;
+}
+.season-actions .rating-control .field-label {
+  margin-bottom: 4px;
+  font-size: 8px;
+}
+.season-actions .rating-star {
+  width: 21px;
+  height: 21px;
+}
+.season-actions .rating-star > span {
+  font-size: 20px;
+}
+.season-actions .rating-clear {
+  width: 15px;
+  padding: 0;
+  font-size: 15px;
+}
+.season-actions .rating-clear[hidden] {
+  display: block;
+  visibility: hidden;
 }
 .season-actions button {
   font-size: 10px;
@@ -1298,6 +1432,80 @@ dialog::backdrop {
     letter-spacing: 0.8px;
     text-transform: uppercase;
   }
+  .season-header {
+    position: relative;
+    align-items: center;
+  }
+  .season-options {
+    position: relative;
+    display: block;
+    margin-left: auto;
+  }
+  .season-options > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 650;
+    cursor: pointer;
+    list-style: none;
+  }
+  .season-options > summary::after {
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    content: "";
+    transform: translateY(-2px) rotate(45deg);
+  }
+  .season-options > summary::-webkit-details-marker {
+    display: none;
+  }
+  .season-options[open] > summary {
+    border-color: #61794d;
+    color: var(--accent);
+  }
+  .season-options[open] > summary::after {
+    transform: translateY(2px) rotate(225deg);
+  }
+  .season-options .season-actions {
+    position: absolute;
+    z-index: 70;
+    top: calc(100% + 6px);
+    right: 0;
+    width: min(280px, calc(100vw - 40px));
+    align-items: stretch;
+    flex-direction: column;
+    padding: 13px;
+    border: 1px solid #435246;
+    border-radius: 10px;
+    background: #1b251e;
+    box-shadow: 0 16px 40px #0009;
+  }
+  .season-options .season-actions > button {
+    width: 100%;
+  }
+  .season-options .rating-control {
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+    flex-basis: auto;
+    margin: 0 0 3px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .season-options .rating-control .field-label {
+    width: 100%;
+    text-align: center;
+  }
+  .season-options .rating-entry {
+    justify-content: center;
+  }
 }
 @media (max-width: 560px) {
   .topbar {
@@ -1421,10 +1629,6 @@ dialog::backdrop {
   .detail-controls #toggle-watchlist {
     margin-left: 0;
   }
-  .season-header {
-    align-items: start;
-    flex-direction: column;
-  }
   .episode {
     padding: 12px 10px;
     gap: 9px;
@@ -1435,6 +1639,13 @@ dialog::backdrop {
   }
   .detail-progress-top {
     font-size: 11px;
+  }
+  .detail-progress {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .detail-progress .next-watched-detail {
+    align-self: flex-start;
   }
   .detail-bottom {
     align-items: start;
