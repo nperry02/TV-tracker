@@ -1491,7 +1491,20 @@ dialog::backdrop {
     width: 100%;
   }
   .season-options .rating-control {
-    align-self: flex-start;
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+    flex-basis: auto;
+    margin: 0 0 3px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .season-options .rating-control .field-label {
+    width: 100%;
+    text-align: center;
+  }
+  .season-options .rating-entry {
+    justify-content: center;
   }
 }
 @media (max-width: 560px) {
