@@ -1133,7 +1133,17 @@ dialog::backdrop {
   align-self: end;
 }
 .detail-progress {
+  display: flex;
+  align-items: center;
+  gap: 18px;
   margin: 24px 0;
+}
+.detail-progress-main {
+  flex: 1;
+  min-width: 0;
+}
+.detail-progress .next-watched-detail {
+  flex: 0 0 auto;
 }
 .detail-progress-top {
   display: flex;
@@ -1552,6 +1562,13 @@ dialog::backdrop {
   }
   .detail-progress-top {
     font-size: 11px;
+  }
+  .detail-progress {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .detail-progress .next-watched-detail {
+    align-self: flex-start;
   }
   .detail-bottom {
     align-items: start;

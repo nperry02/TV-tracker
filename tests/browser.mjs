@@ -164,6 +164,10 @@ try {
   );
   await page.reload();
   await page.locator('.show-card[data-show="1396"]').click();
+  const progressDetailsBox = await page.locator(".detail-progress-main").boundingBox();
+  const nextEpisodeActionBox = await page.locator(".next-watched-detail").boundingBox();
+  assert.ok(nextEpisodeActionBox.x > progressDetailsBox.x);
+  assert.ok(nextEpisodeActionBox.y < progressDetailsBox.y + progressDetailsBox.height);
   await page.locator('#show-rating input[value="4.5"]').check();
   await page.waitForFunction(
     () =>
