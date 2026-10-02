@@ -2544,8 +2544,8 @@ h1 {
   color: var(--muted);
 }
 .stats-info > svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -2686,6 +2686,9 @@ h1 {
   color: var(--accent);
   font-size: 10px;
   place-items: center;
+}
+.genre-bars li > span {
+  min-height: 37px;
 }
 .genre-rating-bars li > span > span {
   display: grid;
