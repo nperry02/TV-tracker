@@ -1064,7 +1064,9 @@ dialog::backdrop {
   content: "★";
 }
 .rating-star > span::before {
-  color: #71834f;
+  color: #66764f;
+  -webkit-text-stroke: 1px #9db873;
+  paint-order: stroke fill;
 }
 .rating-star.comparison-half > span::before {
   width: 50%;
