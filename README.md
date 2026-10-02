@@ -86,6 +86,8 @@ The tests cover status transitions, unaired episodes, specials, stats aggregatio
 
 Browser tests use Playwright with installed Google Chrome, a temporary library, and fixture metadata. `npm run test:live` runs the main browser flow against real TMDB using `.env`; it also uses an isolated temporary library. Screenshots are saved under ignored `test-results/`.
 
+When application behavior described by the in-app Help & about page changes, update `public/views/help.js` as part of the same work so the guide remains accurate.
+
 Optional environment variables: `PORT` (default `3210`) and `TV_DATA_FILE` (alternative library path).
 
 ## Credits
