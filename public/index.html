@@ -147,6 +147,13 @@
         </header>
         <div id="stats-content"></div>
       </section>
+      <!-- Product guide, local-data details, and attribution -->
+      <section
+        id="help-view"
+        class="help-page"
+        aria-labelledby="help-title"
+        hidden
+      ></section>
     </main>
     <!-- Secondary actions and project information -->
     <footer class="site-footer">
@@ -157,7 +164,7 @@
       </div>
       <div>
         <a href="/api/export" download>Back up library ↗</a
-        ><button class="text-button" id="credits">About & credits</button>
+        ><a href="#help" data-page="help">Help & about</a>
       </div>
     </footer>
     <!-- Responsive navigation and application dialogs -->
@@ -243,42 +250,6 @@
     </dialog>
     <dialog id="show-dialog" class="show-dialog">
       <div id="show-content"></div>
-    </dialog>
-    <dialog id="credits-dialog" class="credits-dialog">
-      <div class="dialog-top">
-        <h2>Made for your next episode.</h2>
-        <button
-          class="icon-button"
-          data-close="credits-dialog"
-          aria-label="Close credits"
-        >
-          ×
-        </button>
-      </div>
-      <p>
-        A private TV library, saved on this Mac. Rate shows, keep your place,
-        and discover what to watch next.
-      </p>
-      <p>
-        Show information and artwork provided by
-        <a href="https://www.themoviedb.org" target="_blank" rel="noreferrer"
-          >TMDB</a
-        >.
-      </p>
-      <img
-        class="tmdb-logo"
-        src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_long_2-9665a76b1ae401a510ec1e0ca40ddcb3b0cfe45f1d51b77a308fea0845885648.svg"
-        alt="TMDB"
-      />
-      <p class="muted">
-        This product uses the TMDB API but is not endorsed or certified by TMDB.
-      </p>
-      <p class="muted">
-        Show information refreshes automatically: daily for active shows,
-        weekly for Paused and Watchlist shows, and monthly for Completed and
-        Dropped shows. At most five shows refresh when the app opens.
-      </p>
-      <p class="muted">Viewing dates and a diary are planned for later.</p>
     </dialog>
     <div id="toast" role="status" popover="manual" hidden></div>
   </body>

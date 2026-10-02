@@ -113,6 +113,7 @@ try {
   assert.equal(await page.locator("#home-view").isVisible(), true);
   assert.equal(await page.locator("#library-view").isVisible(), false);
   assert.equal(await page.locator("#stats-view").isVisible(), false);
+  assert.equal(await page.locator("#help-view").isVisible(), false);
   await page.getByRole("link", { name: "Stats", exact: true }).click();
   assert.equal(new URL(page.url()).hash, "#stats");
   await page.locator("#stats-view").waitFor();
@@ -866,12 +867,29 @@ try {
     await page.getByText("TMDB is unavailable", { exact: false }).waitFor();
   }
   await page.getByRole("button", { name: "Close search", exact: true }).click();
-  await page.getByRole("button", { name: "About & credits" }).click();
-  if (live)
-    await page.waitForFunction(
-      () => document.querySelector(".tmdb-logo").naturalWidth > 0,
-    );
-  await page.getByRole("button", { name: "Close credits" }).click();
+  // Help is a routed page, so the footer link participates in browser history.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page
+    .locator(".site-footer")
+    .getByRole("link", { name: "Help & about", exact: true })
+    .click();
+  assert.equal(new URL(page.url()).hash, "#help");
+  await page.getByRole("heading", { name: "Keep your place. Find what’s next." }).waitFor();
+  assert.equal(await page.locator("#help-view").isVisible(), true);
+  assert.equal(await page.locator("#home-view").isVisible(), false);
+  assert.equal(await page.locator("#library-view").isVisible(), false);
+  assert.equal(await page.locator("#stats-view").isVisible(), false);
+  await page.getByText("Your library stays on this computer.", { exact: true }).waitFor();
+  assert.equal(await page.locator("#help-view .tmdb-logo").count(), 1);
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    true,
+    "Help view fits desktop viewport",
+  );
+  await page.locator("#toast").waitFor({ state: "hidden" });
+  await page.screenshot({ path: "test-results/help.png", fullPage: true });
+  await page.goBack();
+  await page.locator("#library-view").waitFor();
   assert.deepEqual(errors, []);
   console.log(
     `${live ? "Live TMDB" : "Fixture"} browser checks passed: search, add, ratings, season progress, stats, overrides, reload persistence, filters, errors, and mobile layout.`,

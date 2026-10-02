@@ -169,6 +169,7 @@ const files = {
   "/style.css": ["style.css", "text/css"],
   "/ui.js": ["ui.js", "text/javascript"],
   "/views/home.js": ["views/home.js", "text/javascript"],
+  "/views/help.js": ["views/help.js", "text/javascript"],
   "/views/library.js": ["views/library.js", "text/javascript"],
   "/views/search-dialog.js": ["views/search-dialog.js", "text/javascript"],
   "/views/show-dialog.js": ["views/show-dialog.js", "text/javascript"],

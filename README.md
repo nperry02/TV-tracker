@@ -46,6 +46,7 @@ running it. Stop it with Ctrl+C.
 
 - Use the header to move between distinct Home, My Shows, and Stats views or open the Add a show dialog. A navigation drawer keeps those actions available in narrow web-browser windows.
 - Home shows library summary cards and up to three backdrop-based Continue Watching cards. My Shows contains the collection, filters, sorting, and gallery/list controls.
+- Open Help & about from the footer for an in-app guide to progress, statuses, filtering, refreshes, local data, backups, and show-data credits.
 - Open Stats from the header for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
 - Stats estimate watch time from episode runtimes, each show's typical runtime, and the median known runtime in the library. Specials count toward episodes watched and watch time, but not season-completion or regular-episode progress.
 - Search TMDB and add shows to your library. Load additional pages without losing earlier results; failed page loads can be retried.

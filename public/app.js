@@ -17,6 +17,7 @@ import {
 import { renderStats } from "./views/stats.js";
 import { createSearchDialog } from "./views/search-dialog.js";
 import { renderHome } from "./views/home.js";
+import { renderHelp } from "./views/help.js";
 import { renderLibrary } from "./views/library.js";
 import {
   initialShowSeason,
@@ -76,10 +77,14 @@ let viewMode = (() => {
 
 // Hash routing and top-level rendering
 function applyRoute({ scroll = false } = {}) {
-  const route = location.hash === "#stats" ? "stats" : location.hash === "#library" ? "library" : "home";
+  const requestedRoute = location.hash.slice(1);
+  const route = ["library", "stats", "help"].includes(requestedRoute)
+    ? requestedRoute
+    : "home";
   $("#home-view").hidden = route !== "home";
   $("#library-view").hidden = route !== "library";
   $("#stats-view").hidden = route !== "stats";
+  $("#help-view").hidden = route !== "help";
   document.querySelectorAll("[data-page]").forEach((link) =>
     link.classList.toggle("active", link.dataset.page === route),
   );
@@ -246,7 +251,6 @@ document.addEventListener("click", async (event) => {
     return searchDialog.open();
   }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
-  if (button.id === "credits") return $("#credits-dialog").showModal();
   if (button.id === "toggle-watchlist") {
     const show = shows.find((s) => s.id === selectedId);
     const watchlist = !inWatchlist(show);
@@ -408,6 +412,9 @@ for (const dialog of document.querySelectorAll("dialog"))
     )
       dialog.close();
   });
+
+// Static guidance renders independently of library loading and refreshes.
+renderHelp($("#help-view"));
 
 // Startup renders saved data first, then refreshes a bounded stale-metadata queue.
 async function boot() {
