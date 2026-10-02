@@ -27,7 +27,7 @@ function ratingControl(id, value, label, mutationPending, compact = false) {
     return `<span class="rating-star ${fillClass}"><span aria-hidden="true">★</span><input id="${id}-${String(half).replace(".", "-")}" type="radio" name="${id}-option" value="${half}" data-rating-kind="${id}" aria-label="${half} out of 5 stars"${value === half ? " checked" : ""}><input id="${id}-${whole}" type="radio" name="${id}-option" value="${whole}" data-rating-kind="${id}" aria-label="${whole} out of 5 stars"${value === whole ? " checked" : ""}></span>`;
   }).join("");
   const description = value == null ? "Not rated" : `${value} out of 5`;
-  return `<fieldset class="rating-control${compact ? " compact" : ""}" id="${id}" data-value="${value ?? ""}"${mutationPending ? " disabled" : ""}><legend class="field-label">${label}</legend><div class="rating-entry"><div class="star-rating" title="${description}">${stars}</div><button type="button" class="rating-clear" id="clear-${id}" data-clear-rating="${id}"${value == null ? " hidden" : ""}>Clear</button></div><output class="sr-only">${description}</output></fieldset>`;
+  return `<fieldset class="rating-control${compact ? " compact" : ""}" id="${id}" data-value="${value ?? ""}"${mutationPending ? " disabled" : ""}><legend class="field-label">${label}</legend><div class="rating-entry"><div class="star-rating" title="${description}">${stars}</div><button type="button" class="rating-clear" id="clear-${id}" data-clear-rating="${id}" aria-label="Clear rating" title="Clear rating"${value == null ? " hidden" : ""}>×</button></div><output class="sr-only">${description}</output></fieldset>`;
 }
 
 export function initialShowSeason(show) {

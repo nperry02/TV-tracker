@@ -227,7 +227,7 @@ try {
   // Moving to Clear but remaining inside the fieldset restores the saved appearance.
   await page.locator("#show-rating .rating-clear").hover();
   assert.equal(await page.locator("#show-rating output").textContent(), "4.5 out of 5");
-  await page.getByRole("button", { name: "Clear", exact: true }).first().click();
+  await page.getByRole("button", { name: "Clear rating", exact: true }).first().click();
   await page.waitForFunction(
     () =>
       !document.querySelector("#show-rating").disabled &&
