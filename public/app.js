@@ -112,12 +112,23 @@ function renderShow() {
   }
 }
 
-// Hover previews repaint the stars without changing the saved rating value.
+// Hover previews separate the shared fill from the difference to the saved rating.
 function previewRating(control, value) {
+  const savedValue = control.dataset.value ? Number(control.dataset.value) : null;
+  const comparing = savedValue != null && value !== savedValue;
+  const normalValue = comparing ? Math.min(savedValue, value) : value;
+  const comparisonValue = comparing ? Math.max(savedValue, value) : 0;
+
   control.querySelectorAll(".rating-star").forEach((star, index) => {
-    const fill = Math.max(0, Math.min(1, (value || 0) - index));
-    star.classList.remove("unfilled", "half", "full");
-    star.classList.add(fill === 1 ? "full" : fill === 0.5 ? "half" : "unfilled");
+    const normalFill = Math.max(0, Math.min(1, (normalValue || 0) - index));
+    const comparisonFill = Math.max(0, Math.min(1, comparisonValue - index));
+    star.classList.remove("unfilled", "half", "full", "comparison-half", "comparison-full");
+    star.classList.add(
+      normalFill === 1 ? "full" : normalFill === 0.5 ? "half" : "unfilled",
+    );
+    if (comparisonFill > normalFill) {
+      star.classList.add(comparisonFill === 1 ? "comparison-full" : "comparison-half");
+    }
   });
 }
 

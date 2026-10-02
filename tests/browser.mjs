@@ -183,6 +183,31 @@ try {
     ),
     ["full", "full", "half", "unfilled", "unfilled"],
   );
+  assert.deepEqual(
+    await page.locator("#show-rating .rating-star").evaluateAll((stars) =>
+      stars.map((star) =>
+        [...star.classList].find((name) => name.startsWith("comparison-")) || null,
+      ),
+    ),
+    [null, null, "comparison-full", "comparison-full", "comparison-half"],
+  );
+  await page.locator('#show-rating input[value="3"]').check();
+  await page.waitForFunction(
+    () => document.querySelector("#show-rating").dataset.value === "3",
+  );
+  await page.locator('#show-rating input[value="5"]').hover();
+  assert.deepEqual(
+    await page.locator("#show-rating .rating-star").evaluateAll((stars) =>
+      stars.map((star) =>
+        [...star.classList].find((name) => name.startsWith("comparison-")) || null,
+      ),
+    ),
+    [null, null, null, "comparison-full", "comparison-full"],
+  );
+  await page.locator('#show-rating input[value="4.5"]').check();
+  await page.waitForFunction(
+    () => document.querySelector("#show-rating").dataset.value === "4.5",
+  );
   // Adjacent star targets meet so the preview remains continuous between glyphs.
   const firstStarBox = await page.locator("#show-rating .rating-star").first().boundingBox();
   await page.locator("#show-rating .star-rating").hover({
@@ -199,8 +224,8 @@ try {
   await page.waitForFunction(
     () => document.querySelector("#show-rating").dataset.value === "4.5",
   );
-  // Moving below the stars but remaining inside the fieldset restores the saved value.
-  await page.locator("#show-rating .rating-summary").hover();
+  // Moving to Clear but remaining inside the fieldset restores the saved appearance.
+  await page.locator("#show-rating .rating-clear").hover();
   assert.equal(await page.locator("#show-rating output").textContent(), "4.5 out of 5");
   await page.getByRole("button", { name: "Clear", exact: true }).first().click();
   await page.waitForFunction(

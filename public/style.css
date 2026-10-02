@@ -1053,6 +1053,7 @@ dialog::backdrop {
   font-size: 27px;
   line-height: 1;
 }
+.rating-star > span::before,
 .rating-star > span::after {
   position: absolute;
   top: 0;
@@ -1061,6 +1062,15 @@ dialog::backdrop {
   overflow: hidden;
   color: var(--accent);
   content: "★";
+}
+.rating-star > span::before {
+  color: #71834f;
+}
+.rating-star.comparison-half > span::before {
+  width: 50%;
+}
+.rating-star.comparison-full > span::before {
+  width: 100%;
 }
 .rating-star.half > span::after {
   width: 50%;
@@ -1097,16 +1107,10 @@ dialog::backdrop {
 .rating-control:disabled {
   opacity: 0.5;
 }
-.rating-summary {
+.rating-entry {
   display: flex;
-  min-height: 20px;
   align-items: center;
   gap: 8px;
-  margin-top: 3px;
-}
-.rating-summary output {
-  color: var(--muted);
-  font-size: 10px;
 }
 .rating-clear {
   padding: 0;
@@ -1176,11 +1180,6 @@ dialog::backdrop {
 .season-actions .rating-star > span {
   font-size: 20px;
 }
-.season-actions .rating-summary {
-  min-height: 15px;
-  margin-top: 1px;
-}
-.season-actions .rating-summary output,
 .season-actions .rating-clear {
   font-size: 8px;
 }
