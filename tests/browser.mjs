@@ -164,17 +164,53 @@ try {
   );
   await page.reload();
   await page.locator('.show-card[data-show="1396"]').click();
-  await page.locator("#show-rating").selectOption("4.5");
+  await page.locator('#show-rating input[value="4.5"]').check();
   await page.waitForFunction(
     () =>
       !document.querySelector("#show-rating").disabled &&
-      document.querySelector("#show-rating").value === "4.5",
+      document.querySelector("#show-rating").dataset.value === "4.5",
   );
-  await page.locator("#season-rating").selectOption("4");
+  await page.locator('#show-rating input[value="2.5"]').hover();
+  assert.equal(await page.locator("#show-rating").getAttribute("data-value"), "4.5");
+  assert.equal(await page.locator("#show-rating output").textContent(), "4.5 out of 5");
+  assert.deepEqual(
+    await page.locator("#show-rating .rating-star").evaluateAll((stars) =>
+      stars.map((star) =>
+        [...star.classList].find((name) =>
+          ["full", "half", "unfilled"].includes(name),
+        ),
+      ),
+    ),
+    ["full", "full", "half", "unfilled", "unfilled"],
+  );
+  // Moving below the stars but remaining inside the fieldset restores the saved value.
+  await page.locator("#show-rating .rating-summary").hover();
+  assert.equal(await page.locator("#show-rating output").textContent(), "4.5 out of 5");
+  await page.getByRole("button", { name: "Clear", exact: true }).first().click();
+  await page.waitForFunction(
+    () =>
+      !document.querySelector("#show-rating").disabled &&
+      document.querySelector("#show-rating").dataset.value === "",
+  );
+  await page.locator('#show-rating input[value="4.5"]').check();
+  await page.waitForFunction(
+    () => document.querySelector("#show-rating").dataset.value === "4.5",
+  );
+  assert.deepEqual(
+    await page.locator("#show-rating .rating-star").evaluateAll((stars) =>
+      stars.map((star) =>
+        [...star.classList].find((name) =>
+          ["full", "half", "unfilled"].includes(name),
+        ),
+      ),
+    ),
+    ["full", "full", "full", "full", "half"],
+  );
+  await page.locator('#season-rating input[value="4"]').check();
   await page.waitForFunction(
     () =>
       !document.querySelector("#season-rating").disabled &&
-      document.querySelector("#season-rating").value === "4",
+      document.querySelector("#season-rating").dataset.value === "4",
   );
   await page.locator('[data-through="2"]').click();
   await page.waitForFunction(
@@ -235,7 +271,7 @@ try {
     await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
     "true",
   );
-  assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
+  assert.equal(await page.locator("#show-rating").getAttribute("data-value"), "4.5");
   await page.locator("#season-select").selectOption("2");
   await page.locator('[data-through="1"]').click();
   await page.waitForFunction(
@@ -266,10 +302,10 @@ try {
   await selectLibraryStatus("All");
   await page.reload();
   await page.locator('[data-show="1396"]').first().click();
-  assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
+  assert.equal(await page.locator("#show-rating").getAttribute("data-value"), "4.5");
   assert.equal(await page.locator("#show-status").inputValue(), "Dropped");
   await page.locator("#season-select").selectOption("1");
-  assert.equal(await page.locator("#season-rating").inputValue(), "4");
+  assert.equal(await page.locator("#season-rating").getAttribute("data-value"), "4");
   assert.equal(await page.locator('[data-episode="1"]').isChecked(), true);
   await page.locator('[data-episode="1"]').uncheck();
   await page.waitForFunction(
@@ -353,7 +389,7 @@ try {
     assert.equal(await page.locator("#show-content [data-next]").count(), 0);
     await page.locator("#season-select").selectOption("1");
     assert.equal(await page.locator('[data-episode="1"]').isChecked(), true);
-    assert.equal(await page.locator("#show-rating").inputValue(), "4.5");
+    assert.equal(await page.locator("#show-rating").getAttribute("data-value"), "4.5");
     await page.getByRole("button", { name: "Close show", exact: true }).click();
     await page.reload();
     await page
@@ -783,10 +819,10 @@ try {
       await page.locator("#toggle-watchlist").getAttribute("aria-pressed"),
       "true",
     );
-    await page.locator("#show-rating").selectOption("2");
+    await page.locator('#show-rating input[value="2"]').check();
     await page.waitForFunction(
       () =>
-        document.querySelector("#show-rating")?.value === "2" &&
+        document.querySelector("#show-rating")?.dataset.value === "2" &&
         !document.querySelector("#show-rating").disabled,
     );
     page.once("dialog", (dialog) => dialog.accept());
@@ -805,7 +841,7 @@ try {
       "1",
     );
     await page.locator('.show-card[data-show="200022"]').click();
-    assert.equal(await page.locator("#show-rating").inputValue(), "");
+    assert.equal(await page.locator("#show-rating").getAttribute("data-value"), "");
     assert.equal(await page.locator("#show-status").inputValue(), "");
     assert.equal(
       await page.locator(".detail-hero .status-badge").first().textContent(),

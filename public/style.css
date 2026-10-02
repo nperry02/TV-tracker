@@ -1023,18 +1023,102 @@ dialog::backdrop {
   color: var(--muted);
   margin-bottom: 8px;
 }
-.rating-control select,
 .status-control select {
   font-size: 12px;
 }
-.rating-control select {
-  color: var(--accent);
-}
-.rating-control .custom-select-trigger,
 .status-control .custom-select-trigger {
   font-size: 12px;
 }
-.rating-control .custom-select-trigger {
+.rating-control {
+  min-width: 190px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.star-rating {
+  display: flex;
+  width: max-content;
+  gap: 3px;
+}
+.rating-star {
+  position: relative;
+  display: block;
+  width: 29px;
+  height: 29px;
+}
+.rating-star > span {
+  position: relative;
+  display: block;
+  color: #455248;
+  font-size: 27px;
+  line-height: 1;
+}
+.rating-star > span::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  overflow: hidden;
+  color: var(--accent);
+  content: "★";
+}
+.rating-star.half > span::after {
+  width: 50%;
+}
+.rating-star.full > span::after {
+  width: 100%;
+}
+.rating-star input {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rating-star input:first-of-type {
+  left: 0;
+}
+.rating-star input:last-of-type {
+  right: 0;
+}
+.rating-star:has(input:hover) > span {
+  filter: brightness(1.25);
+  transform: scale(1.06);
+}
+.rating-star:has(input:focus-visible) {
+  border-radius: 5px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.rating-control:disabled {
+  opacity: 0.5;
+}
+.rating-summary {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+.rating-summary output {
+  color: var(--muted);
+  font-size: 10px;
+}
+.rating-clear {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #aebbb0;
+  font-size: 10px;
+  font-weight: 500;
+}
+.rating-clear:hover {
+  border: 0;
+  background: transparent;
   color: var(--accent);
 }
 .detail-controls #toggle-watchlist {
@@ -1076,6 +1160,29 @@ dialog::backdrop {
   gap: 7px;
   align-items: center;
   flex-wrap: wrap;
+}
+.season-actions .rating-control {
+  min-width: 133px;
+  margin-right: 4px;
+}
+.season-actions .rating-control .field-label {
+  margin-bottom: 4px;
+  font-size: 8px;
+}
+.season-actions .rating-star {
+  width: 21px;
+  height: 21px;
+}
+.season-actions .rating-star > span {
+  font-size: 20px;
+}
+.season-actions .rating-summary {
+  min-height: 15px;
+  margin-top: 1px;
+}
+.season-actions .rating-summary output,
+.season-actions .rating-clear {
+  font-size: 8px;
 }
 .season-actions button {
   font-size: 10px;

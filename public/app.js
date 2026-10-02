@@ -112,6 +112,15 @@ function renderShow() {
   }
 }
 
+// Hover previews repaint the stars without changing the saved rating value.
+function previewRating(control, value) {
+  control.querySelectorAll(".rating-star").forEach((star, index) => {
+    const fill = Math.max(0, Math.min(1, (value || 0) - index));
+    star.classList.remove("unfilled", "half", "full");
+    star.classList.add(fill === 1 ? "full" : fill === 0.5 ? "half" : "unfilled");
+  });
+}
+
 // Mutations redraw disabled controls immediately, then restore dialog context.
 async function save(body, message, id = selectedId) {
   if (mutationPending) return;
@@ -247,6 +256,13 @@ document.addEventListener("click", async (event) => {
   }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.dataset.clearRating === "show-rating")
+    return save({ rating: null }, "Show rating cleared.");
+  if (button.dataset.clearRating === "season-rating")
+    return save(
+      { seasonRating: { season: selectedSeason, rating: null } },
+      "Season rating cleared.",
+    );
   if (button.id === "toggle-watchlist") {
     const show = shows.find((s) => s.id === selectedId);
     const watchlist = !inWatchlist(show);
@@ -354,14 +370,14 @@ document.addEventListener("change", (event) => {
     renderShow();
     $("#season-select").focus();
   }
-  if (el.id === "show-rating")
-    save({ rating: el.value ? Number(el.value) : null }, "Show rating saved.");
-  if (el.id === "season-rating")
+  if (el.dataset.ratingKind === "show-rating")
+    save({ rating: Number(el.value) }, "Show rating saved.");
+  if (el.dataset.ratingKind === "season-rating")
     save(
       {
         seasonRating: {
           season: selectedSeason,
-          rating: el.value ? Number(el.value) : null,
+          rating: Number(el.value),
         },
       },
       "Season rating saved.",
@@ -379,6 +395,20 @@ document.addEventListener("change", (event) => {
     });
 });
 $("#library-query").addEventListener("input", render);
+
+// Each transparent half-star target previews its value until the pointer leaves.
+document.addEventListener("pointerover", (event) => {
+  const input = event.target.closest("[data-rating-kind]");
+  if (input) previewRating(input.closest(".rating-control"), Number(input.value));
+});
+document.addEventListener("pointerout", (event) => {
+  const input = event.target.closest("[data-rating-kind]");
+  if (!input) return;
+  const control = input.closest(".rating-control");
+  const nextInput = event.relatedTarget?.closest?.("[data-rating-kind]");
+  if (nextInput?.closest(".rating-control") === control) return;
+  previewRating(control, control.dataset.value ? Number(control.dataset.value) : null);
+});
 
 // Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
