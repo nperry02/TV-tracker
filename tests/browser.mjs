@@ -247,12 +247,18 @@ try {
     ),
     ["full", "full", "full", "full", "half"],
   );
+  const unratedSeasonBox = await page.locator("#season-rating").boundingBox();
+  const unratedSeasonActionBox = await page.locator("#mark-season").boundingBox();
   await page.locator('#season-rating input[value="4"]').check();
   await page.waitForFunction(
     () =>
       !document.querySelector("#season-rating").disabled &&
       document.querySelector("#season-rating").dataset.value === "4",
   );
+  const ratedSeasonBox = await page.locator("#season-rating").boundingBox();
+  const ratedSeasonActionBox = await page.locator("#mark-season").boundingBox();
+  assert.equal(ratedSeasonBox.width, unratedSeasonBox.width);
+  assert.equal(ratedSeasonActionBox.x, unratedSeasonActionBox.x);
   await page.locator('[data-through="2"]').click();
   await page.waitForFunction(
     () =>

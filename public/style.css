@@ -1169,7 +1169,9 @@ dialog::backdrop {
   flex-wrap: wrap;
 }
 .season-actions .rating-control {
+  width: 133px;
   min-width: 133px;
+  flex: 0 0 133px;
   margin-right: 4px;
 }
 .season-actions .rating-control .field-label {
@@ -1184,7 +1186,13 @@ dialog::backdrop {
   font-size: 20px;
 }
 .season-actions .rating-clear {
+  width: 15px;
+  padding: 0;
   font-size: 15px;
+}
+.season-actions .rating-clear[hidden] {
+  display: block;
+  visibility: hidden;
 }
 .season-actions button {
   font-size: 10px;
