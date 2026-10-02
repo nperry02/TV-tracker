@@ -2,15 +2,45 @@
 
 A personal TV library: find shows, rate them, and keep your place across episodes and seasons. Built as a local web app with Node.js 22+ and no runtime dependencies.
 
-## Run
+## First-time setup
+
+Install [Node.js 22 or newer](https://nodejs.org/), then clone the repository and
+enter its directory:
+
+```sh
+git clone https://github.com/nperry02/TV-tracker.git
+cd TV-tracker
+```
+
+Create the local environment file from the committed template:
+
+```sh
+cp .env.example .env
+```
+
+Create a TMDB account and request an API credential from its
+[API settings](https://www.themoviedb.org/settings/api). Open `.env` and add
+the API Read Access Token or v3 API key:
+
+```env
+TMDB_TOKEN=your_tmdb_credential
+```
+
+`PORT` is optional. The app uses port `3210` when it is not included in `.env`.
+The credential and personal library stay outside Git. Each checkout creates its
+own independent library in `data/library.json` when the app first saves data.
+
+The web app has no runtime packages to install. Run `npm install` only when you
+also need the Playwright development dependency for browser testing.
+
+## Running the app
 
 ```sh
 npm start
 ```
 
-Open **http://localhost:3210**. The server binds only to this Mac. Stop it with Ctrl+C.
-
-The existing Letterbox project TMDB credential has been copied into the ignored local `.env` file. For a fresh checkout, copy `.env.example` to `.env` and fill in `TMDB_TOKEN` with your TMDB API Read Access Token. A v3 API key is also supported. Credentials stay on the server.
+Open **http://localhost:3210**. The server is available only on the computer
+running it. Stop it with Ctrl+C.
 
 ## First version
 
