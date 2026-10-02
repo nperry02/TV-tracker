@@ -1,5 +1,5 @@
 import { libraryStats, statuses } from "../model.js";
-import { esc, poster, stars } from "../ui.js";
+import { esc } from "../ui.js";
 
 // Compact display formatting
 function formatHours(minutes) {
@@ -39,14 +39,14 @@ export function renderStats(shows, container) {
         )
         .join("")
     : '<li class="stats-empty">Genres will appear as you add shows.</li>';
-  const topRated = data.topRated.length
-    ? data.topRated
+  const ratedGenreList = data.topGenresByRating.length
+    ? data.topGenresByRating
         .map(
-          (show) =>
-            `<button class="stats-show" data-show="${show.id}" aria-label="Open ${esc(show.name)}, rated ${show.rating} out of 5">${poster(show, "", "w342")}<span><strong>${esc(show.name)}</strong>${stars(show.rating)}</span></button>`,
+          (genre, index) =>
+            `<li><span><b>${index + 1}</b><span>${esc(genre.name)}<small>${genre.ratedShows} rated ${genre.ratedShows === 1 ? "show" : "shows"} · ${genre.averageRating.toFixed(1)} raw average</small></span></span><strong>${genre.weightedRating.toFixed(1)} ★</strong><progress value="${genre.weightedRating}" max="5" aria-label="${esc(genre.name)} has a weighted rating of ${genre.weightedRating.toFixed(1)} out of 5, based on a ${genre.averageRating.toFixed(1)} average from ${genre.ratedShows} rated ${genre.ratedShows === 1 ? "show" : "shows"}"></progress></li>`,
         )
         .join("")
-    : '<div class="stats-empty stats-empty-wide"><strong>No rated shows yet.</strong><span>Rate a show and your favorites will appear here.</span></div>';
+    : '<li class="stats-empty">Rated genres will appear after you rate shows.</li>';
 
   // Coverage distinguishes metadata-backed runtimes from the median fallback.
   const runtimeNote =
@@ -71,22 +71,22 @@ export function renderStats(shows, container) {
         <ul class="stats-bars">${statusList}</ul>
         <div class="watchlist-total"><span><i class="nav-dot watchlist"></i>Watchlist <small>can overlap</small></span><strong>${data.watchlistShows}</strong></div>
       </section>
+      <section class="stats-panel" aria-labelledby="genres-heading">
+        <div class="stats-panel-heading"><div><p class="eyebrow">MOST WATCHED</p><h2 id="genres-heading">Top genres</h2></div></div>
+        <ol class="stats-bars genre-bars">${genreList}</ol>
+      </section>
+      <section class="stats-panel" aria-labelledby="genres-rating-heading">
+        <div class="stats-panel-heading"><div><p class="eyebrow stats-eyebrow">HIGHEST RATED <span class="stats-info" tabindex="0" aria-label="How genre ratings are calculated" aria-describedby="genre-rating-formula"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.8 1c0 1.8-2.5 2-2.5 3.8"></path><path d="M12 17.3h.01"></path></svg><span id="genre-rating-formula" role="tooltip">Weighted score = (genre rating total + 3 × overall rating average) ÷ (rated shows in genre + 3). Unrated shows are excluded.</span></span></p><h2 id="genres-rating-heading">Top genres by rating</h2></div></div>
+        <ol class="stats-bars genre-bars genre-rating-bars">${ratedGenreList}</ol>
+      </section>
       <section class="stats-panel progress-panel" aria-labelledby="progress-heading">
         <div class="stats-panel-heading"><div><p class="eyebrow">AIRED EPISODES</p><h2 id="progress-heading">Progress</h2></div><strong>${Math.round(data.progressPercent)}%</strong></div>
         <progress value="${data.watchedRegularEpisodes}" max="${data.airedRegularEpisodes || 1}" aria-label="${data.watchedRegularEpisodes} of ${data.airedRegularEpisodes} regular aired episodes watched"></progress>
         <p><strong>${data.watchedRegularEpisodes.toLocaleString()}</strong> of ${data.airedRegularEpisodes.toLocaleString()} regular aired episodes watched</p>
         <small>Specials are excluded from progress and completed-season totals.</small>
       </section>
-      <section class="stats-panel" aria-labelledby="genres-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">MOST WATCHED</p><h2 id="genres-heading">Top genres</h2></div></div>
-        <ol class="stats-bars genre-bars">${genreList}</ol>
-      </section>
     </div>
     <section class="stats-panel runtime-panel" aria-labelledby="runtime-heading">
       <div><p class="eyebrow">WATCH TIME</p><h2 id="runtime-heading">About your estimate</h2></div><p>${runtimeNote}</p>
-    </section>
-    <section class="top-rated" aria-labelledby="top-rated-heading">
-      <div class="stats-panel-heading"><div><p class="eyebrow">YOUR FAVORITES</p><h2 id="top-rated-heading">Top-rated shows</h2></div><small>Rating, then recent progress</small></div>
-      <div class="top-rated-grid">${topRated}</div>
     </section>`;
 }

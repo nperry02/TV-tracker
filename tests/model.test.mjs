@@ -8,6 +8,7 @@ import {
   matchesLibraryFilters,
   matchesGenres,
   libraryStats,
+  topRatedShows,
   metadataRefreshInterval,
   metadataRefreshQueue,
 } from "../public/model.js";
@@ -202,7 +203,7 @@ test("library stats aggregate ratings, statuses, progress, specials, seasons, an
         name: "Alpha",
         tracked: true,
         watchlist: false,
-        rating: 4.5,
+        rating: 4,
         genres: [
           { id: 18, name: "Drama" },
           { id: 80, name: "Crime" },
@@ -255,7 +256,7 @@ test("library stats aggregate ratings, statuses, progress, specials, seasons, an
   assert.equal(stats.statusCounts["Caught Up"], 1);
   assert.equal(stats.statusCounts.Completed, 1);
   assert.equal(stats.watchlistShows, 2);
-  assert.equal(stats.averageRating, 4.5);
+  assert.equal(stats.averageRating, 4.25);
   assert.equal(stats.ratedShows, 2);
   assert.equal(stats.unratedShows, 0);
   assert.equal(stats.ratingBuckets.length, 10);
@@ -265,12 +266,17 @@ test("library stats aggregate ratings, statuses, progress, specials, seasons, an
   );
   assert.equal(
     stats.ratingBuckets.find((bucket) => bucket.rating === 4.5).count,
-    2,
+    1,
   );
   assert.deepEqual(stats.topGenres, [
     { name: "Drama", count: 2 },
     { name: "Comedy", count: 1 },
     { name: "Crime", count: 1 },
+  ]);
+  assert.deepEqual(stats.topGenresByRating, [
+    { name: "Comedy", averageRating: 4.5, weightedRating: 4.3125, ratedShows: 1 },
+    { name: "Drama", averageRating: 4.25, weightedRating: 4.25, ratedShows: 2 },
+    { name: "Crime", averageRating: 4, weightedRating: 4.1875, ratedShows: 1 },
   ]);
   assert.deepEqual(
     stats.topRated.map((entry) => entry.name),
@@ -292,6 +298,16 @@ test("library stats handle empty libraries and missing runtime metadata", () => 
   assert.equal(stats.unratedShows, 1);
   assert.equal(stats.runtimeCoveredEpisodes, 0);
   assert.deepEqual(libraryStats([]).topGenres, []);
+  assert.deepEqual(libraryStats([]).topGenresByRating, []);
+});
+
+test("top-rated shows use progress recency to break equal ratings", () => {
+  const ranked = topRatedShows([
+    show({ id: 1, name: "Older", tracked: true, rating: 5, lastWatchedAt: "2026-01-01" }),
+    show({ id: 2, name: "Newer", tracked: true, rating: 5, lastWatchedAt: "2026-02-01" }),
+    show({ id: 3, name: "Watchlist", tracked: false, watchlist: true, rating: 5 }),
+  ]);
+  assert.deepEqual(ranked.map((entry) => entry.name), ["Newer", "Older"]);
 });
 
 test("metadata refreshes active shows most often and limits startup work", () => {

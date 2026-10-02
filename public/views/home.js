@@ -1,5 +1,11 @@
-import { inLibrary, matchesTab, progress, watchStatus } from "../model.js";
-import { $, episodeCode, esc, image, poster } from "../ui.js";
+import {
+  inLibrary,
+  matchesTab,
+  progress,
+  topRatedShows,
+  watchStatus,
+} from "../model.js";
+import { $, episodeCode, esc, image, poster, stars } from "../ui.js";
 
 export function renderHome(shows, mutationPending) {
   // Overview cards summarize tracked membership rather than Watchlist overlap.
@@ -36,4 +42,15 @@ export function renderHome(shows, mutationPending) {
       return `<article class="continue-card"><button class="continue-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(show, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(show.name)}</strong><small>${episodeCode(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></span></button><button class="next-watched" data-next="${show.id}" aria-label="Mark ${esc(show.name)} ${episodeCode(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
     })
     .join("");
+
+  // Favorites stay visible on Home even when no shows currently need attention.
+  const topRated = topRatedShows(shows);
+  $("#home-top-rated-grid").innerHTML = topRated.length
+    ? topRated
+        .map(
+          (show) =>
+            `<button class="stats-show" data-show="${show.id}" aria-label="Open ${esc(show.name)}, rated ${show.rating} out of 5">${poster(show, "", "w342")}<span><strong>${esc(show.name)}</strong>${stars(show.rating)}</span></button>`,
+        )
+        .join("")
+    : '<div class="stats-empty stats-empty-wide"><strong>No rated shows yet.</strong><span>Rate a show and your favorites will appear here.</span></div>';
 }

@@ -353,7 +353,7 @@ try {
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await selectLibraryStatus("All");
   await page.reload();
-  await page.locator('[data-show="1396"]').first().click();
+  await page.locator('.show-card[data-show="1396"]').click();
   assert.equal(await page.locator("#show-rating").getAttribute("data-value"), "4.5");
   assert.equal(await page.locator("#show-status").inputValue(), "Dropped");
   await page.locator("#season-select").selectOption("1");
@@ -629,12 +629,26 @@ try {
       await page.locator(".runtime-panel").textContent(),
       /watched episodes have show or episode runtime data/,
     );
-    assert.equal(await page.locator(".stats-show").count(), 5);
+    await page.getByRole("heading", { name: "Top genres by rating" }).waitFor();
+    assert.equal(await page.locator(".genre-rating-bars li").count(), 2);
+    await page.locator(".stats-info").hover();
+    await page.getByRole("tooltip").waitFor();
+    assert.match(await page.getByRole("tooltip").textContent(), /Unrated shows are excluded/);
+    assert.equal(
+      await page.locator(".progress-panel").evaluate(
+        (panel) => getComputedStyle(panel).gridColumnEnd,
+      ),
+      "-1",
+    );
+    assert.equal(await page.locator("#stats-view .stats-show").count(), 0);
     await page.screenshot({ path: "test-results/desktop-stats.png", fullPage: true });
-    await page.locator(".stats-show").first().click();
+    await page.getByRole("link", { name: "Home", exact: true }).click();
+    await page.locator("#home-view").waitFor();
+    assert.equal(await page.locator("#home-top-rated-grid .stats-show").count(), 5);
+    await page.locator("#home-top-rated-grid .stats-show").first().click();
     await page.locator("#show-dialog[open]").waitFor();
     await page.getByRole("button", { name: "Close show", exact: true }).click();
-    await page.goBack();
+    await page.getByRole("link", { name: "My Shows", exact: true }).click();
     await page.locator("#library-view").waitFor();
     await page.getByRole("button", { name: /List/ }).click();
     assert.equal(
@@ -755,7 +769,7 @@ try {
     "Gallery view fits mobile viewport",
   );
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
-  await page.locator('[data-show="1396"]').first().click();
+  await page.locator('.show-card[data-show="1396"]').click();
   const seasonOptions = page.locator(".season-options");
   assert.equal(await seasonOptions.locator("summary").isVisible(), true);
   assert.equal(await seasonOptions.locator(".season-actions").isVisible(), false);
