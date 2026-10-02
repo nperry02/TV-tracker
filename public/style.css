@@ -2565,8 +2565,8 @@ h1 {
   z-index: 4;
   top: calc(100% + 8px);
   left: 50%;
-  width: min(310px, 70vw);
-  padding: 10px 12px;
+  width: min(390px, 78vw);
+  padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #1b281e;
@@ -2580,6 +2580,48 @@ h1 {
   pointer-events: none;
   transform: translateX(-50%) translateY(-3px);
   transition: opacity 120ms ease, transform 120ms ease;
+}
+.stats-formula {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+}
+.stats-formula i,
+.stats-formula-definitions i {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+.stats-fraction {
+  display: inline-grid;
+  text-align: center;
+}
+.stats-fraction > span:first-child {
+  padding: 0 5px 3px;
+  border-bottom: 1px solid currentColor;
+}
+.stats-fraction > span:last-child {
+  padding-top: 2px;
+}
+.stats-formula-definitions {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+}
+.stats-formula-definitions > span::before {
+  margin-right: 7px;
+  content: "•";
+  color: var(--accent);
+}
+.stats-formula-note {
+  display: block;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
 }
 .stats-info:hover [role="tooltip"],
 .stats-info:focus [role="tooltip"] {
