@@ -17,17 +17,17 @@ import {
   year,
 } from "../ui.js";
 
-// Rating and initial-season helpers
-function ratingOptions(value, empty = "Not rated") {
-  return (
-    `<option value=""${value == null ? " selected" : ""}>${empty}</option>` +
-    Array.from({ length: 10 }, (_, index) => (index + 1) / 2)
-      .map(
-        (rating) =>
-          `<option value="${rating}"${rating === value ? " selected" : ""}>${"★".repeat(Math.floor(rating))}${rating % 1 ? "½" : ""} · ${rating}</option>`,
-      )
-      .join("")
-  );
+// Each visible star contains two native radio targets to preserve half-star ratings.
+function ratingControl(id, value, label, mutationPending, compact = false) {
+  const stars = Array.from({ length: 5 }, (_, index) => {
+    const half = index + 0.5;
+    const whole = index + 1;
+    const fill = Math.max(0, Math.min(1, (value || 0) - index)) * 100;
+    const fillClass = fill === 100 ? "full" : fill === 50 ? "half" : "unfilled";
+    return `<span class="rating-star ${fillClass}"><span aria-hidden="true">★</span><input id="${id}-${String(half).replace(".", "-")}" type="radio" name="${id}-option" value="${half}" data-rating-kind="${id}" aria-label="${half} out of 5 stars"${value === half ? " checked" : ""}><input id="${id}-${whole}" type="radio" name="${id}-option" value="${whole}" data-rating-kind="${id}" aria-label="${whole} out of 5 stars"${value === whole ? " checked" : ""}></span>`;
+  }).join("");
+  const description = value == null ? "Not rated" : `${value} out of 5`;
+  return `<fieldset class="rating-control${compact ? " compact" : ""}" id="${id}" data-value="${value ?? ""}"${mutationPending ? " disabled" : ""}><legend class="field-label">${label}</legend><div class="rating-entry"><div class="star-rating" title="${description}">${stars}</div><button type="button" class="rating-clear" id="clear-${id}" data-clear-rating="${id}" aria-label="Clear rating" title="Clear rating"${value == null ? " hidden" : ""}>×</button></div><output class="sr-only">${description}</output></fieldset>`;
 }
 
 export function initialShowSeason(show) {
@@ -46,7 +46,7 @@ export function renderShowDialog(show, selectedSeason, mutationPending) {
     (episode) => episode.season_number === selectedSeason,
   );
   $("#show-content").innerHTML =
-    `<div class="detail-hero">${image(show.backdrop_path) ? `<img class="detail-backdrop" src="${image(show.backdrop_path, "w1280")}" alt="">` : ""}<div class="detail-hero-content"><div class="detail-hero-main">${poster(show, "detail-poster")}<div class="detail-heading">${badge(watchStatus(show))}${inWatchlist(show) ? badge("Watchlist") : ""}<h2>${esc(show.name)}</h2><p>${year(show)} · ${esc(show.seriesStatus)} · ${show.seasons.filter((season) => season.number > 0).length} seasons<br>${show.genres.map((genre) => esc(genre.name)).join(" · ")}</p></div></div><p class="overview">${esc(show.overview || "No description available.")}</p></div><button class="icon-button" data-close="show-dialog" aria-label="Close show">×</button></div><div class="detail-body"><div class="detail-controls"><label class="rating-control"><span class="field-label">Your show rating</span><select id="show-rating">${ratingOptions(show.rating)}</select></label><label class="status-control"><span class="field-label">Watch status</span><select id="show-status"><option value=""${!show.statusOverride ? " selected" : ""}>Automatic · ${watchStatus({ ...show, statusOverride: null })}</option>${statuses.map((status) => `<option${show.statusOverride === status ? " selected" : ""}>${status}</option>`).join("")}</select></label></div><div class="detail-progress"><div class="detail-progress-top"><strong>${showProgress.done ? `Last watched ${episodeCode(showProgress.last)}` : "Ready when you are"}</strong><span>${showProgress.done} of ${showProgress.total} aired episodes watched</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="Show progress"></progress><p>${showProgress.next ? `Up next: ${episodeCode(showProgress.next)} · ${esc(showProgress.next.name)}` : showProgress.upcoming ? `Next episode: ${episodeCode(showProgress.upcoming)} · ${esc(showProgress.upcoming.air_date)}` : showProgress.done ? "You have watched every currently available episode." : "Choose an episode below to set your progress."}${show.statusOverride ? " Your status is set manually; choose Automatic to follow episode progress." : ""}</p></div><div class="season-header"><label><span class="sr-only">Season</span><select id="season-select">${show.seasons.map((season) => `<option value="${season.number}"${season.number === selectedSeason ? " selected" : ""}>${esc(season.name)}</option>`).join("")}</select></label><div class="season-actions"><label><span class="sr-only">Season rating</span><select id="season-rating">${ratingOptions(show.seasonRatings[selectedSeason], "Rate season")}</select></label><button id="mark-season">✓ Mark season watched</button><button id="clear-season">Clear season</button></div></div>${selectedSeason === 0 ? '<p class="muted">Specials are optional and do not affect show completion.</p>' : ""}<div class="episode-list">${
+    `<div class="detail-hero">${image(show.backdrop_path) ? `<img class="detail-backdrop" src="${image(show.backdrop_path, "w1280")}" alt="">` : ""}<div class="detail-hero-content"><div class="detail-hero-main">${poster(show, "detail-poster")}<div class="detail-heading">${badge(watchStatus(show))}${inWatchlist(show) ? badge("Watchlist") : ""}<h2>${esc(show.name)}</h2><p>${year(show)} · ${esc(show.seriesStatus)} · ${show.seasons.filter((season) => season.number > 0).length} seasons<br>${show.genres.map((genre) => esc(genre.name)).join(" · ")}</p></div></div><p class="overview">${esc(show.overview || "No description available.")}</p></div><button class="icon-button" data-close="show-dialog" aria-label="Close show">×</button></div><div class="detail-body"><div class="detail-controls">${ratingControl("show-rating", show.rating, "Your show rating", mutationPending)}<label class="status-control"><span class="field-label">Watch status</span><select id="show-status"><option value=""${!show.statusOverride ? " selected" : ""}>Automatic · ${watchStatus({ ...show, statusOverride: null })}</option>${statuses.map((status) => `<option${show.statusOverride === status ? " selected" : ""}>${status}</option>`).join("")}</select></label></div><div class="detail-progress"><div class="detail-progress-main"><div class="detail-progress-top"><strong>${showProgress.done ? `Last watched ${episodeCode(showProgress.last)}` : "Ready when you are"}</strong><span>${showProgress.done} of ${showProgress.total} aired episodes watched</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="Show progress"></progress><p>${showProgress.next ? `Up next: ${episodeCode(showProgress.next)} · ${esc(showProgress.next.name)}` : showProgress.upcoming ? `Next episode: ${episodeCode(showProgress.upcoming)} · ${esc(showProgress.upcoming.air_date)}` : showProgress.done ? "You have watched every currently available episode." : "Choose an episode below to set your progress."}${show.statusOverride ? " Your status is set manually; choose Automatic to follow episode progress." : ""}</p></div></div><div class="season-header"><label><span class="sr-only">Season</span><select id="season-select">${show.seasons.map((season) => `<option value="${season.number}"${season.number === selectedSeason ? " selected" : ""}>${esc(season.name)}</option>`).join("")}</select></label><div class="season-actions">${ratingControl("season-rating", show.seasonRatings[selectedSeason], "Season rating", mutationPending, true)}<button id="mark-season">✓ Mark season watched</button><button id="clear-season">Clear season</button></div></div>${selectedSeason === 0 ? '<p class="muted">Specials are optional and do not affect show completion.</p>' : ""}<div class="episode-list">${
       episodes.length
         ? episodes
             .map((episode) => {
@@ -58,6 +58,15 @@ export function renderShowDialog(show, selectedSeason, mutationPending) {
             .join("")
         : '<p class="muted">No episodes announced for this season yet.</p>'
     }</div><div class="detail-bottom"><div class="detail-refresh"><small>Show info refreshed ${new Date(show.refreshedAt).toLocaleDateString()}.</small><button id="refresh-show">↻ Refresh show info</button><small>to update the show's details and check for new episodes.</small></div><button class="text-button" id="remove-show">${inLibrary(show) ? "Remove from All Shows" : "Remove saved show"}</button></div></div>`;
+
+  // Narrow layouts collapse season rating and progress actions into one menu.
+  const seasonActions = $(".season-actions");
+  const openSeasonOptions = matchMedia("(max-width: 800px)").matches ? "" : " open";
+  seasonActions.insertAdjacentHTML(
+    "beforebegin",
+    `<details class="season-options"${openSeasonOptions}><summary>Season options</summary></details>`,
+  );
+  $(".season-options").append(seasonActions);
 
   // Contextual actions are inserted only when their underlying progress exists.
   if (showProgress.next) {

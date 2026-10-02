@@ -112,9 +112,34 @@ function openShow(id) {
 function renderShow() {
   const show = shows.find((entry) => entry.id === selectedId);
   if (show) {
+    const keepSeasonOptionsOpen =
+      $("#show-dialog").open && $(".season-options")?.open;
     renderShowDialog(show, selectedSeason, mutationPending);
+    const seasonOptions = $(".season-options");
+    if (seasonOptions && matchMedia("(max-width: 800px)").matches)
+      seasonOptions.open = Boolean(keepSeasonOptionsOpen);
     enhanceSelects($("#show-content"));
   }
+}
+
+// Hover previews separate the shared fill from the difference to the saved rating.
+function previewRating(control, value) {
+  const savedValue = control.dataset.value ? Number(control.dataset.value) : null;
+  const comparing = savedValue != null && value !== savedValue;
+  const normalValue = comparing ? Math.min(savedValue, value) : value;
+  const comparisonValue = comparing ? Math.max(savedValue, value) : 0;
+
+  control.querySelectorAll(".rating-star").forEach((star, index) => {
+    const normalFill = Math.max(0, Math.min(1, (normalValue || 0) - index));
+    const comparisonFill = Math.max(0, Math.min(1, comparisonValue - index));
+    star.classList.remove("unfilled", "half", "full", "comparison-half", "comparison-full");
+    star.classList.add(
+      normalFill === 1 ? "full" : normalFill === 0.5 ? "half" : "unfilled",
+    );
+    if (comparisonFill > normalFill) {
+      star.classList.add(comparisonFill === 1 ? "comparison-full" : "comparison-half");
+    }
+  });
 }
 
 // Mutations redraw disabled controls immediately, then restore dialog context.
@@ -178,6 +203,13 @@ document.addEventListener("click", async (event) => {
       const filter = $(selector);
       if (filter) filter.open = false;
     }
+  const seasonOptions = $(".season-options");
+  if (
+    matchMedia("(max-width: 800px)").matches &&
+    seasonOptions &&
+    !event.target.closest(".season-options")
+  )
+    seasonOptions.open = false;
   const pageLink = event.target.closest("[data-page]");
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
@@ -251,6 +283,14 @@ document.addEventListener("click", async (event) => {
     return searchDialog.open();
   }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
+  if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.dataset.clearRating === "show-rating")
+    return save({ rating: null }, "Show rating cleared.");
+  if (button.dataset.clearRating === "season-rating")
+    return save(
+      { seasonRating: { season: selectedSeason, rating: null } },
+      "Season rating cleared.",
+    );
   if (button.id === "toggle-watchlist") {
     const show = shows.find((s) => s.id === selectedId);
     const watchlist = !inWatchlist(show);
@@ -358,14 +398,14 @@ document.addEventListener("change", (event) => {
     renderShow();
     $("#season-select").focus();
   }
-  if (el.id === "show-rating")
-    save({ rating: el.value ? Number(el.value) : null }, "Show rating saved.");
-  if (el.id === "season-rating")
+  if (el.dataset.ratingKind === "show-rating")
+    save({ rating: Number(el.value) }, "Show rating saved.");
+  if (el.dataset.ratingKind === "season-rating")
     save(
       {
         seasonRating: {
           season: selectedSeason,
-          rating: el.value ? Number(el.value) : null,
+          rating: Number(el.value),
         },
       },
       "Season rating saved.",
@@ -384,12 +424,30 @@ document.addEventListener("change", (event) => {
 });
 $("#library-query").addEventListener("input", render);
 
+// Each transparent half-star target previews its value until the pointer leaves.
+document.addEventListener("pointerover", (event) => {
+  const input = event.target.closest("[data-rating-kind]");
+  if (input) previewRating(input.closest(".rating-control"), Number(input.value));
+});
+document.addEventListener("pointerout", (event) => {
+  const input = event.target.closest("[data-rating-kind]");
+  if (!input) return;
+  const control = input.closest(".rating-control");
+  const nextInput = event.relatedTarget?.closest?.("[data-rating-kind]");
+  if (nextInput?.closest(".rating-control") === control) return;
+  previewRating(control, control.dataset.value ? Number(control.dataset.value) : null);
+});
+
 // Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
   const openFilter = $("#status-filter[open], #genre-filter[open]");
-  if (event.key === "Escape" && openFilter) {
-    openFilter.open = false;
-    openFilter.querySelector("summary").focus();
+  const openSeasonOptions = matchMedia("(max-width: 800px)").matches
+    ? $(".season-options[open]")
+    : null;
+  const openDisclosure = openFilter || openSeasonOptions;
+  if (event.key === "Escape" && openDisclosure) {
+    openDisclosure.open = false;
+    openDisclosure.querySelector("summary").focus();
     return;
   }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -398,6 +456,12 @@ document.addEventListener("keydown", (event) => {
   }
 });
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
+
+// Keep season actions expanded on desktop and collapsed after crossing to mobile.
+matchMedia("(max-width: 800px)").addEventListener("change", (event) => {
+  const seasonOptions = $(".season-options");
+  if (seasonOptions) seasonOptions.open = !event.matches;
+});
 
 // A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))
