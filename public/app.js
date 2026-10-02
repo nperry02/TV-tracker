@@ -193,6 +193,13 @@ document.addEventListener("click", async (event) => {
       const filter = $(selector);
       if (filter) filter.open = false;
     }
+  const seasonOptions = $(".season-options");
+  if (
+    matchMedia("(max-width: 800px)").matches &&
+    seasonOptions &&
+    !event.target.closest(".season-options")
+  )
+    seasonOptions.open = false;
   const pageLink = event.target.closest("[data-page]");
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
@@ -424,9 +431,13 @@ document.addEventListener("pointerout", (event) => {
 // Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
   const openFilter = $("#status-filter[open], #genre-filter[open]");
-  if (event.key === "Escape" && openFilter) {
-    openFilter.open = false;
-    openFilter.querySelector("summary").focus();
+  const openSeasonOptions = matchMedia("(max-width: 800px)").matches
+    ? $(".season-options[open]")
+    : null;
+  const openDisclosure = openFilter || openSeasonOptions;
+  if (event.key === "Escape" && openDisclosure) {
+    openDisclosure.open = false;
+    openDisclosure.querySelector("summary").focus();
     return;
   }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -435,6 +446,12 @@ document.addEventListener("keydown", (event) => {
   }
 });
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
+
+// Keep season actions expanded on desktop and collapsed after crossing to mobile.
+matchMedia("(max-width: 800px)").addEventListener("change", (event) => {
+  const seasonOptions = $(".season-options");
+  if (seasonOptions) seasonOptions.open = !event.matches;
+});
 
 // A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))

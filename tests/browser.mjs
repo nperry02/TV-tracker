@@ -755,6 +755,11 @@ try {
   );
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
   await page.locator('[data-show="1396"]').first().click();
+  const seasonOptions = page.locator(".season-options");
+  assert.equal(await seasonOptions.locator("summary").isVisible(), true);
+  assert.equal(await seasonOptions.locator(".season-actions").isVisible(), false);
+  await seasonOptions.locator("summary").click();
+  assert.equal(await seasonOptions.locator(".season-actions").isVisible(), true);
   assert.equal(
     await page
       .locator("#show-dialog")

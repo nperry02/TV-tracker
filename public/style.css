@@ -1179,6 +1179,12 @@ dialog::backdrop {
   align-items: center;
   flex-wrap: wrap;
 }
+.season-options {
+  display: contents;
+}
+.season-options > summary {
+  display: none;
+}
 .season-actions .rating-control {
   width: 133px;
   min-width: 133px;
@@ -1426,6 +1432,67 @@ dialog::backdrop {
     letter-spacing: 0.8px;
     text-transform: uppercase;
   }
+  .season-header {
+    position: relative;
+    align-items: center;
+  }
+  .season-options {
+    position: relative;
+    display: block;
+    margin-left: auto;
+  }
+  .season-options > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 650;
+    cursor: pointer;
+    list-style: none;
+  }
+  .season-options > summary::after {
+    width: 7px;
+    height: 7px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    content: "";
+    transform: translateY(-2px) rotate(45deg);
+  }
+  .season-options > summary::-webkit-details-marker {
+    display: none;
+  }
+  .season-options[open] > summary {
+    border-color: #61794d;
+    color: var(--accent);
+  }
+  .season-options[open] > summary::after {
+    transform: translateY(2px) rotate(225deg);
+  }
+  .season-options .season-actions {
+    position: absolute;
+    z-index: 70;
+    top: calc(100% + 6px);
+    right: 0;
+    width: min(280px, calc(100vw - 40px));
+    align-items: stretch;
+    flex-direction: column;
+    padding: 13px;
+    border: 1px solid #435246;
+    border-radius: 10px;
+    background: #1b251e;
+    box-shadow: 0 16px 40px #0009;
+  }
+  .season-options .season-actions > button {
+    width: 100%;
+  }
+  .season-options .rating-control {
+    align-self: flex-start;
+  }
 }
 @media (max-width: 560px) {
   .topbar {
@@ -1548,10 +1615,6 @@ dialog::backdrop {
   }
   .detail-controls #toggle-watchlist {
     margin-left: 0;
-  }
-  .season-header {
-    align-items: start;
-    flex-direction: column;
   }
   .episode {
     padding: 12px 10px;
