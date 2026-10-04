@@ -1,6 +1,8 @@
 import { libraryStats, statuses } from "../model.js";
 import { esc } from "../ui.js";
 
+const circleQuestionMarkIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 1 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg>`;
+
 // Compact display formatting
 function formatHours(minutes) {
   if (minutes == null) return "—";
@@ -55,11 +57,11 @@ export function renderStats(shows, container) {
       : `${data.runtimeCoveredEpisodes.toLocaleString()} of ${data.episodesWatched.toLocaleString()} watched episodes have show or episode runtime data. Missing runtimes use your library median.`;
   container.innerHTML = `
     <section class="stats-overview" aria-label="Library overview">
-      <article><i class="stats-overview-icon" aria-hidden="true">▶</i><strong>${data.trackedShows.toLocaleString()}</strong><span>Tracked shows</span></article>
-      <article><i class="stats-overview-icon" aria-hidden="true">✓</i><strong>${data.episodesWatched.toLocaleString()}</strong><span>Episodes watched</span></article>
-      <article><i class="stats-overview-icon" aria-hidden="true">▤</i><strong>${data.seasonsCompleted.toLocaleString()}</strong><span>Seasons completed</span></article>
-      <article><i class="stats-overview-icon" aria-hidden="true">★</i><strong>${data.ratedShows.toLocaleString()}</strong><span>Rated shows</span></article>
-      <article><i class="stats-overview-icon" aria-hidden="true">◷</i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "<small>h</small>"}</strong><span class="stats-overview-label">Est. hours watched <span class="stats-info runtime-info" tabindex="0" aria-label="How watch time is estimated" aria-describedby="runtime-estimate-help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.8 1c0 1.8-2.5 2-2.5 3.8"></path><path d="M12 17.3h.01"></path></svg><span id="runtime-estimate-help" role="tooltip">${runtimeNote} Specials count toward watched time. Regular aired episodes determine progress and completed seasons.</span></span></span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></i><strong>${data.trackedShows.toLocaleString()}</strong><span>Tracked shows</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m10 8 6 4-6 4Z"></path></svg></i><strong>${data.episodesWatched.toLocaleString()}</strong><span>Episodes watched</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg></i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "<small>h</small>"}</strong><span class="stats-overview-label">Est. hours watched <span class="stats-info runtime-info" tabindex="0" aria-label="How watch time is estimated" aria-describedby="runtime-estimate-help">${circleQuestionMarkIcon}<span id="runtime-estimate-help" role="tooltip">${runtimeNote} Specials count toward watched time. Regular aired episodes determine progress and completed seasons.</span></span></span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"></path><path d="m2 12 10 5 10-5M2 17l10 5 10-5"></path></svg></i><strong>${data.seasonsCompleted.toLocaleString()}</strong><span>Seasons completed</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"></path></svg></i><strong>${data.ratedShows.toLocaleString()}</strong><span>Rated shows</span></article>
     </section>
     <div class="stats-layout">
       <section class="stats-panel ratings-panel" aria-labelledby="ratings-heading">
@@ -78,7 +80,7 @@ export function renderStats(shows, container) {
           <ol class="stats-bars genre-bars">${genreList}</ol>
         </section>
         <section class="stats-panel" aria-labelledby="genres-rating-heading">
-          <div class="stats-panel-heading"><div class="stats-heading-with-info"><h2 id="genres-rating-heading">Highest-rated genres</h2><span class="stats-info" tabindex="0" aria-label="How genre ratings are calculated" aria-describedby="genre-rating-formula"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.8 1c0 1.8-2.5 2-2.5 3.8"></path><path d="M12 17.3h.01"></path></svg><span id="genre-rating-formula" role="tooltip"><span class="stats-formula" aria-label="Weighted rate equals v times R plus m times C, divided by v plus m"><i>Weighted Rate</i> = <span class="stats-fraction"><span>(<i>v</i> × <i>R</i>) + (<i>m</i> × <i>C</i>)</span><span><i>v</i> + <i>m</i></span></span></span><span class="stats-formula-definitions"><span><i>v</i> = rated shows in the genre</span><span><i>R</i> = genre’s raw rating average</span><span><i>m</i> = confidence weight of 3 ratings</span><span><i>C</i> = average across all rated shows</span></span><span class="stats-formula-note">Unrated shows are excluded.</span></span></span></div></div>
+          <div class="stats-panel-heading"><div class="stats-heading-with-info"><h2 id="genres-rating-heading">Highest-rated genres</h2><span class="stats-info" tabindex="0" aria-label="How genre ratings are calculated" aria-describedby="genre-rating-formula">${circleQuestionMarkIcon}<span id="genre-rating-formula" role="tooltip"><span class="stats-formula" aria-label="Weighted rate equals v times R plus m times C, divided by v plus m"><i>Weighted Rate</i> = <span class="stats-fraction"><span>(<i>v</i> × <i>R</i>) + (<i>m</i> × <i>C</i>)</span><span><i>v</i> + <i>m</i></span></span></span><span class="stats-formula-definitions"><span><i>v</i> = rated shows in the genre</span><span><i>R</i> = genre’s raw rating average</span><span><i>m</i> = confidence weight of 3 ratings</span><span><i>C</i> = average across all rated shows</span></span><span class="stats-formula-note">Unrated shows are excluded.</span></span></span></div></div>
           <ol class="stats-bars genre-bars genre-rating-bars">${ratedGenreList}</ol>
         </section>
       </div>
