@@ -8,18 +8,18 @@ function formatHours(minutes) {
   return hours >= 10 ? Math.round(hours).toLocaleString() : hours.toFixed(1);
 }
 
-// SVG keeps the histogram dependency-free while exposing each bucket to assistive tech.
+// One compact SVG keeps the histogram dependency-free and easy to inspect.
 function ratingChart(buckets) {
   const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
   const bars = buckets
     .map((bucket, index) => {
-      const height = (bucket.count / max) * 112;
+      const height = (bucket.count / max) * 110;
       const x = 18 + index * 49;
-      const y = 132 - height;
-      return `<g tabindex="0" role="listitem" aria-label="${bucket.rating} stars: ${bucket.count} ${bucket.count === 1 ? "show" : "shows"}"><title>${bucket.rating} stars: ${bucket.count}</title><rect x="${x}" y="${y}" width="34" height="${height || 2}" rx="4"></rect><text x="${x + 17}" y="157" text-anchor="middle">${bucket.rating}</text></g>`;
+      const y = 114 - height;
+      return `<g tabindex="0" role="listitem" aria-label="${bucket.rating} stars: ${bucket.count} ${bucket.count === 1 ? "show" : "shows"}"><title>${bucket.rating} stars: ${bucket.count}</title><rect x="${x}" y="${y}" width="34" height="${height || 2}" rx="4"></rect><text x="${x + 17}" y="139" text-anchor="middle">${bucket.rating}</text></g>`;
     })
     .join("");
-  return `<svg class="rating-chart" viewBox="0 0 520 170" role="list" aria-label="Show ratings from half a star to five stars">${bars}</svg>`;
+  return `<svg class="rating-chart" viewBox="0 0 520 152" role="list" aria-label="Show ratings from half a star to five stars">${bars}</svg>`;
 }
 
 export function renderStats(shows, container) {
