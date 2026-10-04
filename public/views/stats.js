@@ -13,15 +13,24 @@ function formatHours(minutes) {
 // One compact SVG keeps the histogram dependency-free and easy to inspect.
 function ratingChart(buckets) {
   const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
-  const bars = buckets
-    .map((bucket, index) => {
-      const height = (bucket.count / max) * 110;
-      const x = 18 + index * 49;
-      const y = 114 - height;
-      return `<g tabindex="0" role="listitem" aria-label="${bucket.rating} stars: ${bucket.count} ${bucket.count === 1 ? "show" : "shows"}"><title>${bucket.rating} stars: ${bucket.count}</title><rect x="${x}" y="${y}" width="34" height="${height || 2}" rx="4"></rect><text x="${x + 17}" y="139" text-anchor="middle">${bucket.rating}</text></g>`;
+  const scaleMax = Math.ceil(max / 5) * 5;
+  const baseline = 140;
+  const chartHeight = 112;
+  const gridLines = [scaleMax, scaleMax / 2, 0]
+    .map((value, index) => {
+      const y = 28 + index * 56;
+      return `<line class="rating-chart-grid" x1="42" y1="${y}" x2="548" y2="${y}"></line><text class="rating-chart-axis" x="32" y="${y + 4}" text-anchor="end">${Number.isInteger(value) ? value : value.toFixed(1)}</text>`;
     })
     .join("");
-  return `<svg class="rating-chart" viewBox="0 0 520 152" role="list" aria-label="Show ratings from half a star to five stars">${bars}</svg>`;
+  const bars = buckets
+    .map((bucket, index) => {
+      const height = (bucket.count / scaleMax) * chartHeight;
+      const x = 52 + index * 49;
+      const y = baseline - height;
+      return `<g class="rating-chart-bar" tabindex="0" role="listitem" aria-label="${bucket.rating} stars: ${bucket.count} ${bucket.count === 1 ? "show" : "shows"}"><title>${bucket.rating} stars: ${bucket.count}</title><text class="rating-chart-count" x="${x + 18}" y="${Math.max(18, y - 7)}" text-anchor="middle">${bucket.count}</text><rect x="${x}" y="${y}" width="36" height="${height || 2}" rx="3"></rect><text class="rating-chart-rating" x="${x + 18}" y="166" text-anchor="middle">${bucket.rating}</text></g>`;
+    })
+    .join("");
+  return `<svg class="rating-chart" viewBox="0 0 564 176" role="list" aria-label="Show ratings from half a star to five stars">${gridLines}${bars}</svg>`;
 }
 
 export function renderStats(shows, container) {
@@ -65,9 +74,8 @@ export function renderStats(shows, container) {
     </section>
     <div class="stats-layout">
       <section class="stats-panel ratings-panel" aria-labelledby="ratings-heading">
-        <div class="stats-panel-heading"><h2 id="ratings-heading">Ratings</h2><strong>${data.averageRating == null ? "—" : data.averageRating.toFixed(1)} <small>average</small></strong></div>
+        <div class="stats-panel-heading"><h2 id="ratings-heading">Your ratings</h2><div class="ratings-summary"><strong>${data.averageRating == null ? "—" : data.averageRating.toFixed(1)} <small>average</small></strong><span>${data.ratedShows} rated · ${data.unratedShows} unrated</span></div></div>
         ${data.ratedShows ? ratingChart(data.ratingBuckets) : '<div class="stats-empty"><strong>No ratings yet.</strong><span>Your rating spread will appear here.</span></div>'}
-        <p class="stats-footnote">${data.ratedShows} rated · ${data.unratedShows} unrated</p>
       </section>
       <section class="stats-panel" aria-labelledby="library-breakdown-heading">
         <div class="stats-panel-heading"><h2 id="library-breakdown-heading">Library breakdown</h2></div>
