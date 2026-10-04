@@ -62,33 +62,33 @@ export function renderStats(shows, container) {
     </section>
     <div class="stats-layout">
       <section class="stats-panel ratings-panel" aria-labelledby="ratings-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">YOUR TASTE</p><h2 id="ratings-heading">Ratings</h2></div><strong>${data.averageRating == null ? "—" : data.averageRating.toFixed(1)} <small>average</small></strong></div>
+        <div class="stats-panel-heading"><h2 id="ratings-heading">Ratings</h2><strong>${data.averageRating == null ? "—" : data.averageRating.toFixed(1)} <small>average</small></strong></div>
         ${data.ratedShows ? ratingChart(data.ratingBuckets) : '<div class="stats-empty"><strong>No ratings yet.</strong><span>Your rating spread will appear here.</span></div>'}
         <p class="stats-footnote">${data.ratedShows} rated · ${data.unratedShows} unrated</p>
       </section>
       <section class="stats-panel" aria-labelledby="library-breakdown-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">CURRENT STATUS</p><h2 id="library-breakdown-heading">Library breakdown</h2></div></div>
+        <div class="stats-panel-heading"><h2 id="library-breakdown-heading">Library breakdown</h2></div>
         <ul class="stats-bars">${statusList}</ul>
         <div class="watchlist-total"><span><i class="nav-dot watchlist"></i>Watchlist <small>can overlap</small></span><strong>${data.watchlistShows}</strong></div>
       </section>
       <div class="stats-genre-layout">
         <section class="stats-panel" aria-labelledby="genres-heading">
-          <div class="stats-panel-heading"><div><p class="eyebrow">MOST WATCHED</p><h2 id="genres-heading">Top genres</h2></div></div>
+          <div class="stats-panel-heading"><h2 id="genres-heading">Most watched genres</h2></div>
           <ol class="stats-bars genre-bars">${genreList}</ol>
         </section>
         <section class="stats-panel" aria-labelledby="genres-rating-heading">
-          <div class="stats-panel-heading"><div><p class="eyebrow stats-eyebrow">HIGHEST RATED <span class="stats-info" tabindex="0" aria-label="How genre ratings are calculated" aria-describedby="genre-rating-formula"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.8 1c0 1.8-2.5 2-2.5 3.8"></path><path d="M12 17.3h.01"></path></svg><span id="genre-rating-formula" role="tooltip"><span class="stats-formula" aria-label="Weighted rate equals v times R plus m times C, divided by v plus m"><i>Weighted Rate</i> = <span class="stats-fraction"><span>(<i>v</i> × <i>R</i>) + (<i>m</i> × <i>C</i>)</span><span><i>v</i> + <i>m</i></span></span></span><span class="stats-formula-definitions"><span><i>v</i> = rated shows in the genre</span><span><i>R</i> = genre’s raw rating average</span><span><i>m</i> = confidence weight of 3 ratings</span><span><i>C</i> = average across all rated shows</span></span><span class="stats-formula-note">Unrated shows are excluded.</span></span></span></p><h2 id="genres-rating-heading">Top genres by rating</h2></div></div>
+          <div class="stats-panel-heading"><div class="stats-heading-with-info"><h2 id="genres-rating-heading">Highest-rated genres</h2><span class="stats-info" tabindex="0" aria-label="How genre ratings are calculated" aria-describedby="genre-rating-formula"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.8 1c0 1.8-2.5 2-2.5 3.8"></path><path d="M12 17.3h.01"></path></svg><span id="genre-rating-formula" role="tooltip"><span class="stats-formula" aria-label="Weighted rate equals v times R plus m times C, divided by v plus m"><i>Weighted Rate</i> = <span class="stats-fraction"><span>(<i>v</i> × <i>R</i>) + (<i>m</i> × <i>C</i>)</span><span><i>v</i> + <i>m</i></span></span></span><span class="stats-formula-definitions"><span><i>v</i> = rated shows in the genre</span><span><i>R</i> = genre’s raw rating average</span><span><i>m</i> = confidence weight of 3 ratings</span><span><i>C</i> = average across all rated shows</span></span><span class="stats-formula-note">Unrated shows are excluded.</span></span></span></div></div>
           <ol class="stats-bars genre-bars genre-rating-bars">${ratedGenreList}</ol>
         </section>
       </div>
       <section class="stats-panel progress-panel" aria-labelledby="progress-heading">
-        <div class="stats-panel-heading"><div><p class="eyebrow">AIRED EPISODES</p><h2 id="progress-heading">Progress</h2></div><strong>${Math.round(data.progressPercent)}%</strong></div>
+        <div class="stats-panel-heading"><h2 id="progress-heading">Aired episode progress</h2><strong>${Math.round(data.progressPercent)}%</strong></div>
         <progress value="${data.watchedRegularEpisodes}" max="${data.airedRegularEpisodes || 1}" aria-label="${data.watchedRegularEpisodes} of ${data.airedRegularEpisodes} regular aired episodes watched"></progress>
         <p><strong>${data.watchedRegularEpisodes.toLocaleString()}</strong> of ${data.airedRegularEpisodes.toLocaleString()} regular aired episodes watched</p>
         <small>Specials are excluded from progress and completed-season totals.</small>
       </section>
     </div>
     <section class="stats-panel runtime-panel" aria-labelledby="runtime-heading">
-      <div><p class="eyebrow">WATCH TIME</p><h2 id="runtime-heading">About your estimate</h2></div><p>${runtimeNote}</p>
+      <h2 id="runtime-heading">Watch time estimate</h2><p>${runtimeNote}</p>
     </section>`;
 }

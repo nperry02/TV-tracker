@@ -2522,6 +2522,13 @@ h1 {
 .progress-panel {
   grid-column: 1 / -1;
 }
+.progress-panel .stats-panel-heading {
+  align-items: baseline;
+}
+.progress-panel .stats-panel-heading > strong {
+  font-size: 20px;
+  line-height: 1;
+}
 .stats-panel {
   padding: 22px;
 }
@@ -2534,8 +2541,9 @@ h1 {
 .stats-panel-heading h2,
 .runtime-panel h2,
 .top-rated h2 {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 20px;
+  line-height: 1;
 }
 .stats-panel-heading > strong {
   color: var(--text);
@@ -2547,7 +2555,7 @@ h1 {
   font-weight: 600;
   text-transform: uppercase;
 }
-.stats-eyebrow {
+.stats-heading-with-info {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2727,7 +2735,7 @@ h1 {
 .progress-panel > progress {
   width: 100%;
   height: 13px;
-  margin: 42px 0 8px;
+  margin: 15px 0 8px;
 }
 .progress-panel > small {
   display: block;
@@ -3126,6 +3134,12 @@ h1 {
   }
   .stats-genre-layout {
     grid-template-columns: 1fr;
+  }
+  .stats-info [role="tooltip"] {
+    width: min(220px, calc(100vw - 44px));
+  }
+  .stats-formula {
+    flex-direction: column;
   }
   .help-steps,
   .help-card-grid,

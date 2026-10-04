@@ -629,7 +629,7 @@ try {
       await page.locator(".runtime-panel").textContent(),
       /watched episodes have show or episode runtime data/,
     );
-    await page.getByRole("heading", { name: "Top genres by rating" }).waitFor();
+    await page.getByRole("heading", { name: "Highest-rated genres" }).waitFor();
     assert.equal(await page.locator(".genre-rating-bars li").count(), 2);
     await page.locator(".stats-info").hover();
     await page.getByRole("tooltip").waitFor();
