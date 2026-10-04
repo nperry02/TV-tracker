@@ -622,18 +622,23 @@ try {
     await page.getByRole("link", { name: "Stats", exact: true }).click();
     await page.locator("#stats-view").waitFor();
     assert.equal(new URL(page.url()).hash, "#stats");
-    assert.equal(await page.locator(".stats-overview article").count(), 4);
+    assert.equal(await page.locator(".stats-overview article").count(), 5);
     assert.equal(await page.locator(".rating-chart g").count(), 10);
     await page.getByText("6 rated · 0 unrated", { exact: true }).waitFor();
+    await page.locator(".runtime-info").hover();
     assert.match(
-      await page.locator(".runtime-panel").textContent(),
+      await page.locator(".runtime-info [role=tooltip]").textContent(),
       /watched episodes have show or episode runtime data/,
     );
     await page.getByRole("heading", { name: "Highest-rated genres" }).waitFor();
     assert.equal(await page.locator(".genre-rating-bars li").count(), 2);
-    await page.locator(".stats-info").hover();
-    await page.getByRole("tooltip").waitFor();
-    assert.match(await page.getByRole("tooltip").textContent(), /Unrated shows are excluded/);
+    const genreRatingInfo = page.locator(".stats-heading-with-info .stats-info");
+    await genreRatingInfo.hover();
+    await genreRatingInfo.getByRole("tooltip").waitFor();
+    assert.match(
+      await genreRatingInfo.getByRole("tooltip").textContent(),
+      /Unrated shows are excluded/,
+    );
     assert.equal(
       await page.locator(".progress-panel").evaluate(
         (panel) => getComputedStyle(panel).gridColumnEnd,

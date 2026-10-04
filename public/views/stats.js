@@ -55,10 +55,11 @@ export function renderStats(shows, container) {
       : `${data.runtimeCoveredEpisodes.toLocaleString()} of ${data.episodesWatched.toLocaleString()} watched episodes have show or episode runtime data. Missing runtimes use your library median.`;
   container.innerHTML = `
     <section class="stats-overview" aria-label="Library overview">
-      <article><i aria-hidden="true">▶</i><strong>${data.trackedShows.toLocaleString()}</strong><span>Tracked shows</span></article>
-      <article><i aria-hidden="true">✓</i><strong>${data.episodesWatched.toLocaleString()}</strong><span>Episodes watched</span></article>
-      <article><i aria-hidden="true">▤</i><strong>${data.seasonsCompleted.toLocaleString()}</strong><span>Seasons completed</span></article>
-      <article><i aria-hidden="true">◷</i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "h"}</strong><span>Estimated hours watched</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true">▶</i><strong>${data.trackedShows.toLocaleString()}</strong><span>Tracked shows</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true">✓</i><strong>${data.episodesWatched.toLocaleString()}</strong><span>Episodes watched</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true">▤</i><strong>${data.seasonsCompleted.toLocaleString()}</strong><span>Seasons completed</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true">★</i><strong>${data.ratedShows.toLocaleString()}</strong><span>Rated shows</span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true">◷</i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "<small>h</small>"}</strong><span class="stats-overview-label">Est. hours watched <span class="stats-info runtime-info" tabindex="0" aria-label="How watch time is estimated" aria-describedby="runtime-estimate-help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 0 1 4.8 1c0 1.8-2.5 2-2.5 3.8"></path><path d="M12 17.3h.01"></path></svg><span id="runtime-estimate-help" role="tooltip">${runtimeNote} Specials count toward watched time. Regular aired episodes determine progress and completed seasons.</span></span></span></article>
     </section>
     <div class="stats-layout">
       <section class="stats-panel ratings-panel" aria-labelledby="ratings-heading">
@@ -87,8 +88,5 @@ export function renderStats(shows, container) {
         <p><strong>${data.watchedRegularEpisodes.toLocaleString()}</strong> of ${data.airedRegularEpisodes.toLocaleString()} regular aired episodes watched</p>
         <small>Specials are excluded from progress and completed-season totals.</small>
       </section>
-    </div>
-    <section class="stats-panel runtime-panel" aria-labelledby="runtime-heading">
-      <h2 id="runtime-heading">Watch time estimate</h2><p>${runtimeNote}</p>
-    </section>`;
+    </div>`;
 }
