@@ -505,7 +505,29 @@ document.addEventListener("click", async (event) => {
 // Native control changes update filters or persist show-level fields.
 document.addEventListener("change", (event) => {
   const el = event.target;
-  if (el.id === "list-ordered") $("#list-sort-field").hidden = el.checked;
+  if (el.dataset.listSort) {
+    const list = lists.find((entry) => entry.id === el.dataset.listSort);
+    if (!list) return;
+    el.disabled = true;
+    api(`/api/lists/${encodeURIComponent(list.id)}`, {
+      method: "PATCH",
+      body: {
+        name: list.name,
+        description: list.description,
+        ordered: list.ordered,
+        sort: el.value,
+      },
+    })
+      .then((updated) => {
+        lists = lists.map((entry) => (entry.id === list.id ? updated : entry));
+        render();
+        toast("Display order saved.");
+      })
+      .catch((error) => {
+        report(error);
+        el.disabled = false;
+      });
+  }
   if (["rating-filter", "sort"].includes(el.id)) render();
   if (el.id === "season-select") {
     selectedSeason = Number(el.value);
@@ -545,7 +567,12 @@ $("#list-form").addEventListener("submit", async (event) => {
     name: $("#list-name").value,
     description: $("#list-description").value,
     ordered: $("#list-ordered").checked,
-    sort: $("#list-sort").value,
+    sort:
+      !id || String($("#list-ordered").checked) !== $("#list-ordered").dataset.original
+        ? $("#list-ordered").checked
+          ? "manual"
+          : "added-oldest"
+        : lists.find((list) => list.id === id)?.sort || "added-oldest",
   };
   submit.disabled = true;
   try {

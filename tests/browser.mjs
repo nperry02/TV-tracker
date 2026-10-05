@@ -122,11 +122,10 @@ try {
   await page.locator("#list-name").fill("Weekend favorites");
   await page.locator("#list-description").fill("Shows worth revisiting.");
   await page.locator("#list-ordered").check();
-  assert.equal(await page.locator("#list-sort-field").isVisible(), false);
   await page.getByRole("button", { name: "Create list", exact: true }).click();
   await page.getByText("Weekend favorites", { exact: true }).waitFor();
   assert.equal(await page.locator(".list-card").count(), 1);
-  assert.match(await page.locator(".list-card-meta").textContent(), /0 shows.*Ordered/s);
+  assert.match(await page.locator(".list-card-meta").textContent(), /0 shows.*Ranked/s);
   await page.getByRole("button", { name: "Edit Weekend favorites" }).click();
   await page.locator("#list-name").fill("Weekend watchlist");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
@@ -1053,7 +1052,7 @@ try {
           name: "Ordering test",
           description: "Two ways to arrange shows.",
           ordered: true,
-          sort: "title-desc",
+          sort: "manual",
         },
       })
     ).json();
@@ -1075,9 +1074,21 @@ try {
       await page.locator(".list-show-open strong").allTextContents(),
       ["Breaking Bad", "Test series 23"],
     );
+    await page.locator("[data-list-sort]").selectOption("title-desc");
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
+    assert.equal(await page.getByRole("button", { name: /Move .* (up|down)/ }).count(), 0);
+    await page.locator("[data-list-sort]").selectOption("manual");
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
     await page.getByRole("button", { name: "Edit", exact: true }).click();
     await page.locator("#list-ordered").uncheck();
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.locator("#list-dialog").waitFor({ state: "hidden" });
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    assert.deepEqual(
+      await page.locator(".list-show-open strong").allTextContents(),
+      ["Breaking Bad", "Test series 23"],
+    );
+    await page.locator("[data-list-sort]").selectOption("title-desc");
     await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
     assert.deepEqual(
       await page.locator(".list-show-open strong").allTextContents(),
@@ -1085,7 +1096,13 @@ try {
     );
     await page.getByRole("button", { name: "Edit", exact: true }).click();
     await page.locator("#list-ordered").check();
+    const rankedSave = page.waitForResponse(
+      (response) => response.url().endsWith(`/api/lists/${createdList.id}`) && response.request().method() === "PATCH",
+    );
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    const rankedList = await (await rankedSave).json();
+    assert.equal(rankedList.ordered, true);
+    assert.equal(rankedList.sort, "manual");
     await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
     assert.deepEqual(
       await page.locator(".list-show-open strong").allTextContents(),

@@ -327,7 +327,8 @@ test("list entries preserve ranks and sort missing values last", () => {
     ],
   };
   const ids = (value) => listEntries(value, shows).map(({ show }) => show.id);
-  assert.deepEqual(ids(list), [3, 1, 2]);
+  assert.deepEqual(ids(list), [2, 1, 3]);
+  assert.deepEqual(ids({ ...list, sort: "manual" }), [3, 1, 2]);
   assert.deepEqual(ids({ ...list, ordered: false }), [2, 1, 3]);
   assert.deepEqual(ids({ ...list, ordered: false, sort: "added-oldest" }), [1, 2, 3]);
   assert.deepEqual(ids({ ...list, ordered: false, sort: "release-newest" }), [2, 1, 3]);

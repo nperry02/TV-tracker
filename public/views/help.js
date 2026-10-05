@@ -84,7 +84,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">☷</i>
           <h3>Personal lists</h3>
-          <p>Collect shows already in My Shows or Watchlist. Leave a list unordered and choose its sort, or rank it manually with drag-and-drop or Move buttons. Manage membership from the list or show details.</p>
+          <p>Collect shows already in My Shows or Watchlist. Unranked lists start in added order; ranked lists keep manual ranks changed with drag-and-drop or Move buttons. Change either list's display order from its page.</p>
         </article>
       </div>
     </section>

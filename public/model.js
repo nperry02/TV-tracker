@@ -40,6 +40,7 @@ export function matchesGenres(show, selectedGenres) {
 
 // List presentation preserves manual ranks while unordered lists use saved sorts.
 export const listSorts = [
+  "manual",
   "added-oldest",
   "added-newest",
   "title-asc",
@@ -54,7 +55,7 @@ export function listEntries(list, shows) {
   const entries = list.entries
     .map((entry, index) => ({ entry, index, show: showsById.get(entry.showId) }))
     .filter(({ show }) => show);
-  if (list.ordered) return entries;
+  if (list.ordered && list.sort === "manual") return entries;
 
   const missingLast = (a, b, value, direction = 1) => {
     const valueA = value(a.show);
@@ -65,6 +66,7 @@ export function listEntries(list, shows) {
     return direction * (valueA < valueB ? -1 : valueA > valueB ? 1 : 0);
   };
   const comparators = {
+    manual: (a, b) => a.index - b.index,
     "added-oldest": (a, b) =>
       a.entry.addedAt.localeCompare(b.entry.addedAt) || a.index - b.index,
     "added-newest": (a, b) =>

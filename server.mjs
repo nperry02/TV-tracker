@@ -90,11 +90,15 @@ function validateListFields(value, currentId = null, source = library) {
       { status: 400 },
     );
   if (typeof value.ordered !== "boolean")
-    throw Object.assign(new Error("Ordered must be true or false."), {
+    throw Object.assign(new Error("Ranked must be true or false."), {
       status: 400,
     });
   if (!listSorts.includes(value.sort))
     throw Object.assign(new Error("Invalid list sort."), { status: 400 });
+  if (!value.ordered && value.sort === "manual")
+    throw Object.assign(new Error("Only ranked lists use ranked order."), {
+      status: 400,
+    });
   if (
     source.lists.some(
       (list) =>

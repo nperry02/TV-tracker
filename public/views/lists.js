@@ -11,6 +11,7 @@ export const listSortOptions = [
   ["rating-high", "Rating: highest"],
   ["rating-low", "Rating: lowest"],
 ];
+const rankedSortOption = ["manual", "Ranked order"];
 
 // Overview previews always reflect the order visitors will see inside the list.
 function listCard(list, shows) {
@@ -27,19 +28,20 @@ function listCard(list, shows) {
       <span class="list-card-copy">
         <strong>${esc(list.name)}</strong>
         ${description}
-        <span class="list-card-meta"><span>${entries.length} ${entries.length === 1 ? "show" : "shows"}</span><span>${list.ordered ? "Ordered" : "Unordered"}</span></span>
+        <span class="list-card-meta"><span>${entries.length} ${entries.length === 1 ? "show" : "shows"}</span><span>${list.ordered ? "Ranked" : "Unranked"}</span></span>
       </span>
     </button>
     <button class="list-card-edit icon-button" type="button" data-edit-list="${esc(list.id)}" aria-label="Edit ${esc(list.name)}">•••</button>
   </article>`;
 }
 
-function listShowCard({ show }, index, list, viewMode) {
-  const controls = list.ordered
+function listShowCard({ show, index: rankIndex }, index, list, viewMode) {
+  const rankingVisible = list.ordered && list.sort === "manual";
+  const controls = rankingVisible
     ? `<span class="list-rank-controls"><button type="button" data-move-list-show="up" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} up"${index === 0 ? " disabled" : ""}>↑</button><button type="button" data-move-list-show="down" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} down"${index === list.entries.length - 1 ? " disabled" : ""}>↓</button></span>`
     : "";
-  return `<article class="list-show-card ${viewMode === "list" ? "list-show-row" : ""}" draggable="${list.ordered}" data-list-show="${show.id}" data-list-id="${esc(list.id)}">
-    ${list.ordered ? `<span class="list-rank">${index + 1}</span>` : ""}
+  return `<article class="list-show-card ${viewMode === "list" ? "list-show-row" : ""}" draggable="${rankingVisible}" data-list-show="${show.id}" data-list-id="${esc(list.id)}">
+    ${list.ordered ? `<span class="list-rank">${rankIndex + 1}</span>` : ""}
     <button type="button" class="list-show-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${poster(show, "list-show-poster", "w342")}<span><strong>${esc(show.name)}</strong><small>${year(show)}</small>${stars(show.rating)}</span></button>
     ${controls}
   </article>`;
@@ -47,10 +49,11 @@ function listShowCard({ show }, index, list, viewMode) {
 
 function renderDetail(list, shows, viewMode) {
   const entries = listEntries(list, shows);
-  const sortLabel = listSortOptions.find(([value]) => value === list.sort)?.[1];
+  const availableSorts = list.ordered ? [rankedSortOption, ...listSortOptions] : listSortOptions;
+  const sortLabel = availableSorts.find(([value]) => value === list.sort)?.[1];
   $("#list-detail").innerHTML = `<a class="list-back" href="#lists">← Back to Lists</a>
-    <header class="list-detail-header"><div><span class="list-type">${list.ordered ? "Ordered" : esc(sortLabel)}</span><h1>${esc(list.name)}</h1>${list.description ? `<p>${esc(list.description)}</p>` : ""}<small>${entries.length} ${entries.length === 1 ? "show" : "shows"}</small></div><div class="list-detail-actions"><button type="button" data-edit-list="${esc(list.id)}">Edit</button><button class="primary" type="button" data-add-list-shows="${esc(list.id)}">＋ Add shows</button></div></header>
-    <div class="list-detail-toolbar"><div class="view-toggle" role="group" aria-label="List view"><button type="button" data-list-view="gallery" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "gallery"}">Gallery</button><button type="button" data-list-view="list" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "list"}">List</button></div></div>
+    <header class="list-detail-header"><div><span class="list-type">${list.ordered ? `Ranked · ${esc(sortLabel)}` : esc(sortLabel)}</span><h1>${esc(list.name)}</h1>${list.description ? `<p>${esc(list.description)}</p>` : ""}<small>${entries.length} ${entries.length === 1 ? "show" : "shows"}</small></div><div class="list-detail-actions"><button type="button" data-edit-list="${esc(list.id)}">Edit</button><button class="primary" type="button" data-add-list-shows="${esc(list.id)}">＋ Add shows</button></div></header>
+    <div class="list-detail-toolbar"><label class="list-detail-sort"><span>Display order</span><select data-list-sort="${esc(list.id)}" aria-label="Display order for ${esc(list.name)}">${availableSorts.map(([value, label]) => `<option value="${value}"${list.sort === value ? " selected" : ""}>${label}</option>`).join("")}</select></label><div class="view-toggle" role="group" aria-label="List view"><button type="button" data-list-view="gallery" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "gallery"}">Gallery</button><button type="button" data-list-view="list" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "list"}">List</button></div></div>
     <div class="list-shows ${viewMode === "list" ? "list-shows-rows" : ""}">${entries.length ? entries.map((entry, index) => listShowCard(entry, index, list, viewMode)).join("") : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div>`;
 }
 
@@ -87,11 +90,5 @@ export function renderListDialog(list = null) {
   $("#list-name").value = list?.name || "";
   $("#list-description").value = list?.description || "";
   $("#list-ordered").checked = list?.ordered || false;
-  $("#list-sort").innerHTML = listSortOptions
-    .map(
-      ([value, label]) =>
-        `<option value="${value}"${(list?.sort || "added-oldest") === value ? " selected" : ""}>${label}</option>`,
-    )
-    .join("");
-  $("#list-sort-field").hidden = $("#list-ordered").checked;
+  $("#list-ordered").dataset.original = String(list?.ordered || false);
 }
