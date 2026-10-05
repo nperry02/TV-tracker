@@ -2778,6 +2778,33 @@ h1 {
   align-items: center;
   gap: 9px;
 }
+.stats-bars .nav-dot,
+.watchlist-total .nav-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+.nav-dot.watching {
+  color: #d5ed9c;
+}
+.nav-dot.paused {
+  color: #edcf91;
+}
+.nav-dot.caught-up {
+  color: #98d9c9;
+}
+.nav-dot.completed {
+  color: #c1b5ed;
+}
+.nav-dot.dropped {
+  color: #f0a1a6;
+}
+.nav-dot.watchlist {
+  color: #e6c68d;
+}
 .stats-bars progress {
   grid-column: 1 / -1;
   width: 100%;

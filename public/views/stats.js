@@ -39,7 +39,7 @@ export function renderStats(shows, container) {
   const statusList = statuses
     .map(
       (status) =>
-        `<li><span><i class="nav-dot ${status.toLowerCase().replaceAll(" ", "-")}"></i>${status}</span><strong>${data.statusCounts[status]}</strong><progress value="${data.statusCounts[status]}" max="${data.trackedShows || 1}" aria-label="${data.statusCounts[status]} of ${data.trackedShows} tracked shows are ${status.toLowerCase()}"></progress></li>`,
+        `<li><span><i class="nav-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>${status}</span><strong>${data.statusCounts[status]}</strong><progress value="${data.statusCounts[status]}" max="${data.trackedShows || 1}" aria-label="${data.statusCounts[status]} of ${data.trackedShows} tracked shows are ${status.toLowerCase()}"></progress></li>`,
     )
     .join("");
   const genreList = data.topGenres.length
@@ -80,7 +80,7 @@ export function renderStats(shows, container) {
       <section class="stats-panel" aria-labelledby="library-breakdown-heading">
         <div class="stats-panel-heading"><h2 id="library-breakdown-heading">Library breakdown</h2></div>
         <ul class="stats-bars">${statusList}</ul>
-        <div class="watchlist-total"><span><i class="nav-dot watchlist"></i>Watchlist <small>can overlap</small></span><strong>${data.watchlistShows}</strong></div>
+        <div class="watchlist-total"><span><i class="nav-dot watchlist" aria-hidden="true"></i>Watchlist <small>can overlap</small></span><strong>${data.watchlistShows}</strong></div>
       </section>
       <div class="stats-genre-layout">
         <section class="stats-panel" aria-labelledby="genres-heading">
