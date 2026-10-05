@@ -19,7 +19,12 @@ import { createSearchDialog } from "./views/search-dialog.js";
 import { renderHome } from "./views/home.js";
 import { renderHelp } from "./views/help.js";
 import { renderLibrary } from "./views/library.js";
-import { renderListDialog, renderLists } from "./views/lists.js";
+import {
+  renderListDialog,
+  renderLists,
+  renderMemberOptions,
+  renderShowListOptions,
+} from "./views/lists.js";
 import {
   initialShowSeason,
   renderShowDialog,
@@ -30,7 +35,24 @@ let shows = [],
   lists = [],
   selectedId = null,
   selectedSeason = null,
-  mutationPending = false;
+  mutationPending = false,
+  pendingListShowId = null,
+  listMemberSelection = new Set();
+
+function selectedListId() {
+  return location.hash.startsWith("#lists/")
+    ? decodeURIComponent(location.hash.slice(7))
+    : null;
+}
+function listViewMode(id) {
+  try {
+    return localStorage.getItem(`next-episode:list-view:${id}`) === "list"
+      ? "list"
+      : "gallery";
+  } catch {
+    return "gallery";
+  }
+}
 
 // Library selections survive page navigation and reloads within the current tab.
 const libraryFilters = (() => {
@@ -93,6 +115,8 @@ function applyRoute({ scroll = false } = {}) {
     link.classList.toggle("active", link.dataset.page === route),
   );
   if (route === "stats") renderStats(shows, $("#stats-content"));
+  if (route === "lists")
+    renderLists(lists, shows, selectedListId(), listViewMode(selectedListId()));
   if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
 function render() {
@@ -101,7 +125,7 @@ function render() {
   });
   renderHome(shows, mutationPending);
   renderLibrary(shows, libraryFilters, viewMode);
-  renderLists(lists, shows);
+  renderLists(lists, shows, selectedListId(), listViewMode(selectedListId()));
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
@@ -119,7 +143,7 @@ function renderShow() {
   if (show) {
     const keepSeasonOptionsOpen =
       $("#show-dialog").open && $(".season-options")?.open;
-    renderShowDialog(show, selectedSeason, mutationPending);
+    renderShowDialog(show, selectedSeason, mutationPending, lists);
     const seasonOptions = $(".season-options");
     if (seasonOptions && matchMedia("(max-width: 800px)").matches)
       seasonOptions.open = Boolean(keepSeasonOptionsOpen);
@@ -302,8 +326,57 @@ document.addEventListener("click", async (event) => {
     return $("#list-dialog").showModal();
   }
   if (button.dataset.openList) {
-    history.pushState(null, "", `#lists/${button.dataset.openList}`);
-    toast("List details are coming in the next milestone.");
+    location.hash = `lists/${encodeURIComponent(button.dataset.openList)}`;
+    return;
+  }
+  if (button.dataset.listView) {
+    try {
+      localStorage.setItem(`next-episode:list-view:${button.dataset.listId}`, button.dataset.listView);
+    } catch {}
+    render();
+    return;
+  }
+  if (button.dataset.addListShows) {
+    const list = lists.find((entry) => entry.id === button.dataset.addListShows);
+    if (!list) return;
+    $("#list-members-id").value = list.id;
+    $("#list-members-query").value = "";
+    $("#list-members-title").textContent = `Shows in ${list.name}`;
+    listMemberSelection = new Set(list.entries.map((entry) => entry.showId));
+    renderMemberOptions(list, shows, "", listMemberSelection);
+    $("#list-members-dialog").showModal();
+    return;
+  }
+  if (button.id === "manage-show-lists") {
+    const show = shows.find((entry) => entry.id === selectedId);
+    if (!show) return;
+    $("#show-lists-id").value = String(show.id);
+    $("#show-lists-title").textContent = `Lists for ${show.name}`;
+    renderShowListOptions(show, lists);
+    $("#show-lists-dialog").showModal();
+    return;
+  }
+  if (button.dataset.createListFromShow !== undefined) {
+    pendingListShowId = Number($("#show-lists-id").value);
+    $("#show-lists-dialog").close();
+    renderListDialog();
+    enhanceSelects($("#list-dialog"));
+    $("#list-dialog").showModal();
+    return;
+  }
+  if (button.dataset.moveListShow) {
+    const list = lists.find((entry) => entry.id === button.dataset.listId);
+    const index = list?.entries.findIndex((entry) => entry.showId === Number(button.dataset.showId));
+    const offset = button.dataset.moveListShow === "up" ? -1 : 1;
+    if (!list || index < 0 || !list.entries[index + offset]) return;
+    const showIds = list.entries.map((entry) => entry.showId);
+    [showIds[index], showIds[index + offset]] = [showIds[index + offset], showIds[index]];
+    try {
+      const updated = await api(`/api/lists/${encodeURIComponent(list.id)}/order`, { method: "PUT", body: { showIds } });
+      lists = lists.map((entry) => (entry.id === list.id ? updated : entry));
+      render();
+      requestAnimationFrame(() => document.querySelector(`[data-move-list-show="${button.dataset.moveListShow}"][data-show-id="${button.dataset.showId}"]`)?.focus());
+    } catch (error) { report(error); }
     return;
   }
   if (button.id === "delete-list") {
@@ -315,6 +388,7 @@ document.addEventListener("click", async (event) => {
       await api(`/api/lists/${encodeURIComponent(id)}`, { method: "DELETE" });
       lists = lists.filter((entry) => entry.id !== id);
       $("#list-dialog").close();
+      if (selectedListId() === id) history.replaceState(null, "", "#lists");
       render();
       toast("List deleted. Your shows were not changed.");
     } catch (error) {
@@ -482,14 +556,86 @@ $("#list-form").addEventListener("submit", async (event) => {
     lists = id
       ? lists.map((list) => (list.id === id ? saved : list))
       : [...lists, saved];
+    if (!id && pendingListShowId) {
+      const updated = await api(`/api/lists/${encodeURIComponent(saved.id)}/items`, {
+        method: "PUT",
+        body: { showIds: [pendingListShowId] },
+      });
+      lists = lists.map((list) => (list.id === saved.id ? updated : list));
+    }
     $("#list-dialog").close();
     render();
+    if ($("#show-dialog").open) renderShow();
     toast(id ? "List changes saved." : "List created.");
   } catch (error) {
     report(error);
   } finally {
+    pendingListShowId = null;
     submit.disabled = false;
   }
+});
+$("#list-members-query").addEventListener("input", () => {
+  const list = lists.find((entry) => entry.id === $("#list-members-id").value);
+  if (list) renderMemberOptions(list, shows, $("#list-members-query").value, listMemberSelection);
+});
+$("#list-members-options").addEventListener("change", (event) => {
+  if (event.target.name !== "showId") return;
+  const id = Number(event.target.value);
+  event.target.checked ? listMemberSelection.add(id) : listMemberSelection.delete(id);
+});
+$("#list-members-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const id = $("#list-members-id").value;
+  // Search filtering never drops selections that are temporarily out of view.
+  const showIds = shows.filter((show) => listMemberSelection.has(show.id)).map((show) => show.id);
+  try {
+    const updated = await api(`/api/lists/${encodeURIComponent(id)}/items`, { method: "PUT", body: { showIds } });
+    lists = lists.map((list) => (list.id === id ? updated : list));
+    $("#list-members-dialog").close();
+    render();
+    toast("List shows saved.");
+  } catch (error) { report(error); }
+});
+$("#show-lists-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const showId = Number($("#show-lists-id").value);
+  const listIds = [...$("#show-lists-options").querySelectorAll('input[name="listId"]:checked')].map((input) => input.value);
+  try {
+    lists = await api(`/api/shows/${showId}/lists`, { method: "PUT", body: { listIds } });
+    $("#show-lists-dialog").close();
+    render();
+    renderShow();
+    toast("List memberships saved.");
+  } catch (error) { report(error); }
+});
+
+// Ordered cards support pointer dragging in addition to the keyboard-safe buttons.
+let draggedListShow = null;
+document.addEventListener("dragstart", (event) => {
+  const card = event.target.closest('[draggable="true"][data-list-show]');
+  if (!card) return;
+  draggedListShow = { listId: card.dataset.listId, showId: Number(card.dataset.listShow) };
+  card.classList.add("dragging");
+});
+document.addEventListener("dragover", (event) => {
+  if (draggedListShow && event.target.closest(`[data-list-id="${draggedListShow.listId}"][data-list-show]`)) event.preventDefault();
+});
+document.addEventListener("drop", async (event) => {
+  const target = event.target.closest("[data-list-show]");
+  if (!draggedListShow || !target || target.dataset.listId !== draggedListShow.listId) return;
+  event.preventDefault();
+  const list = lists.find((entry) => entry.id === draggedListShow.listId);
+  const showIds = list.entries.map((entry) => entry.showId).filter((id) => id !== draggedListShow.showId);
+  showIds.splice(showIds.indexOf(Number(target.dataset.listShow)), 0, draggedListShow.showId);
+  try {
+    const updated = await api(`/api/lists/${encodeURIComponent(list.id)}/order`, { method: "PUT", body: { showIds } });
+    lists = lists.map((entry) => (entry.id === list.id ? updated : entry));
+    render();
+  } catch (error) { report(error); }
+});
+document.addEventListener("dragend", () => {
+  document.querySelector(".list-show-card.dragging")?.classList.remove("dragging");
+  draggedListShow = null;
 });
 $("#library-query").addEventListener("input", render);
 

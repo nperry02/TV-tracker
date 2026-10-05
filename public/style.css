@@ -2058,14 +2058,103 @@ main {
   align-items: center;
 }
 .danger-button { color: #f2a39b; }
+.list-back {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.list-detail-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+.list-detail-header h1 { margin: 5px 0 8px; }
+.list-detail-header p {
+  max-width: 720px;
+  margin: 0 0 9px;
+  color: var(--muted);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.list-detail-header small,
+.list-type { color: #89968c; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.list-detail-actions { display: flex; gap: 9px; }
+.list-detail-toolbar { display: flex; justify-content: flex-end; padding: 18px 0; }
+.list-detail-toolbar .view-toggle { width: auto; }
+.list-shows {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 22px 14px;
+}
+.list-show-card { position: relative; min-width: 0; }
+.list-show-card.dragging { opacity: 0.35; }
+.list-rank {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 7px;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border-radius: 50%;
+  color: #17200f;
+  background: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+.list-show-open { display: block; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; }
+.list-show-open:hover { border: 0; background: transparent; }
+.list-show-poster,
+.list-show-open > .poster-placeholder { width: 100%; aspect-ratio: 2 / 3; border-radius: 8px; object-fit: cover; }
+.list-show-open > span:last-child { display: grid; gap: 3px; padding: 9px 2px 5px; }
+.list-show-open strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.list-show-open small { color: var(--muted); font-size: 10px; }
+.list-rank-controls { display: flex; gap: 5px; margin-top: 4px; }
+.list-rank-controls button { flex: 1; padding: 5px; }
+.list-shows-rows { display: grid; grid-template-columns: 1fr; gap: 0; border: 1px solid var(--border); border-radius: 10px; }
+.list-show-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+.list-show-row:last-child { border-bottom: 0; }
+.list-show-row .list-show-open { display: flex; align-items: center; gap: 13px; }
+.list-show-row .list-show-poster,
+.list-show-row .list-show-open > .poster-placeholder { width: 45px; height: 67px; flex: 0 0 45px; }
+.list-show-row .list-rank { position: static; grid-column: 1; grid-row: 1; margin-right: 8px; }
+.list-show-row:has(.list-rank) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.list-show-row:has(.list-rank) .list-show-open { grid-column: 2; }
+.list-show-row .list-rank-controls { grid-column: -1; margin: 0; }
+.list-detail-empty { grid-column: 1 / -1; }
+.list-members-options { display: grid; gap: 6px; max-height: min(480px, 55vh); overflow: auto; }
+.list-member-search input { width: 100%; }
+.list-member-option,
+.show-list-option { display: flex; align-items: center; gap: 12px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: #111914; }
+.list-member-option > span,
+.show-list-option > span { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.list-member-option strong,
+.show-list-option strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-member-option small,
+.show-list-option small { color: var(--muted); }
+.list-member-poster,
+.list-member-option > .poster-placeholder { width: 38px; height: 57px; flex: 0 0 38px; border-radius: 4px; object-fit: cover; }
+.list-member-option input,
+.show-list-option input { width: 18px; height: 18px; }
 @media (max-width: 900px) {
   .lists-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .list-shows { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
 }
 @media (max-width: 560px) {
   .lists-header { align-items: start; flex-direction: column; }
   .lists-grid { grid-template-columns: 1fr; }
   .list-dialog-actions { grid-template-columns: 1fr 1fr; }
   .list-dialog-actions > span { display: none; }
+  .list-detail-header { align-items: start; flex-direction: column; }
+  .list-detail-actions { width: 100%; }
+  .list-detail-actions button { flex: 1; }
+  .list-shows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .page-heading {
   display: grid;

@@ -1,5 +1,5 @@
 import { listEntries } from "../model.js";
-import { $, esc, poster } from "../ui.js";
+import { $, esc, poster, stars, year } from "../ui.js";
 
 export const listSortOptions = [
   ["added-oldest", "Added: oldest first"],
@@ -34,10 +34,48 @@ function listCard(list, shows) {
   </article>`;
 }
 
-export function renderLists(lists, shows) {
+function listShowCard({ show }, index, list, viewMode) {
+  const controls = list.ordered
+    ? `<span class="list-rank-controls"><button type="button" data-move-list-show="up" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} up"${index === 0 ? " disabled" : ""}>↑</button><button type="button" data-move-list-show="down" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} down"${index === list.entries.length - 1 ? " disabled" : ""}>↓</button></span>`
+    : "";
+  return `<article class="list-show-card ${viewMode === "list" ? "list-show-row" : ""}" draggable="${list.ordered}" data-list-show="${show.id}" data-list-id="${esc(list.id)}">
+    ${list.ordered ? `<span class="list-rank">${index + 1}</span>` : ""}
+    <button type="button" class="list-show-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${poster(show, "list-show-poster", "w342")}<span><strong>${esc(show.name)}</strong><small>${year(show)}</small>${stars(show.rating)}</span></button>
+    ${controls}
+  </article>`;
+}
+
+function renderDetail(list, shows, viewMode) {
+  const entries = listEntries(list, shows);
+  const sortLabel = listSortOptions.find(([value]) => value === list.sort)?.[1];
+  $("#list-detail").innerHTML = `<a class="list-back" href="#lists">← Back to Lists</a>
+    <header class="list-detail-header"><div><span class="list-type">${list.ordered ? "Ordered" : esc(sortLabel)}</span><h1>${esc(list.name)}</h1>${list.description ? `<p>${esc(list.description)}</p>` : ""}<small>${entries.length} ${entries.length === 1 ? "show" : "shows"}</small></div><div class="list-detail-actions"><button type="button" data-edit-list="${esc(list.id)}">Edit</button><button class="primary" type="button" data-add-list-shows="${esc(list.id)}">＋ Add shows</button></div></header>
+    <div class="list-detail-toolbar"><div class="view-toggle" role="group" aria-label="List view"><button type="button" data-list-view="gallery" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "gallery"}">Gallery</button><button type="button" data-list-view="list" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "list"}">List</button></div></div>
+    <div class="list-shows ${viewMode === "list" ? "list-shows-rows" : ""}">${entries.length ? entries.map((entry, index) => listShowCard(entry, index, list, viewMode)).join("") : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div>`;
+}
+
+export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery") {
+  const selected = lists.find((list) => list.id === selectedListId);
+  $("#lists-overview").hidden = Boolean(selected);
+  $("#list-detail").hidden = !selected;
+  if (selected) renderDetail(selected, shows, viewMode);
   $("#lists-grid").innerHTML = lists.map((list) => listCard(list, shows)).join("");
   $("#lists-empty").hidden = lists.length > 0;
   $("#lists-grid").hidden = !lists.length;
+}
+
+export function renderMemberOptions(list, shows, query = "", selectedIds = null) {
+  const selected = selectedIds || new Set(list.entries.map((entry) => entry.showId));
+  const matches = shows.filter((show) => show.name.toLowerCase().includes(query.trim().toLowerCase()));
+  $("#list-members-options").innerHTML = matches.length
+    ? matches.map((show) => `<label class="list-member-option">${poster(show, "list-member-poster", "w92")}<span><strong>${esc(show.name)}</strong><small>${year(show)}</small></span><input type="checkbox" name="showId" value="${show.id}"${selected.has(show.id) ? " checked" : ""}></label>`).join("")
+    : '<p class="muted">No saved shows match your search.</p>';
+}
+
+export function renderShowListOptions(show, lists) {
+  $("#show-lists-options").innerHTML = lists.length
+    ? lists.map((list) => `<label class="show-list-option"><input type="checkbox" name="listId" value="${esc(list.id)}"${list.entries.some((entry) => entry.showId === show.id) ? " checked" : ""}><span><strong>${esc(list.name)}</strong><small>${list.entries.length} ${list.entries.length === 1 ? "show" : "shows"}</small></span></label>`).join("")
+    : '<p class="muted">You have not created any lists yet.</p>';
 }
 
 export function renderListDialog(list = null) {

@@ -145,6 +145,7 @@
       </section>
       <!-- Personal show-list overview -->
       <section id="lists-view" class="lists-page" aria-labelledby="lists-title" hidden>
+        <div id="lists-overview">
         <header class="lists-header">
           <div>
             <p class="eyebrow">YOUR COLLECTIONS</p>
@@ -160,6 +161,8 @@
           <p>Collect saved shows around a theme, or put your favorites in order.</p>
           <button class="primary" type="button" data-create-list>Create a list</button>
         </div>
+        </div>
+        <div id="list-detail" hidden></div>
       </section>
       <!-- Library statistics -->
       <section id="stats-view" class="stats-page" aria-labelledby="stats-title" hidden>
@@ -301,6 +304,24 @@
           <button type="button" data-close="list-dialog">Cancel</button>
           <button id="list-dialog-submit" class="primary" type="submit">Create list</button>
         </div>
+      </form>
+    </dialog>
+    <dialog id="list-members-dialog" class="list-dialog list-members-dialog" aria-labelledby="list-members-title">
+      <form id="list-members-form">
+        <div class="dialog-top"><div><p class="eyebrow">LIST MEMBERS</p><h2 id="list-members-title">Add shows</h2></div><button class="icon-button" type="button" data-close="list-members-dialog" aria-label="Close show picker">×</button></div>
+        <input id="list-members-id" type="hidden" />
+        <label class="list-member-search"><span class="sr-only">Search saved shows</span><input id="list-members-query" type="search" placeholder="Search My Shows and Watchlist…" autocomplete="off" /></label>
+        <div id="list-members-options" class="list-members-options"></div>
+        <div class="list-dialog-actions"><span></span><span></span><button type="button" data-close="list-members-dialog">Cancel</button><button class="primary" type="submit">Save shows</button></div>
+      </form>
+    </dialog>
+    <dialog id="show-lists-dialog" class="list-dialog" aria-labelledby="show-lists-title">
+      <form id="show-lists-form">
+        <div class="dialog-top"><div><p class="eyebrow">COLLECTIONS</p><h2 id="show-lists-title">Manage lists</h2></div><button class="icon-button" type="button" data-close="show-lists-dialog" aria-label="Close list manager">×</button></div>
+        <input id="show-lists-id" type="hidden" />
+        <div id="show-lists-options" class="list-members-options"></div>
+        <button type="button" data-create-list-from-show>＋ Create new list</button>
+        <div class="list-dialog-actions"><span></span><span></span><button type="button" data-close="show-lists-dialog">Cancel</button><button class="primary" type="submit">Save lists</button></div>
       </form>
     </dialog>
     <div id="toast" role="status" popover="manual" hidden></div>

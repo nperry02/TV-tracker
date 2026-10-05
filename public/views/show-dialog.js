@@ -39,7 +39,7 @@ export function initialShowSeason(show) {
   );
 }
 
-export function renderShowDialog(show, selectedSeason, mutationPending) {
+export function renderShowDialog(show, selectedSeason, mutationPending, lists = []) {
   // Rebuild the dialog from the latest saved show snapshot after each mutation.
   const showProgress = progress(show);
   const episodes = show.episodes.filter(
@@ -77,7 +77,7 @@ export function renderShowDialog(show, selectedSeason, mutationPending) {
   }
   $(".detail-controls").insertAdjacentHTML(
     "beforeend",
-    `<button id="toggle-watchlist" aria-pressed="${inWatchlist(show)}" aria-label="${inWatchlist(show) ? "Remove from watchlist" : "Add to watchlist"}">${inWatchlist(show) ? "✓ Watchlist" : "＋ Watchlist"}</button>`,
+    `<button id="toggle-watchlist" aria-pressed="${inWatchlist(show)}" aria-label="${inWatchlist(show) ? "Remove from watchlist" : "Add to watchlist"}">${inWatchlist(show) ? "✓ Watchlist" : "＋ Watchlist"}</button><button id="manage-show-lists">☷ Manage lists${lists.some((list) => list.entries.some((entry) => entry.showId === show.id)) ? ` (${lists.filter((list) => list.entries.some((entry) => entry.showId === show.id)).length})` : ""}</button>`,
   );
   const lastAired = episodes
     .filter((episode) => aired(episode))

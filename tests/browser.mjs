@@ -160,7 +160,36 @@ try {
     await page.locator(".detail-hero .status-badge").first().textContent(),
     "Watching",
   );
+  // Show details can create a list and add the current saved show in one flow.
+  await page.getByRole("button", { name: /Manage lists/ }).click();
+  await page.getByRole("button", { name: /Create new list/ }).click();
+  await page.locator("#list-name").fill("Ranked favorites");
+  await page.locator("#list-description").fill("The best saved shows, in order.");
+  await page.locator("#list-ordered").check();
+  await page.getByRole("button", { name: "Create list", exact: true }).click();
+  await page.getByRole("button", { name: /Manage lists \(1\)/ }).waitFor();
   await page.getByRole("button", { name: "Close show", exact: true }).click();
+  await page.getByRole("link", { name: "Lists", exact: true }).click();
+  await page.getByRole("button", { name: "Open Ranked favorites" }).click();
+  await page.getByRole("heading", { name: "Ranked favorites", exact: true }).waitFor();
+  assert.equal(await page.locator('.list-show-card[data-list-show="1396"]').count(), 1);
+  assert.equal(await page.locator(".list-rank").textContent(), "1");
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  assert.equal(await page.locator(".list-shows-rows").count(), 1);
+  await page.reload();
+  assert.equal(await page.locator(".list-shows-rows").count(), 1);
+  await page.getByRole("button", { name: /Add shows/ }).first().click();
+  await page.locator('#list-members-options input[value="1396"]').uncheck();
+  await page.getByRole("button", { name: "Save shows", exact: true }).click();
+  await page.getByText("No shows in this list yet.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Add shows", exact: true }).first().click();
+  await page.locator('#list-members-options input[value="1396"]').check();
+  await page.getByRole("button", { name: "Save shows", exact: true }).click();
+  await page.locator('.list-show-card[data-list-show="1396"]').waitFor();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Delete list", exact: true }).click();
+  await page.getByText("Make your first list.", { exact: true }).waitFor();
   await page.getByRole("link", { name: "My Shows", exact: true }).click();
   await page.locator("#library-view").waitFor();
   assert.equal(await page.locator("#home-view").isVisible(), false);
