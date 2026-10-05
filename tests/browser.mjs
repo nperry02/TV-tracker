@@ -632,12 +632,18 @@ try {
     );
     await page.getByRole("heading", { name: "Highest-rated genres" }).waitFor();
     assert.equal(await page.locator(".genre-rating-bars li").count(), 2);
-    const genreRatingInfo = page.locator(".stats-heading-with-info .stats-info");
+    const genreRatingInfo = page.getByLabel("How genre ratings are calculated");
     await genreRatingInfo.hover();
     await genreRatingInfo.getByRole("tooltip").waitFor();
     assert.match(
       await genreRatingInfo.getByRole("tooltip").textContent(),
       /Unrated shows are excluded/,
+    );
+    const progressInfo = page.getByLabel("What aired episode progress includes");
+    await progressInfo.hover();
+    assert.match(
+      await progressInfo.getByRole("tooltip").textContent(),
+      /Specials are excluded/,
     );
     assert.equal(
       await page.locator(".progress-panel").evaluate(

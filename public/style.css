@@ -2565,7 +2565,7 @@ h1 {
   line-height: 1;
 }
 .stats-panel {
-  padding: 22px;
+  padding: 15px;
 }
 .ratings-panel {
   display: flex;
@@ -2762,8 +2762,8 @@ h1 {
 }
 .stats-bars {
   display: grid;
-  gap: 13px;
-  margin: 20px 0 0;
+  gap: 11px;
+  margin: 17px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -2808,8 +2808,8 @@ h1 {
 .watchlist-total {
   display: flex;
   justify-content: space-between;
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 15px;
+  padding-top: 13px;
   border-top: 1px solid var(--border);
   color: #c9d1ca;
   font-size: 12px;
@@ -2820,7 +2820,7 @@ h1 {
 .progress-panel > progress {
   width: 100%;
   height: 13px;
-  margin: 15px 0 8px;
+  margin: 13px 0 7px;
 }
 .progress-summary,
 .progress-legend {
