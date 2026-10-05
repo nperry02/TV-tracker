@@ -1903,13 +1903,16 @@ main {
   margin: 0 auto;
 }
 .lists-header {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 24px;
+  display: block;
 }
 .lists-header h1 {
-  margin: 4px 0 8px;
+  margin: 4px 0;
+}
+.lists-title-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 8px;
 }
 .lists-grid {
   display: grid;
@@ -2229,7 +2232,7 @@ main {
   .list-shows.poster-grid { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
 }
 @media (max-width: 560px) {
-  .lists-header { align-items: start; flex-direction: column; }
+  .lists-title-row { align-items: start; flex-direction: column; gap: 10px; }
   .lists-grid { grid-template-columns: 1fr; }
   .list-dialog-actions { grid-template-columns: 1fr 1fr; }
   .list-dialog-actions > span { display: none; }
