@@ -1045,6 +1045,55 @@ try {
     await page.getByText("TMDB is unavailable", { exact: false }).waitFor();
   }
   await page.getByRole("button", { name: "Close search", exact: true }).click();
+  if (!live) {
+    // Manual ranks survive alternate unordered display sorts and support both controls.
+    const createdList = await (
+      await page.request.post(`${base}/api/lists`, {
+        data: {
+          name: "Ordering test",
+          description: "Two ways to arrange shows.",
+          ordered: true,
+          sort: "title-desc",
+        },
+      })
+    ).json();
+    await page.request.put(`${base}/api/lists/${createdList.id}/items`, {
+      data: { showIds: [1396, 200022] },
+    });
+    await page.goto(`${base}/#lists/${createdList.id}`);
+    await page.reload();
+    await page.getByRole("heading", { name: "Ordering test", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Move Breaking Bad down" }).click();
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
+    assert.deepEqual(
+      await page.locator(".list-show-open strong").allTextContents(),
+      ["Test series 23", "Breaking Bad"],
+    );
+    await page.locator('[data-list-show="1396"]').dragTo(page.locator('[data-list-show="200022"]'));
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    assert.deepEqual(
+      await page.locator(".list-show-open strong").allTextContents(),
+      ["Breaking Bad", "Test series 23"],
+    );
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.locator("#list-ordered").uncheck();
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
+    assert.deepEqual(
+      await page.locator(".list-show-open strong").allTextContents(),
+      ["Test series 23", "Breaking Bad"],
+    );
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.locator("#list-ordered").check();
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    assert.deepEqual(
+      await page.locator(".list-show-open strong").allTextContents(),
+      ["Breaking Bad", "Test series 23"],
+    );
+    await page.request.delete(`${base}/api/lists/${createdList.id}`);
+    await page.goto(`${base}/#library`);
+  }
   // Help is a routed page, so the footer link participates in browser history.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page

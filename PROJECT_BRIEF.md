@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-09-27
+Last updated: 2026-10-05
 
 ## Purpose and scope
 
@@ -63,7 +63,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Your Shows
 
-- Present the library as a responsive dashboard with Home, My Shows, and Stats navigation in the header.
+- Present the library as a responsive dashboard with Home, My Shows, Lists, and Stats navigation in the header.
 - Keep the Home overview focused on library totals, Continue Watching, and up to five top-rated shows.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
@@ -82,6 +82,15 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Count watched specials in episode and watch-time totals. Exclude specials from completed-season and show-progress calculations.
 - Estimate runtime from episode metadata first, typical show runtime second, and the median known library runtime as a fallback. Label watch time as approximate and let runtime coverage improve through the normal metadata-refresh cycle rather than a bulk backfill.
 - Keep monthly activity, streaks, and time-based trends deferred until dated viewing history exists.
+
+## Lists
+
+- Provide private personal lists containing shows already saved in My Shows or Watchlist. Lists do not create show records or change status, progress, ratings, Watchlist membership, or Stats.
+- Give each list a unique case-insensitive name, optional description, and dedicated overview and detail pages. Automatically preview its first displayed posters.
+- Support unordered lists with persisted added-order, title, premiere-date, and personal-rating sorts. Missing dates and ratings remain last.
+- Support ordered lists with durable manual ranks, drag-and-drop rearrangement, and accessible move controls. Switching to unordered changes display sorting without destroying the manual order restored when ordered mode returns.
+- Manage membership from either the list or show details. Prevent complete deletion of a show until it is removed from every list that names it; deleting a list never deletes its shows.
+- Persist list data in `data/library.json` and include it in normal backup export and restore. Store only per-list gallery/list display preferences in the local browser.
 
 ## Deferred — remember for later
 
