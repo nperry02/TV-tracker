@@ -2623,9 +2623,14 @@ h1 {
 .stats-info {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   cursor: help;
   color: var(--muted);
+  line-height: 0;
 }
 .stats-info > svg {
   width: 14px;
@@ -2817,11 +2822,34 @@ h1 {
   height: 13px;
   margin: 15px 0 8px;
 }
-.progress-panel > small {
-  display: block;
-  margin-top: 18px;
+.progress-summary,
+.progress-legend {
+  display: flex;
+  align-items: center;
+}
+.progress-summary {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 18px;
+}
+.progress-legend {
+  gap: 18px;
   color: var(--muted);
-  line-height: 1.5;
+  font-size: 11px;
+}
+.progress-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.progress-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #59645d;
+}
+.progress-legend i.watched {
+  background: var(--accent);
 }
 .genre-bars b {
   display: inline-grid;
