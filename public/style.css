@@ -2080,6 +2080,14 @@ main {
   border-radius: 8px;
   background: #111914;
 }
+.list-edit-rank { display: none; }
+.ranked-editing .list-edit-rank {
+  display: block;
+  width: 46px;
+  padding: 7px 5px;
+  text-align: center;
+  font-weight: 750;
+}
 .list-edit-show > span {
   display: grid;
   min-width: 0;
@@ -2133,31 +2141,54 @@ main {
   grid-template-columns: repeat(6, minmax(130px, 1fr));
   gap: 18px 14px;
 }
-.list-show-card { position: relative; min-width: 0; }
-.list-show-card.dragging { opacity: 0.35; }
+.list-show-card { position: relative; min-width: 0; overflow: hidden; }
+.list-show-card > .show-card { width: 100%; max-width: 100%; overflow: hidden; }
+.list-show-card .card-heading,
+.list-show-card .card-meta { min-width: 0; }
+.list-show-card .card-heading h3 { min-width: 0; }
+.list-show-card .card-heading small,
+.list-show-card .card-meta > span { flex: 0 0 auto; }
 .list-rank {
   position: absolute;
   z-index: 2;
   top: 7px;
   left: 7px;
   display: grid;
-  width: 27px;
-  height: 27px;
+  width: 34px;
+  height: 34px;
   place-items: center;
+  border: 2px solid #26311f;
   border-radius: 50%;
   color: #17200f;
   background: var(--accent);
-  font-size: 11px;
+  box-shadow: 0 3px 12px #000b;
+  font-size: 14px;
   font-weight: 800;
 }
-.list-rank-controls { display: flex; gap: 5px; margin-top: 4px; }
-.list-rank-controls button { flex: 1; padding: 5px; }
-.list-shows-rows .list-show-row { position: relative; }
+.list-shows-rows .ranked-list-row:has(.list-rank) {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 18px;
+  align-items: center;
+}
+.ranked-list-rows > .list-header {
+  grid-template-columns:
+    44px minmax(220px, 2fr) minmax(105px, 0.8fr) minmax(90px, 0.8fr)
+    minmax(90px, 0.75fr) minmax(175px, 1.35fr) minmax(150px, 1.1fr);
+}
+.list-shows-rows .list-rank {
+  position: static;
+  width: auto;
+  height: auto;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  box-shadow: none;
+  font-size: 16px;
+}
+.list-shows-rows .show-card { width: 100%; }
 .list-shows-rows .list-show-card { border-bottom: 1px solid var(--border); }
 .list-shows-rows .list-show-card:last-child { border-bottom: 0; }
-.list-shows-rows .list-rank { top: 20px; left: 22px; }
-.list-shows-rows .list-rank-controls { position: absolute; z-index: 2; right: 10px; bottom: 8px; margin: 0; }
-.list-shows-rows .list-rank-controls button { padding: 3px 9px; background: #111914e8; }
 .list-detail-empty { grid-column: 1 / -1; }
 .list-members-options { display: grid; gap: 6px; max-height: min(480px, 55vh); overflow: auto; }
 .list-member-search input { width: 100%; }

@@ -88,7 +88,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Provide private personal lists containing shows already saved in My Shows or Watchlist. Lists do not create show records or change status, progress, ratings, Watchlist membership, or Stats.
 - Give each list a unique case-insensitive name, optional description, and dedicated overview and detail pages. Automatically preview its first displayed posters.
 - Support unranked lists that initially display in oldest-added order. Both list types can change display order from the list page using added order, title, premiere date, or personal rating; missing dates and ratings remain last.
-- Support ranked lists with durable manual ranks, drag-and-drop rearrangement, and accessible move controls. Alternate display sorting and switching to unranked never destroy the manual order restored by Ranked order.
+- Support ranked lists with durable manual ranks changed only in Edit List through accessible position fields. Alternate display sorting and switching to unranked never destroy the manual order restored by Ranked order.
 - Manage membership from either the list or show details. Prevent complete deletion of a show until it is removed from every list that names it; deleting a list never deletes its shows.
 - Reuse the My Shows gallery cards and compact rows on list details. Allow title search and status, genre, and rating filters within the current list without changing membership.
 - Persist list data in `data/library.json` and include it in normal backup export and restore. Store only per-list gallery/list display preferences in the local browser.

@@ -1072,13 +1072,19 @@ try {
       ["Test series 23"],
     );
     await page.locator("[data-list-watchlist]").click();
-    await page.getByRole("button", { name: "Move Breaking Bad down" }).click();
+    // Ranked order is edited only through position fields in the list dialog.
+    assert.equal(await page.getByRole("button", { name: /Move .* (up|down)/ }).count(), 0);
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.getByRole("spinbutton", { name: "Rank for Breaking Bad" }).fill("2");
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
     await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
     assert.deepEqual(
       await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Test series 23", "Breaking Bad"],
     );
-    await page.locator('[data-list-show="1396"]').dragTo(page.locator('[data-list-show="200022"]'));
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.getByRole("spinbutton", { name: "Rank for Test series 23" }).fill("2");
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
     await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
     assert.deepEqual(
       await page.locator(".list-show-card .card-heading h3").allTextContents(),

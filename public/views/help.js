@@ -84,7 +84,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">☷</i>
           <h3>Personal lists</h3>
-          <p>Collect shows already in My Shows or Watchlist. Search and filter each list using the familiar My Shows layouts. Ranked lists keep manual ranks changed with drag-and-drop or Move buttons, and either type can change display order.</p>
+          <p>Collect shows already in My Shows or Watchlist. Search and filter each list using the familiar My Shows layouts. Edit ranked lists to change manual order with position fields; either list type can change its display order.</p>
         </article>
       </div>
     </section>

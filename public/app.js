@@ -354,6 +354,7 @@ document.addEventListener("click", async (event) => {
   }
   if (button.dataset.removeEditListShow) {
     button.closest("[data-edit-list-show]")?.remove();
+    refreshEditRanks();
     if (!$("#list-edit-show-options").querySelector("[data-edit-list-show]"))
       $("#list-edit-show-options").innerHTML =
         '<p class="muted">All shows will be removed when you save.</p>';
@@ -425,21 +426,6 @@ document.addEventListener("click", async (event) => {
     renderListDialog();
     enhanceSelects($("#list-dialog"));
     $("#list-dialog").showModal();
-    return;
-  }
-  if (button.dataset.moveListShow) {
-    const list = lists.find((entry) => entry.id === button.dataset.listId);
-    const index = list?.entries.findIndex((entry) => entry.showId === Number(button.dataset.showId));
-    const offset = button.dataset.moveListShow === "up" ? -1 : 1;
-    if (!list || index < 0 || !list.entries[index + offset]) return;
-    const showIds = list.entries.map((entry) => entry.showId);
-    [showIds[index], showIds[index + offset]] = [showIds[index + offset], showIds[index]];
-    try {
-      const updated = await api(`/api/lists/${encodeURIComponent(list.id)}/order`, { method: "PUT", body: { showIds } });
-      lists = lists.map((entry) => (entry.id === list.id ? updated : entry));
-      render();
-      requestAnimationFrame(() => document.querySelector(`[data-move-list-show="${button.dataset.moveListShow}"][data-show-id="${button.dataset.showId}"]`)?.focus());
-    } catch (error) { report(error); }
     return;
   }
   if (button.id === "delete-list") {
@@ -595,6 +581,18 @@ document.addEventListener("change", (event) => {
     filtersForList(selectedListId())[el.dataset.listFilter] = el.value;
     render();
   }
+  if (el.id === "list-ordered")
+    $("#list-form").classList.toggle("ranked-editing", el.checked);
+  if (el.classList.contains("list-edit-rank")) {
+    const rows = [...$("#list-edit-show-options").querySelectorAll(".list-edit-show")];
+    const row = el.closest(".list-edit-show");
+    const destination = Math.max(0, Math.min(rows.length - 1, Number(el.value) - 1));
+    const reference = rows.filter((candidate) => candidate !== row)[destination];
+    if (reference) reference.before(row);
+    else $("#list-edit-show-options").append(row);
+    refreshEditRanks();
+    row.querySelector(".list-edit-rank")?.focus();
+  }
   if (["rating-filter", "sort"].includes(el.id)) render();
   if (el.id === "season-select") {
     selectedSeason = Number(el.value);
@@ -726,34 +724,15 @@ $("#show-lists-form").addEventListener("submit", async (event) => {
   } catch (error) { report(error); }
 });
 
-// Ordered cards support pointer dragging in addition to the keyboard-safe buttons.
-let draggedListShow = null;
-document.addEventListener("dragstart", (event) => {
-  const card = event.target.closest('[draggable="true"][data-list-show]');
-  if (!card) return;
-  draggedListShow = { listId: card.dataset.listId, showId: Number(card.dataset.listShow) };
-  card.classList.add("dragging");
-});
-document.addEventListener("dragover", (event) => {
-  if (draggedListShow && event.target.closest(`[data-list-id="${draggedListShow.listId}"][data-list-show]`)) event.preventDefault();
-});
-document.addEventListener("drop", async (event) => {
-  const target = event.target.closest("[data-list-show]");
-  if (!draggedListShow || !target || target.dataset.listId !== draggedListShow.listId) return;
-  event.preventDefault();
-  const list = lists.find((entry) => entry.id === draggedListShow.listId);
-  const showIds = list.entries.map((entry) => entry.showId).filter((id) => id !== draggedListShow.showId);
-  showIds.splice(showIds.indexOf(Number(target.dataset.listShow)), 0, draggedListShow.showId);
-  try {
-    const updated = await api(`/api/lists/${encodeURIComponent(list.id)}/order`, { method: "PUT", body: { showIds } });
-    lists = lists.map((entry) => (entry.id === list.id ? updated : entry));
-    render();
-  } catch (error) { report(error); }
-});
-document.addEventListener("dragend", () => {
-  document.querySelector(".list-show-card.dragging")?.classList.remove("dragging");
-  draggedListShow = null;
-});
+// Ranked order changes only inside Edit List and persists with the form save.
+function refreshEditRanks() {
+  const rows = [...$("#list-edit-show-options").querySelectorAll(".list-edit-show")];
+  rows.forEach((row, index) => {
+    const input = row.querySelector(".list-edit-rank");
+    input.value = String(index + 1);
+    input.max = String(rows.length);
+  });
+}
 $("#library-query").addEventListener("input", render);
 // Each transparent half-star target previews its value until the pointer leaves.
 document.addEventListener("pointerover", (event) => {
