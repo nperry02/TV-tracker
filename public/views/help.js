@@ -79,7 +79,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">⌁</i>
           <h3>Stats</h3>
-          <p>Explore lifetime totals, ratings, status and genre breakdowns, episode progress, favorites, and an estimated watch time based on available runtime data.</p>
+          <p>Explore lifetime totals, ratings, statuses, your most watched and highest-rated genres, episode progress, and estimated watch time. Genre rankings weight small samples toward your overall average.</p>
         </article>
       </div>
     </section>

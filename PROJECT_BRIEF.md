@@ -63,7 +63,8 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Your Shows
 
-- Present the library as a responsive dashboard. On desktop, provide sidebar shortcuts for Home, My Shows, Watchlist, and viewing statuses; keep mobile focused on the header, summary, Continue Watching, and library controls.
+- Present the library as a responsive dashboard with Home, My Shows, and Stats navigation in the header.
+- Keep the Home overview focused on library totals, Continue Watching, and up to five top-rated shows.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
 - Sort by personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
@@ -76,7 +77,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 ## Stats
 
 - Provide a dedicated Stats view inside the dashboard shell with lifetime library totals.
-- Show tracked shows, episodes watched, completed seasons, estimated watch hours, show-rating distribution, status counts, regular aired-episode progress, top genres, and up to five top-rated shows.
+- Show tracked shows, episodes watched, completed seasons, estimated watch hours, show-rating distribution, status counts, regular aired-episode progress, and the top genres by show count and Bayesian-weighted rating.
 - Keep Watchlist separate from viewing-status counts because it can overlap any status.
 - Count watched specials in episode and watch-time totals. Exclude specials from completed-season and show-progress calculations.
 - Estimate runtime from episode metadata first, typical show runtime second, and the median known library runtime as a fallback. Label watch time as approximate and let runtime coverage improve through the normal metadata-refresh cycle rather than a bulk backfill.

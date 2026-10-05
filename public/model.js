@@ -140,6 +140,20 @@ function median(values) {
     : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
+export function topRatedShows(shows) {
+  return shows
+    .filter(inLibrary)
+    .filter((show) => Number.isFinite(show.rating))
+    .sort(
+      (a, b) =>
+        b.rating - a.rating ||
+        (b.lastWatchedAt || "").localeCompare(a.lastWatchedAt || "") ||
+        (b.addedAt || "").localeCompare(a.addedAt || "") ||
+        a.name.localeCompare(b.name),
+    )
+    .slice(0, 5);
+}
+
 export function libraryStats(shows, date = today()) {
   // Overview and ratings include tracked shows; Watchlist is counted separately.
   const tracked = shows.filter(inLibrary);
@@ -152,6 +166,9 @@ export function libraryStats(shows, date = today()) {
   const ratings = tracked
     .map((show) => show.rating)
     .filter((rating) => Number.isFinite(rating));
+  const averageRating = ratings.length
+    ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+    : null;
   const ratingBuckets = Array.from({ length: 10 }, (_, index) => {
     const rating = (index + 1) / 2;
     return { rating, count: ratings.filter((value) => value === rating).length };
@@ -212,21 +229,43 @@ export function libraryStats(shows, date = today()) {
   }
 
   // Rankings use deterministic alphabetical fallbacks for equal counts or ratings.
-  const genreCounts = new Map();
-  for (const show of tracked)
-    for (const genre of show.genres || [])
-      genreCounts.set(genre.name, (genreCounts.get(genre.name) || 0) + 1);
-  const topGenres = [...genreCounts.entries()]
-    .map(([name, count]) => ({ name, count }))
+  const genreStats = new Map();
+  for (const show of tracked) {
+    for (const genre of show.genres || []) {
+      const totals = genreStats.get(genre.name) || {
+        count: 0,
+        ratingTotal: 0,
+        ratedShows: 0,
+      };
+      totals.count += 1;
+      if (Number.isFinite(show.rating)) {
+        totals.ratingTotal += show.rating;
+        totals.ratedShows += 1;
+      }
+      genreStats.set(genre.name, totals);
+    }
+  }
+  const topGenres = [...genreStats.entries()]
+    .map(([name, totals]) => ({ name, count: totals.count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, 5);
-  const topRated = tracked
-    .filter((show) => Number.isFinite(show.rating))
+  // Three ratings at the library average temper genres backed by small samples.
+  const genreRatingPriorWeight = 3;
+  const topGenresByRating = [...genreStats.entries()]
+    .filter(([, totals]) => totals.ratedShows)
+    .map(([name, totals]) => ({
+      name,
+      averageRating: totals.ratingTotal / totals.ratedShows,
+      weightedRating:
+        (totals.ratingTotal + genreRatingPriorWeight * averageRating) /
+        (totals.ratedShows + genreRatingPriorWeight),
+      ratedShows: totals.ratedShows,
+    }))
     .sort(
       (a, b) =>
-        b.rating - a.rating ||
-        (b.lastWatchedAt || "").localeCompare(a.lastWatchedAt || "") ||
-        (b.addedAt || "").localeCompare(a.addedAt || "") ||
+        b.weightedRating - a.weightedRating ||
+        b.ratedShows - a.ratedShows ||
+        b.averageRating - a.averageRating ||
         a.name.localeCompare(b.name),
     )
     .slice(0, 5);
@@ -239,9 +278,7 @@ export function libraryStats(shows, date = today()) {
     runtimeEstimatedEpisodes,
     statusCounts,
     watchlistShows: shows.filter(inWatchlist).length,
-    averageRating: ratings.length
-      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-      : null,
+    averageRating,
     ratedShows: ratings.length,
     unratedShows: tracked.length - ratings.length,
     ratingBuckets,
@@ -251,6 +288,7 @@ export function libraryStats(shows, date = today()) {
       ? (watchedRegularEpisodes / airedRegularEpisodes) * 100
       : 0,
     topGenres,
-    topRated,
+    topGenresByRating,
+    topRated: topRatedShows(tracked),
   };
 }
