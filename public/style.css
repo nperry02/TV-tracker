@@ -2101,7 +2101,7 @@ main {
 .danger-button { color: #f2a39b; }
 .list-back {
   display: inline-block;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
@@ -2111,23 +2111,21 @@ main {
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  padding-bottom: 22px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
-.list-detail-header h1 { margin: 5px 0 8px; }
+.list-detail-header h1 { margin: 3px 0 4px; }
 .list-detail-header p {
   max-width: 720px;
-  margin: 0 0 9px;
+  margin: 0;
   color: var(--muted);
   line-height: 1.6;
   white-space: pre-line;
 }
-.list-detail-header small,
-.list-type { color: #89968c; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 .list-detail-actions { display: flex; gap: 9px; }
 .list-detail-sort { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
 .list-detail-sort .custom-select-trigger { height: 36px; padding: 0 11px; text-transform: none; }
-.list-collection-controls { margin: 18px 0; }
+.list-collection-controls { margin: 12px 0; }
 .list-collection-controls .list-detail-sort,
 .list-collection-controls .list-detail-sort .custom-select { width: 175px; }
 .list-result-count { margin-bottom: 16px; }
