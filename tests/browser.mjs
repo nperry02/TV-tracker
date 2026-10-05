@@ -623,6 +623,11 @@ try {
     await page.locator("#stats-view").waitFor();
     assert.equal(new URL(page.url()).hash, "#stats");
     assert.equal(await page.locator(".stats-overview article").count(), 5);
+    const ratedShowsSummary = await page
+      .locator(".stats-overview article", { hasText: "Rated shows" })
+      .locator("strong")
+      .textContent();
+    assert.equal(ratedShowsSummary.replace(/\s+/g, " ").trim(), "6 / 6");
     assert.equal(await page.locator(".rating-chart g").count(), 10);
     await page.getByText("6 rated · 0 unrated", { exact: true }).waitFor();
     await page.locator(".runtime-info").hover();
