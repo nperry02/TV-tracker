@@ -1883,7 +1883,7 @@ main {
 }
 #home-view {
   display: grid;
-  gap: 24px;
+  gap: 18px;
 }
 #home-view .page-heading,
 #home-view #continue-section,
@@ -1893,7 +1893,7 @@ main {
 }
 .library-header,
 .stats-header {
-  margin-bottom: 30px;
+  margin-bottom: 18px;
 }
 .page-heading {
   display: grid;
@@ -2463,11 +2463,8 @@ h1 {
   max-width: 1380px;
   margin: 0 auto;
 }
-.stats-header {
-  margin-bottom: 28px;
-}
 .stats-header h1 {
-  margin: 4px 0 5px;
+  margin: 4px 0 8px;
 }
 .stats-overview {
   display: grid;
