@@ -107,13 +107,35 @@ try {
     await page.locator(".top-pages [data-page]").evaluateAll((links) =>
       links.map((link) => link.dataset.page),
     ),
-    ["home", "library", "stats"],
+    ["home", "library", "lists", "stats"],
   );
   assert.equal(await page.locator(".sidebar").count(), 0);
   assert.equal(await page.locator("#home-view").isVisible(), true);
   assert.equal(await page.locator("#library-view").isVisible(), false);
+  assert.equal(await page.locator("#lists-view").isVisible(), false);
   assert.equal(await page.locator("#stats-view").isVisible(), false);
   assert.equal(await page.locator("#help-view").isVisible(), false);
+  await page.getByRole("link", { name: "Lists", exact: true }).click();
+  assert.equal(new URL(page.url()).hash, "#lists");
+  await page.getByText("Make your first list.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Create a list", exact: true }).click();
+  await page.locator("#list-name").fill("Weekend favorites");
+  await page.locator("#list-description").fill("Shows worth revisiting.");
+  await page.locator("#list-ordered").check();
+  assert.equal(await page.locator("#list-sort-field").isVisible(), false);
+  await page.getByRole("button", { name: "Create list", exact: true }).click();
+  await page.getByText("Weekend favorites", { exact: true }).waitFor();
+  assert.equal(await page.locator(".list-card").count(), 1);
+  assert.match(await page.locator(".list-card-meta").textContent(), /0 shows.*Ordered/s);
+  await page.getByRole("button", { name: "Edit Weekend favorites" }).click();
+  await page.locator("#list-name").fill("Weekend watchlist");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByText("Weekend watchlist", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Edit Weekend watchlist" }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Delete list", exact: true }).click();
+  await page.getByText("Make your first list.", { exact: true }).waitFor();
+  await page.getByRole("link", { name: "Home", exact: true }).click();
   await page.getByRole("link", { name: "Stats", exact: true }).click();
   assert.equal(new URL(page.url()).hash, "#stats");
   await page.locator("#stats-view").waitFor();
@@ -732,7 +754,7 @@ try {
     .click();
   const navDrawer = page.locator("#nav-drawer");
   await navDrawer.waitFor();
-  assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 3);
+  assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 4);
   assert.equal(
     await navDrawer.getByRole("button", { name: "Add a show", exact: true }).count(),
     1,

@@ -19,6 +19,7 @@ import { createSearchDialog } from "./views/search-dialog.js";
 import { renderHome } from "./views/home.js";
 import { renderHelp } from "./views/help.js";
 import { renderLibrary } from "./views/library.js";
+import { renderListDialog, renderLists } from "./views/lists.js";
 import {
   initialShowSeason,
   renderShowDialog,
@@ -26,6 +27,7 @@ import {
 
 // Shared application and dialog state
 let shows = [],
+  lists = [],
   selectedId = null,
   selectedSeason = null,
   mutationPending = false;
@@ -78,11 +80,13 @@ let viewMode = (() => {
 // Hash routing and top-level rendering
 function applyRoute({ scroll = false } = {}) {
   const requestedRoute = location.hash.slice(1);
-  const route = ["library", "stats", "help"].includes(requestedRoute)
-    ? requestedRoute
+  const routeName = requestedRoute.split("/")[0];
+  const route = ["library", "lists", "stats", "help"].includes(routeName)
+    ? routeName
     : "home";
   $("#home-view").hidden = route !== "home";
   $("#library-view").hidden = route !== "library";
+  $("#lists-view").hidden = route !== "lists";
   $("#stats-view").hidden = route !== "stats";
   $("#help-view").hidden = route !== "help";
   document.querySelectorAll("[data-page]").forEach((link) =>
@@ -97,6 +101,7 @@ function render() {
   });
   renderHome(shows, mutationPending);
   renderLibrary(shows, libraryFilters, viewMode);
+  renderLists(lists, shows);
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
@@ -284,6 +289,40 @@ document.addEventListener("click", async (event) => {
   }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.id === "create-list" || button.dataset.createList !== undefined) {
+    renderListDialog();
+    enhanceSelects($("#list-dialog"));
+    return $("#list-dialog").showModal();
+  }
+  if (button.dataset.editList) {
+    const list = lists.find((entry) => entry.id === button.dataset.editList);
+    if (!list) return;
+    renderListDialog(list);
+    enhanceSelects($("#list-dialog"));
+    return $("#list-dialog").showModal();
+  }
+  if (button.dataset.openList) {
+    history.pushState(null, "", `#lists/${button.dataset.openList}`);
+    toast("List details are coming in the next milestone.");
+    return;
+  }
+  if (button.id === "delete-list") {
+    const id = $("#list-id").value;
+    const list = lists.find((entry) => entry.id === id);
+    if (!list || !confirm(`Delete ${list.name}? Its shows will stay in your library.`)) return;
+    button.disabled = true;
+    try {
+      await api(`/api/lists/${encodeURIComponent(id)}`, { method: "DELETE" });
+      lists = lists.filter((entry) => entry.id !== id);
+      $("#list-dialog").close();
+      render();
+      toast("List deleted. Your shows were not changed.");
+    } catch (error) {
+      report(error);
+      button.disabled = false;
+    }
+    return;
+  }
   if (button.dataset.clearRating === "show-rating")
     return save({ rating: null }, "Show rating cleared.");
   if (button.dataset.clearRating === "season-rating")
@@ -392,6 +431,7 @@ document.addEventListener("click", async (event) => {
 // Native control changes update filters or persist show-level fields.
 document.addEventListener("change", (event) => {
   const el = event.target;
+  if (el.id === "list-ordered") $("#list-sort-field").hidden = el.checked;
   if (["rating-filter", "sort"].includes(el.id)) render();
   if (el.id === "season-select") {
     selectedSeason = Number(el.value);
@@ -421,6 +461,35 @@ document.addEventListener("change", (event) => {
         watched: el.checked,
       },
     });
+});
+// List metadata saves independently from membership, which is added next.
+$("#list-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const id = $("#list-id").value;
+  const submit = $("#list-dialog-submit");
+  const payload = {
+    name: $("#list-name").value,
+    description: $("#list-description").value,
+    ordered: $("#list-ordered").checked,
+    sort: $("#list-sort").value,
+  };
+  submit.disabled = true;
+  try {
+    const saved = await api(id ? `/api/lists/${encodeURIComponent(id)}` : "/api/lists", {
+      method: id ? "PATCH" : "POST",
+      body: payload,
+    });
+    lists = id
+      ? lists.map((list) => (list.id === id ? saved : list))
+      : [...lists, saved];
+    $("#list-dialog").close();
+    render();
+    toast(id ? "List changes saved." : "List created.");
+  } catch (error) {
+    report(error);
+  } finally {
+    submit.disabled = false;
+  }
 });
 $("#library-query").addEventListener("input", render);
 
@@ -483,7 +552,7 @@ renderHelp($("#help-view"));
 // Startup renders saved data first, then refreshes a bounded stale-metadata queue.
 async function boot() {
   try {
-    ({ shows } = await api("/api/library"));
+    ({ shows, lists } = await api("/api/library"));
     render();
     applyRoute({ scroll: true });
     // Refresh failures stop the batch while leaving saved progress and ratings usable.
