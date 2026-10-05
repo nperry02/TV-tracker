@@ -11,6 +11,7 @@ import {
   topRatedShows,
   metadataRefreshInterval,
   metadataRefreshQueue,
+  listEntries,
 } from "../public/model.js";
 
 const episode = (season, number, date = "2026-01-01") => ({
@@ -308,6 +309,30 @@ test("top-rated shows use progress recency to break equal ratings", () => {
     show({ id: 3, name: "Watchlist", tracked: false, watchlist: true, rating: 5 }),
   ]);
   assert.deepEqual(ranked.map((entry) => entry.name), ["Newer", "Older"]);
+});
+
+test("list entries preserve ranks and sort missing values last", () => {
+  const shows = [
+    { id: 1, name: "Beta", first_air_date: "2020-01-01", rating: 4 },
+    { id: 2, name: "Alpha", first_air_date: "2022-01-01", rating: null },
+    { id: 3, name: "Gamma", first_air_date: null, rating: 5 },
+  ];
+  const list = {
+    ordered: true,
+    sort: "title-asc",
+    entries: [
+      { showId: 3, addedAt: "2026-03-01T00:00:00.000Z" },
+      { showId: 1, addedAt: "2026-01-01T00:00:00.000Z" },
+      { showId: 2, addedAt: "2026-02-01T00:00:00.000Z" },
+    ],
+  };
+  const ids = (value) => listEntries(value, shows).map(({ show }) => show.id);
+  assert.deepEqual(ids(list), [3, 1, 2]);
+  assert.deepEqual(ids({ ...list, ordered: false }), [2, 1, 3]);
+  assert.deepEqual(ids({ ...list, ordered: false, sort: "added-oldest" }), [1, 2, 3]);
+  assert.deepEqual(ids({ ...list, ordered: false, sort: "release-newest" }), [2, 1, 3]);
+  assert.deepEqual(ids({ ...list, ordered: false, sort: "rating-high" }), [3, 1, 2]);
+  assert.deepEqual(ids({ ...list, ordered: false, sort: "rating-low" }), [1, 3, 2]);
 });
 
 test("metadata refreshes active shows most often and limits startup work", () => {
