@@ -297,6 +297,10 @@
         <label class="list-form-field"><span>Name</span><input id="list-name" name="name" maxlength="80" required autocomplete="off" /></label>
         <label class="list-form-field"><span>Description <small>Optional</small></span><textarea id="list-description" name="description" maxlength="1000" rows="4"></textarea></label>
         <label class="list-ordered-toggle"><input id="list-ordered" name="ordered" type="checkbox" /><span><strong>Ranked list</strong><small>Give every show a rank that you can rearrange from the list page.</small></span></label>
+        <section id="list-edit-shows" class="list-edit-shows" aria-labelledby="list-edit-shows-title" hidden>
+          <div><strong id="list-edit-shows-title">Shows in this list</strong><small>Remove shows here, then save your changes.</small></div>
+          <div id="list-edit-show-options"></div>
+        </section>
         <div class="list-dialog-actions">
           <button id="delete-list" class="danger-button" type="button" hidden>Delete list</button>
           <span></span>

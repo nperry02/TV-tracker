@@ -321,12 +321,19 @@ document.addEventListener("click", async (event) => {
   if (button.dataset.editList) {
     const list = lists.find((entry) => entry.id === button.dataset.editList);
     if (!list) return;
-    renderListDialog(list);
+    renderListDialog(list, shows);
     enhanceSelects($("#list-dialog"));
     return $("#list-dialog").showModal();
   }
   if (button.dataset.openList) {
     location.hash = `lists/${encodeURIComponent(button.dataset.openList)}`;
+    return;
+  }
+  if (button.dataset.removeEditListShow) {
+    button.closest("[data-edit-list-show]")?.remove();
+    if (!$("#list-edit-show-options").querySelector("[data-edit-list-show]"))
+      $("#list-edit-show-options").innerHTML =
+        '<p class="muted">All shows will be removed when you save.</p>';
     return;
   }
   if (button.dataset.listView) {
@@ -576,10 +583,21 @@ $("#list-form").addEventListener("submit", async (event) => {
   };
   submit.disabled = true;
   try {
-    const saved = await api(id ? `/api/lists/${encodeURIComponent(id)}` : "/api/lists", {
+    let saved = await api(id ? `/api/lists/${encodeURIComponent(id)}` : "/api/lists", {
       method: id ? "PATCH" : "POST",
       body: payload,
     });
+    if (id) {
+      const showIds = [
+        ...$("#list-edit-show-options").querySelectorAll(
+          'input[name="existingShowId"]',
+        ),
+      ].map((input) => Number(input.value));
+      saved = await api(`/api/lists/${encodeURIComponent(id)}/items`, {
+        method: "PUT",
+        body: { showIds },
+      });
+    }
     lists = id
       ? lists.map((list) => (list.id === id ? saved : list))
       : [...lists, saved];

@@ -81,7 +81,7 @@ export function renderShowListOptions(show, lists) {
     : '<p class="muted">You have not created any lists yet.</p>';
 }
 
-export function renderListDialog(list = null) {
+export function renderListDialog(list = null, shows = []) {
   const editing = Boolean(list);
   $("#list-dialog-title").textContent = editing ? "Edit list" : "Create a list";
   $("#list-dialog-submit").textContent = editing ? "Save changes" : "Create list";
@@ -91,4 +91,18 @@ export function renderListDialog(list = null) {
   $("#list-description").value = list?.description || "";
   $("#list-ordered").checked = list?.ordered || false;
   $("#list-ordered").dataset.original = String(list?.ordered || false);
+  $("#list-edit-shows").hidden = !editing;
+  if (editing) {
+    const showsById = new Map(shows.map((show) => [show.id, show]));
+    $("#list-edit-show-options").innerHTML = list.entries.length
+      ? list.entries
+          .map((entry) => showsById.get(entry.showId))
+          .filter(Boolean)
+          .map(
+            (show) =>
+              `<div class="list-edit-show" data-edit-list-show="${show.id}">${poster(show, "list-member-poster", "w92")}<span><strong>${esc(show.name)}</strong><small>${year(show)}</small></span><input type="hidden" name="existingShowId" value="${show.id}"><button type="button" data-remove-edit-list-show="${show.id}" aria-label="Remove ${esc(show.name)} from list">Remove</button></div>`,
+          )
+          .join("")
+      : '<p class="muted">This list has no shows yet.</p>';
+  }
 }

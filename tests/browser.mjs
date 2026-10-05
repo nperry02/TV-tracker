@@ -177,9 +177,9 @@ try {
   assert.equal(await page.locator(".list-shows-rows").count(), 1);
   await page.reload();
   assert.equal(await page.locator(".list-shows-rows").count(), 1);
-  await page.getByRole("button", { name: /Add shows/ }).first().click();
-  await page.locator('#list-members-options input[value="1396"]').uncheck();
-  await page.getByRole("button", { name: "Save shows", exact: true }).click();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("button", { name: "Remove Breaking Bad from list" }).click();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await page.getByText("No shows in this list yet.", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Add shows", exact: true }).first().click();
   await page.locator('#list-members-options input[value="1396"]').check();
