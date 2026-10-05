@@ -38,6 +38,7 @@ let shows = [],
   mutationPending = false,
   pendingListShowId = null,
   listMemberSelection = new Set();
+const listFilters = new Map();
 
 function selectedListId() {
   return location.hash.startsWith("#lists/")
@@ -52,6 +53,17 @@ function listViewMode(id) {
   } catch {
     return "gallery";
   }
+}
+function filtersForList(id) {
+  if (!listFilters.has(id))
+    listFilters.set(id, {
+      query: "",
+      statuses: new Set(),
+      watchlist: false,
+      genres: new Set(),
+      rating: "",
+    });
+  return listFilters.get(id);
 }
 
 // Library selections survive page navigation and reloads within the current tab.
@@ -116,7 +128,14 @@ function applyRoute({ scroll = false } = {}) {
   );
   if (route === "stats") renderStats(shows, $("#stats-content"));
   if (route === "lists")
-    renderLists(lists, shows, selectedListId(), listViewMode(selectedListId()));
+    renderLists(
+      lists,
+      shows,
+      selectedListId(),
+      listViewMode(selectedListId()),
+      filtersForList(selectedListId()),
+    );
+  if (route === "lists") enhanceSelects($("#lists-view"));
   if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
 function render() {
@@ -125,7 +144,13 @@ function render() {
   });
   renderHome(shows, mutationPending);
   renderLibrary(shows, libraryFilters, viewMode);
-  renderLists(lists, shows, selectedListId(), listViewMode(selectedListId()));
+  renderLists(
+    lists,
+    shows,
+    selectedListId(),
+    listViewMode(selectedListId()),
+    filtersForList(selectedListId()),
+  );
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
@@ -227,11 +252,9 @@ const searchDialog = createSearchDialog({
 // Delegated button actions cover content that renderers replace after each change.
 document.addEventListener("click", async (event) => {
   // Native details filters close when interaction moves elsewhere on the page.
-  for (const selector of ["#status-filter", "#genre-filter"])
-    if (!event.target.closest(selector)) {
-      const filter = $(selector);
-      if (filter) filter.open = false;
-    }
+  document.querySelectorAll(".library-controls .status-filter[open]").forEach((filter) => {
+    if (!filter.contains(event.target)) filter.open = false;
+  });
   const seasonOptions = $(".season-options");
   if (
     matchMedia("(max-width: 800px)").matches &&
@@ -340,6 +363,39 @@ document.addEventListener("click", async (event) => {
     try {
       localStorage.setItem(`next-episode:list-view:${button.dataset.listId}`, button.dataset.listView);
     } catch {}
+    render();
+    return;
+  }
+  if (button.dataset.clearListFilters !== undefined) {
+    listFilters.set(selectedListId(), {
+      query: "",
+      statuses: new Set(),
+      watchlist: false,
+      genres: new Set(),
+      rating: "",
+    });
+    render();
+    return;
+  }
+  if (button.dataset.listWatchlist !== undefined) {
+    const filters = filtersForList(selectedListId());
+    filters.watchlist = !filters.watchlist;
+    render();
+    return;
+  }
+  if (button.dataset.listStatus !== undefined) {
+    const selected = filtersForList(selectedListId()).statuses;
+    if (!button.dataset.listStatus) selected.clear();
+    else if (selected.has(button.dataset.listStatus)) selected.delete(button.dataset.listStatus);
+    else selected.add(button.dataset.listStatus);
+    render();
+    return;
+  }
+  if (button.dataset.listGenre !== undefined) {
+    const selected = filtersForList(selectedListId()).genres;
+    if (!button.dataset.listGenre) selected.clear();
+    else if (selected.has(button.dataset.listGenre)) selected.delete(button.dataset.listGenre);
+    else selected.add(button.dataset.listGenre);
     render();
     return;
   }
@@ -535,6 +591,10 @@ document.addEventListener("change", (event) => {
         el.disabled = false;
       });
   }
+  if (el.dataset.listFilter) {
+    filtersForList(selectedListId())[el.dataset.listFilter] = el.value;
+    render();
+  }
   if (["rating-filter", "sort"].includes(el.id)) render();
   if (el.id === "season-select") {
     selectedSeason = Number(el.value);
@@ -564,6 +624,18 @@ document.addEventListener("change", (event) => {
         watched: el.checked,
       },
     });
+});
+document.addEventListener("input", (event) => {
+  const input = event.target.closest("[data-list-query]");
+  if (!input) return;
+  filtersForList(input.dataset.listQuery).query = input.value;
+  const cursor = input.selectionStart;
+  render();
+  const replacement = document.querySelector(
+    `[data-list-query="${CSS.escape(input.dataset.listQuery)}"]`,
+  );
+  replacement?.focus();
+  replacement?.setSelectionRange(cursor, cursor);
 });
 // List metadata saves independently from membership, which is added next.
 $("#list-form").addEventListener("submit", async (event) => {
@@ -683,7 +755,6 @@ document.addEventListener("dragend", () => {
   draggedListShow = null;
 });
 $("#library-query").addEventListener("input", render);
-
 // Each transparent half-star target previews its value until the pointer leaves.
 document.addEventListener("pointerover", (event) => {
   const input = event.target.closest("[data-rating-kind]");
@@ -700,7 +771,7 @@ document.addEventListener("pointerout", (event) => {
 
 // Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
-  const openFilter = $("#status-filter[open], #genre-filter[open]");
+  const openFilter = $(".library-controls .status-filter[open]");
   const openSeasonOptions = matchMedia("(max-width: 800px)").matches
     ? $(".season-options[open]")
     : null;

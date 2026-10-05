@@ -1062,36 +1062,46 @@ try {
     await page.goto(`${base}/#lists/${createdList.id}`);
     await page.reload();
     await page.getByRole("heading", { name: "Ordering test", exact: true }).waitFor();
-    await page.getByRole("button", { name: "Move Breaking Bad down" }).click();
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
+    await page.locator("[data-list-query]").fill("Test series");
+    assert.equal(await page.locator(".list-show-card").count(), 1);
+    await page.locator("[data-list-query]").fill("");
+    assert.equal(await page.locator(".list-show-card").count(), 2);
+    await page.locator("[data-list-watchlist]").click();
     assert.deepEqual(
-      await page.locator(".list-show-open strong").allTextContents(),
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Test series 23"],
+    );
+    await page.locator("[data-list-watchlist]").click();
+    await page.getByRole("button", { name: "Move Breaking Bad down" }).click();
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Test series 23", "Breaking Bad"],
     );
     await page.locator('[data-list-show="1396"]').dragTo(page.locator('[data-list-show="200022"]'));
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
     assert.deepEqual(
-      await page.locator(".list-show-open strong").allTextContents(),
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Breaking Bad", "Test series 23"],
     );
     await page.locator("[data-list-sort]").selectOption("title-desc");
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
     assert.equal(await page.getByRole("button", { name: /Move .* (up|down)/ }).count(), 0);
     await page.locator("[data-list-sort]").selectOption("manual");
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
     await page.getByRole("button", { name: "Edit", exact: true }).click();
     await page.locator("#list-ordered").uncheck();
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
     await page.locator("#list-dialog").waitFor({ state: "hidden" });
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
     assert.deepEqual(
-      await page.locator(".list-show-open strong").allTextContents(),
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Breaking Bad", "Test series 23"],
     );
     await page.locator("[data-list-sort]").selectOption("title-desc");
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Test series 23");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
     assert.deepEqual(
-      await page.locator(".list-show-open strong").allTextContents(),
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Test series 23", "Breaking Bad"],
     );
     await page.getByRole("button", { name: "Edit", exact: true }).click();
@@ -1103,9 +1113,9 @@ try {
     const rankedList = await (await rankedSave).json();
     assert.equal(rankedList.ordered, true);
     assert.equal(rankedList.sort, "manual");
-    await page.waitForFunction(() => document.querySelector(".list-show-open strong")?.textContent === "Breaking Bad");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
     assert.deepEqual(
-      await page.locator(".list-show-open strong").allTextContents(),
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Breaking Bad", "Test series 23"],
     );
     await page.request.delete(`${base}/api/lists/${createdList.id}`);

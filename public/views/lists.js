@@ -1,5 +1,6 @@
-import { listEntries } from "../model.js";
-import { $, esc, poster, stars, year } from "../ui.js";
+import { inWatchlist, listEntries, statuses, watchStatus } from "../model.js";
+import { collectionControls, collectionGenreFilter, collectionStatusFilter, $, esc, poster, viewToggle, year } from "../ui.js";
+import { galleryShowCard, listShowRow } from "./library.js";
 
 export const listSortOptions = [
   ["added-oldest", "Added: oldest first"],
@@ -38,30 +39,62 @@ function listCard(list, shows) {
 function listShowCard({ show, index: rankIndex }, index, list, viewMode) {
   const rankingVisible = list.ordered && list.sort === "manual";
   const controls = rankingVisible
-    ? `<span class="list-rank-controls"><button type="button" data-move-list-show="up" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} up"${index === 0 ? " disabled" : ""}>↑</button><button type="button" data-move-list-show="down" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} down"${index === list.entries.length - 1 ? " disabled" : ""}>↓</button></span>`
+    ? `<span class="list-rank-controls"><button type="button" data-move-list-show="up" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} up"${rankIndex === 0 ? " disabled" : ""}>↑</button><button type="button" data-move-list-show="down" data-list-id="${esc(list.id)}" data-show-id="${show.id}" aria-label="Move ${esc(show.name)} down"${rankIndex === list.entries.length - 1 ? " disabled" : ""}>↓</button></span>`
     : "";
   return `<article class="list-show-card ${viewMode === "list" ? "list-show-row" : ""}" draggable="${rankingVisible}" data-list-show="${show.id}" data-list-id="${esc(list.id)}">
     ${list.ordered ? `<span class="list-rank">${rankIndex + 1}</span>` : ""}
-    <button type="button" class="list-show-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${poster(show, "list-show-poster", "w342")}<span><strong>${esc(show.name)}</strong><small>${year(show)}</small>${stars(show.rating)}</span></button>
+    ${viewMode === "list" ? listShowRow(show) : galleryShowCard(show)}
     ${controls}
   </article>`;
 }
 
-function renderDetail(list, shows, viewMode) {
-  const entries = listEntries(list, shows);
+function renderDetail(list, shows, viewMode, filters) {
+  const allEntries = listEntries(list, shows);
+  const statusMenuOpen = document.querySelector(".list-collection-controls .status-filter")?.open;
+  const genreMenuOpen = document.querySelector(".list-collection-controls .genre-filter")?.open;
+  const genres = [...new Map(allEntries.flatMap(({ show }) => show.genres).map((genre) => [String(genre.id), genre.name])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  const query = filters.query.toLowerCase();
+  const entries = allEntries.filter(({ show }) =>
+    show.name.toLowerCase().includes(query) &&
+    (!filters.statuses.size || filters.statuses.has(watchStatus(show))) &&
+    (!filters.watchlist || inWatchlist(show)) &&
+    (!filters.genres.size || [...filters.genres].every((id) => show.genres.some((genre) => String(genre.id) === id))) &&
+    (!filters.rating || (filters.rating === "unrated" ? !show.rating : show.rating >= Number(filters.rating))),
+  );
   const availableSorts = list.ordered ? [rankedSortOption, ...listSortOptions] : listSortOptions;
   const sortLabel = availableSorts.find(([value]) => value === list.sort)?.[1];
+  const statusCounts = Object.fromEntries(statuses.map((status) => [status, allEntries.filter(({ show }) => watchStatus(show) === status).length]));
+  const controls = collectionControls({
+    label: "List filters and sorting",
+    className: "list-collection-controls",
+    statusControl: collectionStatusFilter({
+      selected: filters.statuses,
+      options: statuses,
+      counts: { ...statusCounts, "": allEntries.length },
+      attribute: "data-list-status",
+      allLabel: "All shows",
+      open: statusMenuOpen,
+    }),
+    watchlistControl: `<button type="button" class="watchlist-filter${filters.watchlist ? " active" : ""}" data-list-watchlist aria-pressed="${filters.watchlist}"><span><i class="status-filter-dot watchlist" aria-hidden="true"></i>Watchlist</span><span class="count">${allEntries.filter(({ show }) => inWatchlist(show)).length}</span></button>`,
+    searchInput: `<label class="library-search"><span aria-hidden="true">⌕</span><input data-list-query="${esc(list.id)}" type="search" value="${esc(filters.query)}" placeholder="Search this list…" aria-label="Search this list"></label>`,
+    viewControl: viewToggle(viewMode, { kind: "list", id: list.id, label: "List view" }),
+    genreControl: `<div class="genre-filter-wrap">${collectionGenreFilter({ selected: filters.genres, genres, attribute: "data-list-genre", open: genreMenuOpen })}</div>`,
+    ratingControl: `<label class="rating-filter-control"><span class="sr-only">Rating</span><select data-list-filter="rating" aria-label="Filter list by rating"><option value="">All ratings</option><option value="unrated"${filters.rating === "unrated" ? " selected" : ""}>Unrated</option>${[4, 3, 2, 1].map((rating) => `<option value="${rating}"${filters.rating === String(rating) ? " selected" : ""}>${rating}+ stars</option>`).join("")}</select></label>`,
+    sortControl: `<label class="list-detail-sort sort-filter-control"><span class="sr-only">Display order</span><select data-list-sort="${esc(list.id)}" aria-label="Display order for ${esc(list.name)}">${availableSorts.map(([value, label]) => `<option value="${value}"${list.sort === value ? " selected" : ""}>${label}</option>`).join("")}</select></label>`,
+  });
   $("#list-detail").innerHTML = `<a class="list-back" href="#lists">← Back to Lists</a>
     <header class="list-detail-header"><div><span class="list-type">${list.ordered ? `Ranked · ${esc(sortLabel)}` : esc(sortLabel)}</span><h1>${esc(list.name)}</h1>${list.description ? `<p>${esc(list.description)}</p>` : ""}<small>${entries.length} ${entries.length === 1 ? "show" : "shows"}</small></div><div class="list-detail-actions"><button type="button" data-edit-list="${esc(list.id)}">Edit</button><button class="primary" type="button" data-add-list-shows="${esc(list.id)}">＋ Add shows</button></div></header>
-    <div class="list-detail-toolbar"><label class="list-detail-sort"><span>Display order</span><select data-list-sort="${esc(list.id)}" aria-label="Display order for ${esc(list.name)}">${availableSorts.map(([value, label]) => `<option value="${value}"${list.sort === value ? " selected" : ""}>${label}</option>`).join("")}</select></label><div class="view-toggle" role="group" aria-label="List view"><button type="button" data-list-view="gallery" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "gallery"}">Gallery</button><button type="button" data-list-view="list" data-list-id="${esc(list.id)}" aria-pressed="${viewMode === "list"}">List</button></div></div>
-    <div class="list-shows ${viewMode === "list" ? "list-shows-rows" : ""}">${entries.length ? entries.map((entry, index) => listShowCard(entry, index, list, viewMode)).join("") : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div>`;
+    ${controls}
+    <div class="library-results"><p class="result-count list-result-count">${entries.length} of ${allEntries.length} ${allEntries.length === 1 ? "show" : "shows"}</p>
+    <div class="list-shows ${viewMode === "list" ? "show-list list-shows-rows" : "poster-grid"}">${viewMode === "list" && entries.length ? '<div class="list-header" aria-hidden="true"><span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>' : ""}${entries.length ? entries.map((entry, index) => listShowCard(entry, index, list, viewMode)).join("") : allEntries.length ? '<div class="empty list-detail-empty"><h2>No shows match these filters.</h2><p>Try another search, status, genre, or rating.</p><button type="button" data-clear-list-filters>Clear filters</button></div>' : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div></div>`;
 }
 
-export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery") {
+export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery", filters = { query: "", statuses: new Set(), watchlist: false, genres: new Set(), rating: "" }) {
   const selected = lists.find((list) => list.id === selectedListId);
   $("#lists-overview").hidden = Boolean(selected);
   $("#list-detail").hidden = !selected;
-  if (selected) renderDetail(selected, shows, viewMode);
+  if (selected) renderDetail(selected, shows, viewMode, filters);
+  else $("#list-detail").replaceChildren();
   $("#lists-grid").innerHTML = lists.map((list) => listCard(list, shows)).join("");
   $("#lists-empty").hidden = lists.length > 0;
   $("#lists-grid").hidden = !lists.length;
