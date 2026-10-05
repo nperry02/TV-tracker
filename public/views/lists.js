@@ -32,7 +32,7 @@ function listCard(list, shows) {
         <span class="list-card-meta"><span>${entries.length} ${entries.length === 1 ? "show" : "shows"}</span><span>${list.ordered ? "Ranked" : "Unranked"}</span></span>
       </span>
     </button>
-    <button class="list-card-edit icon-button" type="button" data-edit-list="${esc(list.id)}" aria-label="Edit ${esc(list.name)}">•••</button>
+    <button class="list-card-edit" type="button" data-edit-list="${esc(list.id)}" aria-label="Edit ${esc(list.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path></svg></button>
   </article>`;
 }
 

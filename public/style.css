@@ -1998,8 +1998,19 @@ main {
   width: 34px;
   height: 30px;
   padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--muted);
-  letter-spacing: 1px;
+}
+.list-card-edit:hover { border: 0; background: transparent; color: var(--text); }
+.list-card-edit svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 .lists-empty { min-height: 390px; }
 .list-dialog {
