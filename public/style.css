@@ -1961,9 +1961,27 @@ main {
   font-size: 42px;
   place-items: center;
 }
+.list-card-rank-label,
+.list-card-count {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  padding: 5px 8px;
+  border: 1px solid #ffffff24;
+  border-radius: 999px;
+  background: #101713e8;
+  color: #d3ddd5;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.7px;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+.list-card-rank-label { left: 12px; }
+.list-card-count { right: 12px; }
 .list-card-copy {
   display: block;
-  padding: 17px 18px 18px;
+  padding: 14px 18px 10px;
 }
 .list-card-copy > strong {
   display: block;
@@ -1971,8 +1989,8 @@ main {
   font-size: 18px;
 }
 .list-card-copy > p {
-  min-height: 36px;
-  margin: 8px 0 14px;
+  min-height: 0;
+  margin: 6px 0 0;
   overflow: hidden;
   color: var(--muted);
   font-size: 12px;
@@ -1982,19 +2000,10 @@ main {
   -webkit-line-clamp: 2;
 }
 .list-card-description-empty { opacity: 0.62; }
-.list-card-meta {
-  display: flex;
-  justify-content: space-between;
-  color: #839187;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-}
 .list-card-edit {
   position: absolute;
-  right: 9px;
-  bottom: 53px;
+  top: 222px;
+  right: 14px;
   width: 34px;
   height: 30px;
   padding: 0;

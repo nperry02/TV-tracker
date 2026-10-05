@@ -125,7 +125,8 @@ try {
   await page.getByRole("button", { name: "Create list", exact: true }).click();
   await page.getByText("Weekend favorites", { exact: true }).waitFor();
   assert.equal(await page.locator(".list-card").count(), 1);
-  assert.match(await page.locator(".list-card-meta").textContent(), /0 shows.*Ranked/s);
+  assert.equal(await page.locator(".list-card-count").textContent(), "0 shows");
+  assert.equal(await page.locator(".list-card-rank-label").textContent(), "Ranked");
   await page.getByRole("button", { name: "Edit Weekend favorites" }).click();
   await page.locator("#list-name").fill("Weekend watchlist");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();

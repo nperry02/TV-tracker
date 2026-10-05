@@ -26,10 +26,11 @@ function listCard(list, shows) {
       <span class="list-preview list-preview-${preview.length || "empty"}">
         ${preview.length ? preview.map(({ show }) => poster(show, "list-preview-poster", "w342")).join("") : '<span class="list-preview-empty" aria-hidden="true">＋</span>'}
       </span>
+      ${list.ordered ? '<span class="list-card-rank-label">Ranked</span>' : ""}
+      <span class="list-card-count">${entries.length} ${entries.length === 1 ? "show" : "shows"}</span>
       <span class="list-card-copy">
         <strong>${esc(list.name)}</strong>
         ${description}
-        <span class="list-card-meta"><span>${entries.length} ${entries.length === 1 ? "show" : "shows"}</span><span>${list.ordered ? "Ranked" : "Unranked"}</span></span>
       </span>
     </button>
     <button class="list-card-edit" type="button" data-edit-list="${esc(list.id)}" aria-label="Edit ${esc(list.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path></svg></button>
