@@ -1136,6 +1136,14 @@ dialog::backdrop {
 .detail-controls #toggle-watchlist {
   margin-left: auto;
 }
+#manage-show-lists {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+#manage-show-lists svg {
+  flex-shrink: 0;
+}
 .detail-progress {
   display: flex;
   align-items: center;
