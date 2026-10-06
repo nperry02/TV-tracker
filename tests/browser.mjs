@@ -783,6 +783,18 @@ try {
     .click();
   const navDrawer = page.locator("#nav-drawer");
   await navDrawer.waitFor();
+  // A taller header must reduce body space without pushing it outside the drawer.
+  const drawerFits = await navDrawer.evaluate((dialog) => {
+    const header = dialog.querySelector(".nav-drawer-header");
+    const body = dialog.querySelector(".nav-drawer-body");
+    const originalHeight = body.getBoundingClientRect().height;
+    header.style.minHeight = "130px";
+    const fits = body.getBoundingClientRect().height < originalHeight &&
+      body.getBoundingClientRect().bottom <= dialog.getBoundingClientRect().bottom + 1;
+    header.style.removeProperty("min-height");
+    return fits;
+  });
+  assert.equal(drawerFits, true, "Drawer body adapts to header height");
   assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 4);
   assert.equal(
     await navDrawer.getByRole("button", { name: "Add a show", exact: true }).count(),
@@ -858,6 +870,20 @@ try {
     path: "test-results/mobile-detail.png",
     fullPage: true,
   });
+  // Long metadata stays within a growing hero instead of overlapping its edges.
+  const heroFits = await page.locator(".detail-hero").evaluate((hero) => {
+    const overview = hero.querySelector(".overview");
+    const original = overview.textContent;
+    const originalHeight = hero.getBoundingClientRect().height;
+    overview.textContent = "A long show description with many details. ".repeat(80);
+    const content = hero.querySelector(".detail-hero-content").getBoundingClientRect();
+    const bounds = hero.getBoundingClientRect();
+    const fits = bounds.height > originalHeight && content.top >= bounds.top &&
+      content.bottom <= bounds.bottom;
+    overview.textContent = original;
+    return fits;
+  });
+  assert.equal(heroFits, true, "Show hero grows to contain long metadata");
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {

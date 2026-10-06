@@ -939,9 +939,12 @@ dialog::backdrop {
 /* Show details and episode controls */
 .detail-hero {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
   min-height: 430px;
   overflow: hidden;
-  padding: 32px;
+  padding: 56px 32px 28px;
   background: #253328;
 }
 .detail-hero-main {
@@ -963,18 +966,15 @@ dialog::backdrop {
 .detail-hero > *:not(.detail-backdrop) {
   position: relative;
 }
-.detail-hero > .detail-hero-content {
-  position: absolute;
-  right: 32px;
-  bottom: 28px;
-  left: 32px;
-}
+/* Keep content in flow so long titles and overviews expand the hero. */
+.detail-hero-content { min-width: 0; }
 .detail-hero > .icon-button {
   position: absolute;
   right: 16px;
   top: 16px;
 }
 .detail-poster {
+  flex-shrink: 0;
   width: 130px;
   aspect-ratio: 2/3;
   object-fit: cover;
@@ -983,11 +983,14 @@ dialog::backdrop {
 }
 .detail-heading {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .detail-heading h2 {
   font-size: 40px;
   letter-spacing: -1px;
-  margin: 13px 0 8px;
+  margin: 6px 0 4px;
+  line-height: 1.15;
   font-weight: 600;
 }
 .detail-heading p {
@@ -1608,11 +1611,6 @@ dialog::backdrop {
     min-height: 320px;
     padding: 45px 20px 25px;
   }
-  .detail-hero > .detail-hero-content {
-    right: 20px;
-    bottom: 25px;
-    left: 20px;
-  }
   .detail-hero-main {
     gap: 16px;
   }
@@ -1815,12 +1813,19 @@ body {
   background: #050906b8;
   backdrop-filter: blur(4px);
 }
+/* Only open dialogs participate in flex layout; the body uses remaining space. */
+.nav-drawer[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 .nav-drawer-header {
   display: flex;
-  height: 78px;
+  flex-shrink: 0;
+  min-height: 78px;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
 }
 .nav-drawer-header > span {
@@ -1836,7 +1841,8 @@ body {
   border-radius: 9px;
 }
 .nav-drawer-body {
-  height: calc(100dvh - 78px);
+  flex: 1;
+  min-height: 0;
   padding: 18px;
   overflow-y: auto;
 }
