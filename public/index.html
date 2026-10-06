@@ -149,11 +149,20 @@
         <header class="lists-header">
           <div>
             <p class="eyebrow">YOUR COLLECTIONS</p>
-            <div class="lists-title-row"><h1 id="lists-title">Lists</h1><button class="primary" id="create-list" type="button">＋ Create list</button></div>
+            <div class="lists-title-row"><h1 id="lists-title">Lists</h1></div>
             <p class="subtitle">Group favorites, plan a marathon, or rank the shows you love.</p>
           </div>
         </header>
+        <div class="lists-overview-controls">
+          <label class="library-search lists-search"><span aria-hidden="true">⌕</span><input id="lists-query" type="search" placeholder="Search list names and descriptions…" aria-label="Search lists" /></label>
+          <button class="primary" id="create-list" type="button">＋ Create list</button>
+        </div>
         <div id="lists-grid" class="lists-grid"></div>
+        <div id="lists-no-results" class="empty lists-empty" hidden>
+          <h2>No lists match your search.</h2>
+          <p>Try another name or description.</p>
+          <button id="clear-lists-search" type="button">Clear search</button>
+        </div>
         <div id="lists-empty" class="empty lists-empty">
           <span class="empty-icon" aria-hidden="true">☷</span>
           <h2>Make your first list.</h2>

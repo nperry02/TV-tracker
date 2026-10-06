@@ -127,6 +127,20 @@ try {
   assert.equal(await page.locator(".list-card").count(), 1);
   assert.equal(await page.locator(".list-card-count").textContent(), "0 shows");
   assert.equal(await page.locator(".list-card-rank-label").textContent(), "Ranked");
+  // Overview search matches names and descriptions without losing input focus.
+  const listsSearch = page.getByRole("searchbox", { name: "Search lists", exact: true });
+  await listsSearch.fill("  WEEKEND  ");
+  assert.equal(await page.locator(".list-card").count(), 1);
+  await listsSearch.fill("revisiting");
+  assert.equal(await page.locator(".list-card").count(), 1);
+  await listsSearch.fill("no matching collection");
+  assert.equal(await page.locator(".list-card").count(), 0);
+  assert.equal(await page.locator("#lists-no-results").isVisible(), true);
+  assert.equal(await page.locator("#lists-empty").isVisible(), false);
+  await page.getByRole("button", { name: "Clear search", exact: true }).click();
+  assert.equal(await listsSearch.inputValue(), "");
+  assert.equal(await listsSearch.evaluate((input) => input === document.activeElement), true);
+  assert.equal(await page.locator(".list-card").count(), 1);
   await page.getByRole("button", { name: "Edit Weekend favorites" }).click();
   await page.locator("#list-name").fill("Weekend watchlist");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();

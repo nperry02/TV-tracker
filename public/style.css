@@ -1926,6 +1926,22 @@ main {
 .lists-header h1 {
   margin: 4px 0;
 }
+.lists-overview-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.lists-overview-controls > button {
+  flex-shrink: 0;
+}
+.lists-page .lists-search {
+  flex: 1;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  height: 40px;
+}
 .lists-title-row {
   display: flex;
   align-items: center;

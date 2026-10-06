@@ -88,15 +88,21 @@ function renderDetail(list, shows, viewMode, filters) {
     <div class="list-shows ${viewMode === "list" ? `show-list list-shows-rows${list.ordered ? " ranked-list-rows" : ""}` : "poster-grid"}">${viewMode === "list" && entries.length ? `<div class="list-header" aria-hidden="true">${list.ordered ? "<span>#</span>" : ""}<span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>` : ""}${entries.length ? entries.map((entry) => listShowCard(entry, list, viewMode)).join("") : allEntries.length ? '<div class="empty list-detail-empty"><h2>No shows match these filters.</h2><p>Try another search, status, genre, or rating.</p><button type="button" data-clear-list-filters>Clear filters</button></div>' : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div></div>`;
 }
 
-export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery", filters = { query: "", statuses: new Set(), watchlist: false, genres: new Set(), rating: "" }) {
+export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery", filters = { query: "", statuses: new Set(), watchlist: false, genres: new Set(), rating: "" }, overviewQuery = "") {
   const selected = lists.find((list) => list.id === selectedListId);
   $("#lists-overview").hidden = Boolean(selected);
   $("#list-detail").hidden = !selected;
   if (selected) renderDetail(selected, shows, viewMode, filters);
   else $("#list-detail").replaceChildren();
-  $("#lists-grid").innerHTML = lists.map((list) => listCard(list, shows)).join("");
+  // Overview search matches metadata without changing list contents or order.
+  const query = overviewQuery.trim().toLowerCase();
+  const matches = lists.filter((list) =>
+    list.name.toLowerCase().includes(query) || (list.description || "").toLowerCase().includes(query),
+  );
+  $("#lists-grid").innerHTML = matches.map((list) => listCard(list, shows)).join("");
   $("#lists-empty").hidden = lists.length > 0;
-  $("#lists-grid").hidden = !lists.length;
+  $("#lists-no-results").hidden = !lists.length || matches.length > 0;
+  $("#lists-grid").hidden = !matches.length;
 }
 
 export function renderMemberOptions(list, shows, query = "", selectedIds = null) {

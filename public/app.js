@@ -134,6 +134,7 @@ function applyRoute({ scroll = false } = {}) {
       selectedListId(),
       listViewMode(selectedListId()),
       filtersForList(selectedListId()),
+      $("#lists-query").value,
     );
   if (route === "lists") enhanceSelects($("#lists-view"));
   if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
@@ -150,6 +151,7 @@ function render() {
     selectedListId(),
     listViewMode(selectedListId()),
     filtersForList(selectedListId()),
+    $("#lists-query").value,
   );
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
@@ -734,6 +736,13 @@ function refreshEditRanks() {
   });
 }
 $("#library-query").addEventListener("input", render);
+// The static overview input retains its value and focus across renders/navigation.
+$("#lists-query").addEventListener("input", render);
+$("#clear-lists-search").addEventListener("click", () => {
+  $("#lists-query").value = "";
+  render();
+  $("#lists-query").focus();
+});
 // Each transparent half-star target previews its value until the pointer leaves.
 document.addEventListener("pointerover", (event) => {
   const input = event.target.closest("[data-rating-kind]");
