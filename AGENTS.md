@@ -33,6 +33,8 @@ Read PROJECT_BRIEF.md for the product scope and deferred features.
 - Keep pure, reusable domain calculations in `public/model.js` so they can be unit tested independently.
 - Follow the existing file organization and patterns. Prefer an existing file or UI pattern when it is the natural fit; create a focused file when separation materially improves clarity.
 - Reuse existing helpers, controls, and dialogs when practical. Extract shared logic when it prevents meaningful duplication or makes behavior easier to verify; avoid premature abstractions.
+- Treat repeated interface patterns as complete reusable components when practical: share their markup, icons, interaction behavior, layout structure, and styling so the same control looks and behaves consistently everywhere it appears.
+- For interface icons, first reuse an icon already serving the same purpose elsewhere in the site. If none exists, use the complete appropriate Lucide icon as provided rather than recreating part of it with text, CSS, or custom SVG; custom symbols are a last resort and should generally be avoided.
 - Do not add a paid service, dependency, API, or feature that costs money to implement or use. If requested work would create a cost, explain the cost and why it should not be implemented before making the change.
 - Stay within the requested scope while completing the supporting work needed to make the change functional and testable. Ask for clarification when a product decision cannot be inferred safely.
 - Do not create new Markdown or README files unless the user requests one or a workflow explicitly requires it. Update existing documentation when product behavior, commands, or repository workflow changes.

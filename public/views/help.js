@@ -7,7 +7,7 @@ export function renderHelp(container) {
         <h1 id="help-title">Keep your place.<br>Find what’s next.</h1>
         <p class="subtitle">
           Next Episode is your private TV library for tracking progress,
-          rating shows, and deciding what to watch next.
+          rating shows, making personal lists, and deciding what to watch next.
         </p>
       </div>
       <div class="help-hero-mark" aria-hidden="true">
@@ -39,7 +39,7 @@ export function renderHelp(container) {
           <b>03</b>
           <div>
             <h3>Make it yours</h3>
-            <p>Rate shows and seasons, combine library filters, and use Stats to see the shape of your viewing history.</p>
+            <p>Rate shows and seasons, collect saved shows in personal lists, and use Stats to see the shape of your viewing history.</p>
           </div>
         </li>
       </ol>
@@ -81,6 +81,13 @@ export function renderHelp(container) {
           <h3>Stats</h3>
           <p>Explore lifetime totals, ratings, statuses, your most watched and highest-rated genres, episode progress, and estimated watch time. Genre rankings weight small samples toward your overall average.</p>
         </article>
+        <article>
+          <i class="help-icon" aria-hidden="true">☷</i>
+          <h3>Personal lists</h3>
+          <p>Search the Lists overview by list name or description.</p>
+          <p>Collect shows already in My Shows or Watchlist. Search and filter each list using the familiar My Shows layouts. Edit ranked lists to change manual order with position fields; either list type can change its display order.</p>
+          <p>List covers follow display order: four or more shows use a 2 × 2 backdrop grid; smaller lists use the first show's backdrop. Missing backdrops fall back to posters.</p>
+        </article>
       </div>
     </section>
 
@@ -88,8 +95,8 @@ export function renderHelp(container) {
       <article>
         <p class="eyebrow">PRIVATE BY DESIGN</p>
         <h2>Your library stays on this computer.</h2>
-        <p>Ratings, progress, and cached show information are stored in <code>data/library.json</code>. Next Episode has no account or cloud sync.</p>
-        <p>Use <a href="/api/export" download>Back up library ↗</a> to download a copy of your data.</p>
+        <p>Ratings, progress, lists, and cached show information are stored in <code>data/library.json</code>. List gallery/row preferences stay in this browser. Next Episode has no account or cloud sync.</p>
+        <p>Use <a href="/api/export" download>Back up library ↗</a> to download your shows, lists, membership, and manual list order. A show must be removed from its lists before it can be deleted completely.</p>
       </article>
       <article>
         <p class="eyebrow">FRESH SHOW INFORMATION</p>

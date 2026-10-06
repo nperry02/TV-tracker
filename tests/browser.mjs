@@ -107,13 +107,69 @@ try {
     await page.locator(".top-pages [data-page]").evaluateAll((links) =>
       links.map((link) => link.dataset.page),
     ),
-    ["home", "library", "stats"],
+    ["home", "library", "lists", "stats"],
   );
   assert.equal(await page.locator(".sidebar").count(), 0);
   assert.equal(await page.locator("#home-view").isVisible(), true);
   assert.equal(await page.locator("#library-view").isVisible(), false);
+  assert.equal(await page.locator("#lists-view").isVisible(), false);
   assert.equal(await page.locator("#stats-view").isVisible(), false);
   assert.equal(await page.locator("#help-view").isVisible(), false);
+  await page.getByRole("link", { name: "Lists", exact: true }).click();
+  assert.equal(new URL(page.url()).hash, "#lists");
+  await page.getByText("Make your first list.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Create a list", exact: true }).click();
+  await page.locator("#list-name").fill("Weekend favorites");
+  await page.locator("#list-description").fill("Shows worth revisiting.");
+  await page.locator("#list-ordered").check();
+  await page.getByRole("button", { name: "Create list", exact: true }).click();
+  await page.getByText("Weekend favorites", { exact: true }).waitFor();
+  assert.equal(await page.locator(".list-card").count(), 1);
+  assert.equal(await page.locator(".list-card-count").textContent(), "0 shows");
+  assert.equal(await page.locator(".list-card-rank-label").textContent(), "Ranked");
+  // Overview search matches names and descriptions without losing input focus.
+  const listsSearch = page.getByRole("searchbox", { name: "Search lists", exact: true });
+  await listsSearch.fill("  WEEKEND  ");
+  assert.equal(await page.locator(".list-card").count(), 1);
+  await listsSearch.fill("revisiting");
+  assert.equal(await page.locator(".list-card").count(), 1);
+  await listsSearch.fill("no matching collection");
+  assert.equal(await page.locator(".list-card").count(), 0);
+  assert.equal(await page.locator("#lists-no-results").isVisible(), true);
+  assert.equal(await page.locator("#lists-empty").isVisible(), false);
+  await page.getByRole("button", { name: "Clear search", exact: true }).click();
+  assert.equal(await listsSearch.inputValue(), "");
+  assert.equal(await listsSearch.evaluate((input) => input === document.activeElement), true);
+  assert.equal(await page.locator(".list-card").count(), 1);
+  await page.getByRole("button", { name: "Edit Weekend favorites" }).click();
+  // Tall editor content scrolls independently while every action stays visible.
+  const editorActionsFit = await page.locator("#list-dialog").evaluate((dialog) => {
+    const body = dialog.querySelector(".list-editor-body");
+    const spacer = document.createElement("div");
+    spacer.style.height = "1200px";
+    body.append(spacer);
+    const actions = dialog.querySelector(".list-dialog-actions");
+    const before = actions.getBoundingClientRect();
+    body.scrollTop = body.scrollHeight;
+    const after = actions.getBoundingClientRect();
+    const bounds = dialog.getBoundingClientRect();
+    const fits = body.scrollTop > 0 && Math.abs(before.top - after.top) < 1 &&
+      after.bottom <= bounds.bottom && after.bottom <= innerHeight &&
+      Math.abs(body.getBoundingClientRect().bottom - after.top) < 1 &&
+      getComputedStyle(dialog.querySelector("#list-edit-show-options")).overflowY === "visible";
+    spacer.remove();
+    body.scrollTop = 0;
+    return fits;
+  });
+  assert.equal(editorActionsFit, true, "List editor actions stay visible while content scrolls");
+  await page.locator("#list-name").fill("Weekend watchlist");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByText("Weekend watchlist", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Edit Weekend watchlist" }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Delete list", exact: true }).click();
+  await page.getByText("Make your first list.", { exact: true }).waitFor();
+  await page.getByRole("link", { name: "Home", exact: true }).click();
   await page.getByRole("link", { name: "Stats", exact: true }).click();
   assert.equal(new URL(page.url()).hash, "#stats");
   await page.locator("#stats-view").waitFor();
@@ -138,7 +194,37 @@ try {
     await page.locator(".detail-hero .status-badge").first().textContent(),
     "Watching",
   );
+  // Show details can create a list and add the current saved show in one flow.
+  await page.getByRole("button", { name: /Manage lists/ }).click();
+  await page.getByRole("button", { name: /Create new list/ }).click();
+  await page.locator("#list-name").fill("Ranked favorites");
+  await page.locator("#list-description").fill("The best saved shows, in order.");
+  await page.locator("#list-ordered").check();
+  await page.getByRole("button", { name: "Create list", exact: true }).click();
+  await page.getByRole("button", { name: /Manage lists \(1\)/ }).waitFor();
   await page.getByRole("button", { name: "Close show", exact: true }).click();
+  await page.getByRole("link", { name: "Lists", exact: true }).click();
+  await page.getByRole("button", { name: "Open Ranked favorites" }).click();
+  await page.getByRole("heading", { name: "Ranked favorites", exact: true }).waitFor();
+  assert.equal(await page.locator('.list-show-card[data-list-show="1396"]').count(), 1);
+  assert.equal(await page.locator(".list-rank").textContent(), "1");
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  assert.equal(await page.locator(".list-shows-rows").count(), 1);
+  await page.reload();
+  assert.equal(await page.locator(".list-shows-rows").count(), 1);
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByRole("button", { name: "Remove Breaking Bad from list" }).click();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByText("No shows in this list yet.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Add shows", exact: true }).first().click();
+  await page.locator('#list-members-options input[value="1396"]').check();
+  await page.getByRole("button", { name: "Save shows", exact: true }).click();
+  await page.locator('.list-show-card[data-list-show="1396"]').waitFor();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  assert.equal(await page.getByRole("button", { name: "Delete list", exact: true }).isEnabled(), true);
+  await page.getByRole("button", { name: "Delete list", exact: true }).click();
+  await page.getByText("Make your first list.", { exact: true }).waitFor();
   await page.getByRole("link", { name: "My Shows", exact: true }).click();
   await page.locator("#library-view").waitFor();
   assert.equal(await page.locator("#home-view").isVisible(), false);
@@ -732,7 +818,19 @@ try {
     .click();
   const navDrawer = page.locator("#nav-drawer");
   await navDrawer.waitFor();
-  assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 3);
+  // A taller header must reduce body space without pushing it outside the drawer.
+  const drawerFits = await navDrawer.evaluate((dialog) => {
+    const header = dialog.querySelector(".nav-drawer-header");
+    const body = dialog.querySelector(".nav-drawer-body");
+    const originalHeight = body.getBoundingClientRect().height;
+    header.style.minHeight = "130px";
+    const fits = body.getBoundingClientRect().height < originalHeight &&
+      body.getBoundingClientRect().bottom <= dialog.getBoundingClientRect().bottom + 1;
+    header.style.removeProperty("min-height");
+    return fits;
+  });
+  assert.equal(drawerFits, true, "Drawer body adapts to header height");
+  assert.equal(await navDrawer.getByRole("navigation", { name: "Pages" }).getByRole("link").count(), 4);
   assert.equal(
     await navDrawer.getByRole("button", { name: "Add a show", exact: true }).count(),
     1,
@@ -807,6 +905,20 @@ try {
     path: "test-results/mobile-detail.png",
     fullPage: true,
   });
+  // Long metadata stays within a growing hero instead of overlapping its edges.
+  const heroFits = await page.locator(".detail-hero").evaluate((hero) => {
+    const overview = hero.querySelector(".overview");
+    const original = overview.textContent;
+    const originalHeight = hero.getBoundingClientRect().height;
+    overview.textContent = "A long show description with many details. ".repeat(80);
+    const content = hero.querySelector(".detail-hero-content").getBoundingClientRect();
+    const bounds = hero.getBoundingClientRect();
+    const fits = bounds.height > originalHeight && content.top >= bounds.top &&
+      content.bottom <= bounds.bottom;
+    overview.textContent = original;
+    return fits;
+  });
+  assert.equal(heroFits, true, "Show hero grows to contain long metadata");
   await page.getByRole("button", { name: "Close show", exact: true }).click();
   await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {
@@ -994,6 +1106,97 @@ try {
     await page.getByText("TMDB is unavailable", { exact: false }).waitFor();
   }
   await page.getByRole("button", { name: "Close search", exact: true }).click();
+  if (!live) {
+    // Manual ranks survive alternate unordered display sorts and support both controls.
+    const createdList = await (
+      await page.request.post(`${base}/api/lists`, {
+        data: {
+          name: "Ordering test",
+          description: "Two ways to arrange shows.",
+          ordered: true,
+          sort: "manual",
+        },
+      })
+    ).json();
+    await page.request.put(`${base}/api/lists/${createdList.id}/items`, {
+      data: { showIds: [1396, 200022] },
+    });
+    await page.goto(`${base}/#lists/${createdList.id}`);
+    await page.reload();
+    await page.getByRole("heading", { name: "Ordering test", exact: true }).waitFor();
+    await page.locator("[data-list-query]").fill("Test series");
+    assert.equal(await page.locator(".list-show-card").count(), 1);
+    await page.locator("[data-list-query]").fill("");
+    assert.equal(await page.locator(".list-show-card").count(), 2);
+    await page.locator("[data-list-watchlist]").click();
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Test series 23"],
+    );
+    await page.locator("[data-list-watchlist]").click();
+    // Ranked order is edited only through position fields in the list dialog.
+    assert.equal(await page.getByRole("button", { name: /Move .* (up|down)/ }).count(), 0);
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.getByRole("spinbutton", { name: "Rank for Breaking Bad" }).fill("2");
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Test series 23", "Breaking Bad"],
+    );
+    // Saving membership without changes must preserve the edited manual order.
+    await page.getByRole("button", { name: "＋ Add shows", exact: true }).click();
+    await page.getByRole("button", { name: "Save shows", exact: true }).click();
+    await page.locator("#list-members-dialog").waitFor({ state: "hidden" });
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Test series 23", "Breaking Bad"],
+    );
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.getByRole("spinbutton", { name: "Rank for Test series 23" }).fill("2");
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Breaking Bad", "Test series 23"],
+    );
+    await page.locator("[data-list-sort]").selectOption("title-desc");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
+    assert.equal(await page.getByRole("button", { name: /Move .* (up|down)/ }).count(), 0);
+    await page.locator("[data-list-sort]").selectOption("manual");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.locator("#list-ordered").uncheck();
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.locator("#list-dialog").waitFor({ state: "hidden" });
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Breaking Bad", "Test series 23"],
+    );
+    await page.locator("[data-list-sort]").selectOption("title-desc");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Test series 23", "Breaking Bad"],
+    );
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await page.locator("#list-ordered").check();
+    const rankedSave = page.waitForResponse(
+      (response) => response.url().endsWith(`/api/lists/${createdList.id}`) && response.request().method() === "PATCH",
+    );
+    await page.getByRole("button", { name: "Save changes", exact: true }).click();
+    const rankedList = await (await rankedSave).json();
+    assert.equal(rankedList.ordered, true);
+    assert.equal(rankedList.sort, "manual");
+    await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Breaking Bad");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Breaking Bad", "Test series 23"],
+    );
+    await page.request.delete(`${base}/api/lists/${createdList.id}`);
+    await page.goto(`${base}/#library`);
+  }
   // Help is a routed page, so the footer link participates in browser history.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page

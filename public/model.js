@@ -38,6 +38,66 @@ export function matchesGenres(show, selectedGenres) {
   );
 }
 
+// List presentation preserves manual ranks while unordered lists use saved sorts.
+export const listSorts = [
+  "manual",
+  "added-oldest",
+  "added-newest",
+  "title-asc",
+  "title-desc",
+  "release-newest",
+  "release-oldest",
+  "rating-high",
+  "rating-low",
+];
+export function listEntries(list, shows) {
+  const showsById = new Map(shows.map((show) => [show.id, show]));
+  const entries = list.entries
+    .map((entry, index) => ({ entry, index, show: showsById.get(entry.showId) }))
+    .filter(({ show }) => show);
+  if (list.ordered && list.sort === "manual") return entries;
+
+  const missingLast = (a, b, value, direction = 1) => {
+    const valueA = value(a.show);
+    const valueB = value(b.show);
+    if (valueA == null && valueB == null) return a.index - b.index;
+    if (valueA == null) return 1;
+    if (valueB == null) return -1;
+    return direction * (valueA < valueB ? -1 : valueA > valueB ? 1 : 0);
+  };
+  const comparators = {
+    manual: (a, b) => a.index - b.index,
+    "added-oldest": (a, b) =>
+      a.entry.addedAt.localeCompare(b.entry.addedAt) || a.index - b.index,
+    "added-newest": (a, b) =>
+      b.entry.addedAt.localeCompare(a.entry.addedAt) || a.index - b.index,
+    "title-asc": (a, b) =>
+      a.show.name.localeCompare(b.show.name) || a.index - b.index,
+    "title-desc": (a, b) =>
+      b.show.name.localeCompare(a.show.name) || a.index - b.index,
+    "release-newest": (a, b) =>
+      missingLast(a, b, (show) => show.first_air_date || null, -1) ||
+      a.index - b.index,
+    "release-oldest": (a, b) =>
+      missingLast(a, b, (show) => show.first_air_date || null) ||
+      a.index - b.index,
+    "rating-high": (a, b) =>
+      missingLast(
+        a,
+        b,
+        (show) => (Number.isFinite(show.rating) ? show.rating : null),
+        -1,
+      ) || a.index - b.index,
+    "rating-low": (a, b) =>
+      missingLast(
+        a,
+        b,
+        (show) => (Number.isFinite(show.rating) ? show.rating : null),
+      ) || a.index - b.index,
+  };
+  return entries.sort(comparators[list.sort] || comparators["added-oldest"]);
+}
+
 // Episode ordering, availability, and progress
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 export function today() {

@@ -44,7 +44,7 @@ running it. Stop it with Ctrl+C.
 
 ## Current features
 
-- Use the header to move between distinct Home, My Shows, and Stats views or open the Add a show dialog. A navigation drawer keeps those actions available in narrow web-browser windows.
+- Use the header to move between distinct Home, My Shows, Lists, and Stats views or open the Add a show dialog. A navigation drawer keeps those actions available in narrow web-browser windows.
 - Home shows library summary cards and up to three backdrop-based Continue Watching cards. My Shows contains the collection, filters, sorting, and gallery/list controls.
 - Open Help & about from the footer for an in-app guide to progress, statuses, filtering, refreshes, local data, backups, and show-data credits.
 - Open Stats from the header for lifetime totals, a half-star rating histogram, status and progress breakdowns, top genres, and clickable top-rated shows.
@@ -54,12 +54,14 @@ running it. Stop it with Ctrl+C.
 - Combine title search, personal rating, and one or more genre filters. A show must match every selected genre. Filter selections remain available while navigating or reloading the current browser tab.
 - Sort by last updated, release date, recently added, personal rating, or title. “Last updated” is the default and uses the most recent newly watched progress, with shows lacking a timestamp afterward. Unknown premiere dates appear last for release sorting.
 - Switch between the default poster gallery and a compact list showing each show's name, premiere date, watch status, rating, progress, and last watched update. The browser remembers the selected view.
+- Create private ranked or unranked lists from shows already saved in My Shows or Watchlist. New unranked lists begin in added order. Change either kind of list's display order from its detail page; edit ranked lists to rearrange their durable manual ranks with position fields.
+- Add or remove shows from a list page or use Manage lists in show details. Search and filter a list by status, genre, or rating, and use the same gallery cards and compact rows as My Shows. Each list remembers its own gallery/list layout in the current browser, while list names, descriptions, membership, and manual order live in the library file.
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
 - Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.
 - “Pick up where you left off” shows up to three Watching shows with remaining episodes, ordered by the most recently added watched progress. Correcting/removing progress does not move a show to the front.
 - Correct progress by unchecking episodes or clearing a season.
-- Remove an accidentally added show from All Shows. This clears its viewing status, ratings, and progress; a separate Watchlist flag is preserved. Unflagged shows are removed entirely and can be added again from search.
+- Remove an accidentally added show from All Shows. This clears its viewing status, ratings, and progress; a separate Watchlist flag is preserved. A show referenced by a list must be removed from those named lists before it can be deleted completely.
 - Automatic status distinguishes ongoing shows from ended/canceled shows. Paused is a manual status for shows you may resume; adding newly watched progress returns it to Watching automatically. Dropped remains set until changed manually.
 - Specials are optional and do not affect completion. Future episodes and episodes with unknown air dates are not marked watched in bulk.
 - Show information refreshes when opening the app according to viewing status: daily for Watching and Caught Up, weekly for Paused and Watchlist-only shows, and every 30 days for Completed and Dropped. Each startup refreshes at most five stale shows, with active shows first. A manual refresh remains available in show details, and saved library data remains usable when TMDB is offline.
@@ -69,9 +71,9 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Storage and backups
 
-Personal data and cached metadata live in `data/library.json`, not in browser storage. Writes use a temporary file and atomic replacement. The data directory and credentials are excluded from Git. Use one running server for a given library file.
+Personal data, lists, and cached metadata live in `data/library.json`. Writes use a temporary file and atomic replacement. The data directory and credentials are excluded from Git. Use one running server for a given library file. Browser storage holds presentation preferences such as the My Shows layout and each list's gallery/list choice.
 
-To restore a downloaded backup, stop the server, preserve your existing file, and copy the backup to `data/library.json`. Then restart. There is no cloud sync or account system.
+Downloaded backups include lists, membership, and manual order. To restore one, stop the server, preserve your existing file, and copy the backup to `data/library.json`. Then restart. There is no cloud sync or account system.
 
 ## Development and verification
 

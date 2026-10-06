@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-09-27
+Last updated: 2026-10-05
 
 ## Purpose and scope
 
@@ -63,7 +63,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Your Shows
 
-- Present the library as a responsive dashboard with Home, My Shows, and Stats navigation in the header.
+- Present the library as a responsive dashboard with Home, My Shows, Lists, and Stats navigation in the header.
 - Keep the Home overview focused on library totals, Continue Watching, and up to five top-rated shows.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
@@ -83,8 +83,19 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Estimate runtime from episode metadata first, typical show runtime second, and the median known library runtime as a fallback. Label watch time as approximate and let runtime coverage improve through the normal metadata-refresh cycle rather than a bulk backfill.
 - Keep monthly activity, streaks, and time-based trends deferred until dated viewing history exists.
 
+## Lists
+
+- Provide private personal lists containing shows already saved in My Shows or Watchlist. Lists do not create show records or change status, progress, ratings, Watchlist membership, or Stats.
+- Give each list a unique case-insensitive name, optional description, and dedicated overview and detail pages. Preview the first four displayed show backdrops in a 2 × 2 grid for lists with at least four shows; smaller lists use the first show's backdrop alone. Fall back to posters when backdrops are missing.
+- Support unranked lists that initially display in oldest-added order. Both list types can change display order from the list page using added order, title, premiere date, or personal rating; missing dates and ratings remain last.
+- Support ranked lists with durable manual ranks changed only in Edit List through accessible position fields. Alternate display sorting and switching to unranked never destroy the manual order restored by Ranked order.
+- Manage membership from either the list or show details. Prevent complete deletion of a show until it is removed from every list that names it; deleting a list never deletes its shows.
+- Reuse the My Shows gallery cards and compact rows on list details. Allow title search and status, genre, and rating filters within the current list without changing membership.
+- Persist list data in `data/library.json` and include it in normal backup export and restore. Store only per-list gallery/list display preferences in the local browser.
+
 ## Deferred — remember for later
 
+- Consolidate the complete show-collection filter toolbar into one configurable renderer shared by My Shows and Lists. Preserve the current My Shows layout exactly, allow collection-specific sort options such as Ranked order, and add visual geometry coverage before the refactor.
 - Dated viewing diary and “when watched” logging.
 - Diary entries or written reviews associated with viewing dates.
 - Native mobile app and multi-device access.

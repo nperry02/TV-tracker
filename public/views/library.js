@@ -11,6 +11,8 @@ import {
 import {
   $,
   badge,
+  collectionGenreFilter,
+  collectionStatusFilter,
   displayDate,
   episodeCode,
   esc,
@@ -68,7 +70,6 @@ function sortShows(shows, sort) {
 export function renderLibrary(shows, libraryFilters, viewMode) {
   // Preserve native details state because rendering replaces both filter menus.
   const { selectedStatuses, selectedGenres, watchlistOnly } = libraryFilters;
-  const allSelected = !selectedStatuses.size && !watchlistOnly;
   const statusMenuOpen = $("#status-filter")?.open;
   const genreMenuOpen = $("#genre-filter")?.open;
   const counts = Object.fromEntries(
@@ -81,26 +82,17 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   // Watch statuses share one multi-select menu; Watchlist remains independent.
   const tracked = shows.filter((show) => matchesTab(show, "All"));
   const selectedLabels = [...selectedStatuses];
-  const statusDots = selectedLabels
-    .map(
-      (status) =>
-        `<i class="status-filter-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>`,
-    )
-    .join("");
-  $("#tabs").innerHTML = `<details class="status-filter" id="status-filter"${statusMenuOpen ? " open" : ""}>
-    <summary><span class="status-filter-selection">${statusDots}<span>${selectedLabels.length ? selectedLabels.join(" + ") : "All shows"}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary>
-    <div class="status-filter-menu" role="group" aria-label="Filter by watch status">${["All", ...statuses]
-      .map((status) => {
-        const active =
-          status === "All"
-            ? allSelected
-            : status === "Watchlist"
-              ? watchlistOnly
-              : selectedStatuses.has(status);
-        return `<button class="status-filter-option" type="button" data-tab="${status}" aria-pressed="${active}"><span><i class="status-filter-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>${status === "All" ? "All shows" : status}</span><span class="count">${status === "All" ? tracked.length : counts[status]}</span></button>`;
-      })
-      .join("")}</div>
-  </details>`;
+  $("#tabs").innerHTML = collectionStatusFilter({
+    selected: selectedStatuses,
+    options: statuses,
+    counts: { ...counts, "": tracked.length },
+    attribute: "data-tab",
+    allLabel: "All shows",
+    allValue: "All",
+    allActive: !selectedStatuses.size && !watchlistOnly,
+    id: "status-filter",
+    open: statusMenuOpen,
+  });
   $("#watchlist-filter").classList.toggle("active", watchlistOnly);
   $("#watchlist-filter").setAttribute("aria-pressed", String(watchlistOnly));
   $("#watchlist-filter").innerHTML = `<span><i class="status-filter-dot watchlist" aria-hidden="true"></i>Watchlist</span><span class="count">${counts.Watchlist}</span>`;
@@ -113,21 +105,13 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
         .map((genre) => [String(genre.id), genre.name]),
     ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1]));
-  const selectedGenreNames = genres
-    .filter(([id]) => selectedGenres.has(id))
-    .map(([, name]) => name);
-  $("#genre-filter-wrap").innerHTML = `<details class="status-filter genre-filter" id="genre-filter"${genreMenuOpen ? " open" : ""}>
-    <summary><span class="status-filter-selection"><span>${selectedGenreNames.length ? selectedGenreNames.join(" + ") : "All genres"}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary>
-    <div class="status-filter-menu" role="group" aria-label="Filter by genre">
-      <button class="status-filter-option" type="button" data-genre="" aria-pressed="${!selectedGenres.size}"><span>All genres</span></button>
-      ${genres
-        .map(
-          ([id, name]) =>
-            `<button class="status-filter-option" type="button" data-genre="${id}" aria-pressed="${selectedGenres.has(id)}"><span>${esc(name)}</span></button>`,
-        )
-        .join("")}
-    </div>
-  </details>`;
+  $("#genre-filter-wrap").innerHTML = collectionGenreFilter({
+    selected: selectedGenres,
+    genres,
+    attribute: "data-genre",
+    id: "genre-filter",
+    open: genreMenuOpen,
+  });
 
   // Statuses use OR, selected genres use AND, and Watchlist intersects both.
   const query = $("#library-query").value.trim().toLowerCase();
@@ -158,14 +142,11 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
       ? `<div class="list-header" aria-hidden="true"><span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>${filtered
           .map(
             (show) =>
-              `<button class="show-card show-row" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><span class="list-title">${poster(show, "list-poster", "w92")}<span><strong>${esc(show.name)}</strong>${inWatchlist(show) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(show.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(show))}</span><span class="list-cell" data-label="Rating">${stars(show.rating)}</span><span class="list-cell" data-label="Progress">${esc(progressLabel(show))}</span><span class="list-cell" data-label="Last updated">${show.lastWatchedAt ? displayDate(show.lastWatchedAt, true) : "No updates yet"}</span></button>`,
+              listShowRow(show),
           )
           .join("")}`
       : filtered
-          .map((show) => {
-            const showProgress = progress(show);
-            return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${poster(show)}<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></button>`;
-          })
+          .map((show) => galleryShowCard(show))
           .join("");
 
   // Empty states distinguish no results, an empty Watchlist, and Watchlist-only saves.
@@ -180,4 +161,14 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
     $("#empty").innerHTML =
       '<span class="empty-icon">▰</span><h2>Your shows are on your watchlist.</h2><p>Start watching a saved show to include it in All shows. You can keep its watchlist flag and viewing status separately.</p><button class="primary" data-tab="Watchlist">View watchlist</button>';
   }
+}
+
+// Lists use the library's complete card and row components without restyling them.
+export function galleryShowCard(show) {
+  const showProgress = progress(show);
+  return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${poster(show)}<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></button>`;
+}
+
+export function listShowRow(show) {
+  return `<button class="show-card show-row" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><span class="list-title">${poster(show, "list-poster", "w92")}<span><strong>${esc(show.name)}</strong>${inWatchlist(show) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(show.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(show))}</span><span class="list-cell" data-label="Rating">${stars(show.rating)}</span><span class="list-cell" data-label="Progress">${esc(progressLabel(show))}</span><span class="list-cell" data-label="Last updated">${show.lastWatchedAt ? displayDate(show.lastWatchedAt, true) : "No updates yet"}</span></button>`;
 }

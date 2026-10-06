@@ -156,6 +156,60 @@ export const poster = (show, className = "", size) =>
     ? `<img class="${className}" src="${image(show.poster_path, size)}" alt="" loading="lazy">`
     : `<span class="poster-placeholder ${className}">${esc(show.name)}</span>`;
 
+// Collection pages share one switch so its icons, labels, and semantics stay aligned.
+export function viewToggle(active, { kind = "library", id = "", label = "Collection view" } = {}) {
+  const attribute = kind === "list" ? "data-list-view" : "data-view";
+  const listId = kind === "list" ? ` data-list-id="${esc(id)}"` : "";
+  return `<div class="view-toggle" role="group" aria-label="${esc(label)}"><button type="button" ${attribute}="gallery"${listId} aria-pressed="${active === "gallery"}"><svg class="view-icon gallery-view-icon" viewBox="0 0 15 15" aria-hidden="true"><rect x="2" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="2" y="8.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="8.5" width="4.5" height="6" rx="0.6"></rect></svg><span>Gallery</span></button><button type="button" ${attribute}="list"${listId} aria-pressed="${active === "list"}"><svg class="view-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5"></path></svg><span>List</span></button></div>`;
+}
+
+// List collections use the library toolbar structure and shared view switch.
+export function collectionControls({
+  label,
+  statusControl,
+  watchlistControl,
+  searchInput,
+  viewControl,
+  genreControl,
+  ratingControl,
+  sortControl,
+  className = "",
+}) {
+  return `<aside class="library-controls ${className}" aria-label="${esc(label)}"><p class="library-controls-label">Filter and sort</p><div class="status-filter-wrap"><span>Watch status</span><div class="tabs">${statusControl}</div></div>${watchlistControl}<div class="filterbar">${searchInput}<div class="filters">${viewControl}${genreControl}${ratingControl}${sortControl}</div></div></aside>`;
+}
+
+// Collection status filters share the same multi-select menu and status cues.
+export function collectionStatusFilter({
+  selected,
+  options,
+  counts,
+  attribute,
+  allLabel = "All shows",
+  allValue = "",
+  allActive = !selected.size,
+  id = "",
+  open = false,
+}) {
+  const selectedLabels = [...selected];
+  const dots = selectedLabels
+    .map((status) => `<i class="status-filter-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>`)
+    .join("");
+  const option = (status, label, isAll = false) => {
+    const active = isAll ? allActive : selected.has(status);
+    const value = isAll ? allValue : status;
+    const count = counts?.[status];
+    return `<button class="status-filter-option" type="button" ${attribute}="${esc(value)}" aria-pressed="${active}"><span><i class="status-filter-dot ${(status || "all").toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>${esc(label)}</span>${count == null ? "" : `<span class="count">${count}</span>`}</button>`;
+  };
+  return `<details class="status-filter"${id ? ` id="${esc(id)}"` : ""}${open ? " open" : ""}><summary><span class="status-filter-selection">${dots}<span>${selectedLabels.length ? selectedLabels.join(" + ") : esc(allLabel)}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary><div class="status-filter-menu" role="group" aria-label="Filter by watch status">${option("", allLabel, true)}${options.map((status) => option(status, status)).join("")}</div></details>`;
+}
+
+// Genre filtering uses the same multi-select dropdown in every show collection.
+export function collectionGenreFilter({ selected, genres, attribute, id = "", open = false }) {
+  const names = genres.filter(([value]) => selected.has(value)).map(([, name]) => name);
+  const option = (value, name, isAll = false) => `<button class="status-filter-option" type="button" ${attribute}="${esc(value)}" aria-pressed="${isAll ? !selected.size : selected.has(value)}"><span>${esc(name)}</span></button>`;
+  return `<details class="status-filter genre-filter"${id ? ` id="${esc(id)}"` : ""}${open ? " open" : ""}><summary><span class="status-filter-selection"><span>${names.length ? names.join(" + ") : "All genres"}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary><div class="status-filter-menu" role="group" aria-label="Filter by genre">${option("", "All genres", true)}${genres.map(([value, name]) => option(value, name)).join("")}</div></details>`;
+}
+
 // Dates without a time are interpreted locally to avoid timezone date shifts.
 export function displayDate(value, includeTime = false) {
   if (!value) return "Not recorded";

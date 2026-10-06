@@ -21,6 +21,7 @@
           <div class="top-pages">
             <a class="active" href="#home" data-page="home">Home</a>
             <a href="#library" data-page="library">My Shows</a>
+            <a href="#lists" data-page="lists">Lists</a>
             <a href="#stats" data-page="stats">Stats</a>
           </div>
           <button class="top-search" id="add-show" aria-label="Add a show">
@@ -110,7 +111,7 @@
                 </button>
               </div>
               <div class="genre-filter-wrap" id="genre-filter-wrap"></div>
-              <label
+              <label class="rating-filter-control"
                 ><span class="sr-only">Your rating</span
                 ><select id="rating-filter">
                   <option value="">All ratings</option>
@@ -121,7 +122,7 @@
                   <option value="1">1+ stars</option>
                 </select></label
               >
-              <label
+              <label class="sort-filter-control"
                 ><span class="sr-only">Sort shows</span
                 ><select id="sort" aria-label="Sort shows">
                   <option value="last-updated" selected>Last updated</option>
@@ -141,6 +142,35 @@
           <div id="empty" class="empty" hidden></div>
         </div>
       </section>
+      </section>
+      <!-- Personal show-list overview -->
+      <section id="lists-view" class="lists-page" aria-labelledby="lists-title" hidden>
+        <div id="lists-overview">
+        <header class="lists-header">
+          <div>
+            <p class="eyebrow">YOUR COLLECTIONS</p>
+            <div class="lists-title-row"><h1 id="lists-title">Lists</h1></div>
+            <p class="subtitle">Group favorites, plan a marathon, or rank the shows you love.</p>
+          </div>
+        </header>
+        <div class="lists-overview-controls">
+          <label class="library-search lists-search"><span aria-hidden="true">⌕</span><input id="lists-query" type="search" placeholder="Search list names and descriptions…" aria-label="Search lists" /></label>
+          <button class="primary" id="create-list" type="button">＋ Create list</button>
+        </div>
+        <div id="lists-grid" class="lists-grid"></div>
+        <div id="lists-no-results" class="empty lists-empty" hidden>
+          <h2>No lists match your search.</h2>
+          <p>Try another name or description.</p>
+          <button id="clear-lists-search" type="button">Clear search</button>
+        </div>
+        <div id="lists-empty" class="empty lists-empty">
+          <span class="empty-icon" aria-hidden="true">☷</span>
+          <h2>Make your first list.</h2>
+          <p>Collect saved shows around a theme, or put your favorites in order.</p>
+          <button class="primary" type="button" data-create-list>Create a list</button>
+        </div>
+        </div>
+        <div id="list-detail" hidden></div>
       </section>
       <!-- Library statistics -->
       <section id="stats-view" class="stats-page" aria-labelledby="stats-title" hidden>
@@ -204,6 +234,13 @@
             ></span>
             My Shows</a
           >
+          <a href="#lists" data-page="lists"
+            ><span class="side-icon" aria-hidden="true"
+              ><svg viewBox="0 0 24 24">
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg
+            ></span>
+            Lists</a
+          >
           <a href="#stats" data-page="stats"
             ><span class="side-icon" aria-hidden="true"
               ><svg viewBox="0 0 24 24">
@@ -254,6 +291,50 @@
     </dialog>
     <dialog id="show-dialog" class="show-dialog">
       <div id="show-content"></div>
+    </dialog>
+    <dialog id="list-dialog" class="list-dialog" aria-labelledby="list-dialog-title">
+      <form id="list-form">
+        <div class="dialog-top">
+          <div>
+            <h2 id="list-dialog-title">Create a list</h2>
+          </div>
+          <button class="icon-button" type="button" data-close="list-dialog" aria-label="Close list editor">×</button>
+        </div>
+        <input id="list-id" type="hidden" />
+        <div class="list-editor-body">
+        <label class="list-form-field"><span>Name</span><input id="list-name" name="name" maxlength="80" required autocomplete="off" /></label>
+        <label class="list-form-field"><span>Description <small>Optional</small></span><textarea id="list-description" name="description" maxlength="1000" rows="4"></textarea></label>
+        <label class="list-ordered-toggle"><input id="list-ordered" name="ordered" type="checkbox" /><span><strong>Ranked list</strong><small>Give every show a rank that you can rearrange while editing the list.</small></span></label>
+        <section id="list-edit-shows" class="list-edit-shows" aria-labelledby="list-edit-shows-title" hidden>
+          <div><strong id="list-edit-shows-title">Shows in this list</strong><small>Remove shows here. For ranked lists, enter a position to change the order.</small></div>
+          <div id="list-edit-show-options"></div>
+        </section>
+        </div>
+        <div class="list-dialog-actions">
+          <button id="delete-list" class="danger-button" type="button" hidden>Delete list</button>
+          <span></span>
+          <button type="button" data-close="list-dialog">Cancel</button>
+          <button id="list-dialog-submit" class="primary" type="submit">Create list</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="list-members-dialog" class="list-dialog list-members-dialog" aria-labelledby="list-members-title">
+      <form id="list-members-form">
+        <div class="dialog-top"><div><p class="eyebrow">LIST MEMBERS</p><h2 id="list-members-title">Add shows</h2></div><button class="icon-button" type="button" data-close="list-members-dialog" aria-label="Close show picker">×</button></div>
+        <input id="list-members-id" type="hidden" />
+        <label class="list-member-search"><span class="sr-only">Search saved shows</span><input id="list-members-query" type="search" placeholder="Search My Shows and Watchlist…" autocomplete="off" /></label>
+        <div id="list-members-options" class="list-members-options"></div>
+        <div class="list-dialog-actions"><span></span><span></span><button type="button" data-close="list-members-dialog">Cancel</button><button class="primary" type="submit">Save shows</button></div>
+      </form>
+    </dialog>
+    <dialog id="show-lists-dialog" class="list-dialog" aria-labelledby="show-lists-title">
+      <form id="show-lists-form">
+        <div class="dialog-top"><div><p class="eyebrow">COLLECTIONS</p><h2 id="show-lists-title">Manage lists</h2></div><button class="icon-button" type="button" data-close="show-lists-dialog" aria-label="Close list manager">×</button></div>
+        <input id="show-lists-id" type="hidden" />
+        <div id="show-lists-options" class="list-members-options"></div>
+        <button type="button" data-create-list-from-show>＋ Create new list</button>
+        <div class="list-dialog-actions"><span></span><span></span><button type="button" data-close="show-lists-dialog">Cancel</button><button class="primary" type="submit">Save lists</button></div>
+      </form>
     </dialog>
     <div id="toast" role="status" popover="manual" hidden></div>
   </body>

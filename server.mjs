@@ -8,12 +8,14 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import {
   aired,
   episodeKey,
   statuses,
   inLibrary,
   inWatchlist,
+  listSorts,
 } from "./public/model.js";
 
 // Persistent library setup and compatibility normalization
@@ -24,7 +26,7 @@ const dataFile = resolve(
 mkdirSync(dirname(dataFile), { recursive: true });
 let library = existsSync(dataFile)
   ? JSON.parse(readFileSync(dataFile, "utf8"))
-  : { version: 1, shows: [] };
+  : { version: 1, shows: [], lists: [] };
 if (library.version !== 1 || !Array.isArray(library.shows))
   throw new Error("Unsupported library file. Your data has not been changed.");
 library.shows = library.shows.map((s) => ({
@@ -32,6 +34,9 @@ library.shows = library.shows.map((s) => ({
   tracked: inLibrary(s),
   watchlist: inWatchlist(s),
 }));
+if ("lists" in library && !Array.isArray(library.lists))
+  throw new Error("Unsupported library file. Your data has not been changed.");
+library.lists ||= [];
 
 // Write a complete temporary file before replacing the saved library atomically.
 function commit(next) {
@@ -53,6 +58,131 @@ function update(id, transform) {
   next.shows[index] = transform(next.shows[index]);
   commit(next);
   return next.shows[index];
+}
+
+function updateList(id, transform) {
+  const index = library.lists.findIndex((list) => list.id === id);
+  if (index < 0)
+    throw Object.assign(new Error("List not found."), { status: 404 });
+  const next = structuredClone(library);
+  next.lists[index] = transform(next.lists[index]);
+  commit(next);
+  return next.lists[index];
+}
+
+const savedShow = (show) => inLibrary(show) || inWatchlist(show);
+const listsContainingShow = (id, source = library) =>
+  source.lists.filter((list) =>
+    list.entries.some((entry) => entry.showId === id),
+  );
+
+function validateListFields(value, currentId = null, source = library) {
+  const name = typeof value.name === "string" ? value.name.trim() : "";
+  const description =
+    typeof value.description === "string" ? value.description.trim() : "";
+  if (!name || name.length > 80)
+    throw Object.assign(new Error("List names must be 1 to 80 characters."), {
+      status: 400,
+    });
+  if (description.length > 1000)
+    throw Object.assign(
+      new Error("List descriptions must be 1000 characters or fewer."),
+      { status: 400 },
+    );
+  if (typeof value.ordered !== "boolean")
+    throw Object.assign(new Error("Ranked must be true or false."), {
+      status: 400,
+    });
+  if (!listSorts.includes(value.sort))
+    throw Object.assign(new Error("Invalid list sort."), { status: 400 });
+  if (!value.ordered && value.sort === "manual")
+    throw Object.assign(new Error("Only ranked lists use ranked order."), {
+      status: 400,
+    });
+  if (
+    source.lists.some(
+      (list) =>
+        list.id !== currentId &&
+        list.name.trim().toLowerCase() === name.toLowerCase(),
+    )
+  )
+    throw Object.assign(new Error("A list with that name already exists."), {
+      status: 409,
+    });
+  return { name, description, ordered: value.ordered, sort: value.sort };
+}
+
+function validateShowIds(showIds, source = library) {
+  if (
+    !Array.isArray(showIds) ||
+    showIds.some((id) => !Number.isSafeInteger(id)) ||
+    new Set(showIds).size !== showIds.length
+  )
+    throw Object.assign(new Error("Show IDs must be a unique list of integers."), {
+      status: 400,
+    });
+  const showsById = new Map(source.shows.map((show) => [show.id, show]));
+  if (showIds.some((id) => !showsById.has(id) || !savedShow(showsById.get(id))))
+    throw Object.assign(
+      new Error("Lists can contain only shows in My Shows or Watchlist."),
+      { status: 400 },
+    );
+  return showIds;
+}
+
+function validateImportedLibrary(value) {
+  if (value?.version !== 1 || !Array.isArray(value.shows))
+    throw Object.assign(new Error("Unsupported backup file."), { status: 400 });
+  const next = structuredClone(value);
+  if (
+    next.shows.some((show) => !Number.isSafeInteger(show.id)) ||
+    new Set(next.shows.map((show) => show.id)).size !== next.shows.length
+  )
+    throw Object.assign(new Error("Backup contains invalid shows."), {
+      status: 400,
+    });
+  next.shows = next.shows.map((show) => ({
+    ...show,
+    tracked: inLibrary(show),
+    watchlist: inWatchlist(show),
+  }));
+  if ("lists" in next && !Array.isArray(next.lists))
+    throw Object.assign(new Error("Backup contains invalid lists."), {
+      status: 400,
+    });
+  next.lists ||= [];
+  const seenIds = new Set();
+  for (const list of next.lists) {
+    if (
+      typeof list.id !== "string" ||
+      !list.id ||
+      seenIds.has(list.id) ||
+      !Array.isArray(list.entries) ||
+      list.entries.some((entry) => !entry || typeof entry !== "object") ||
+      typeof list.createdAt !== "string" ||
+      !Number.isFinite(new Date(list.createdAt).getTime()) ||
+      typeof list.updatedAt !== "string" ||
+      !Number.isFinite(new Date(list.updatedAt).getTime())
+    )
+      throw Object.assign(new Error("Backup contains invalid lists."), {
+        status: 400,
+      });
+    seenIds.add(list.id);
+    validateListFields(list, list.id, next);
+    const showIds = list.entries.map((entry) => entry.showId);
+    validateShowIds(showIds, next);
+    if (
+      list.entries.some(
+        (entry) =>
+          typeof entry.addedAt !== "string" ||
+          !Number.isFinite(new Date(entry.addedAt).getTime()),
+      )
+    )
+      throw Object.assign(new Error("Backup contains invalid list entries."), {
+        status: 400,
+      });
+  }
+  return next;
 }
 
 // TMDB requests and metadata shaping
@@ -148,11 +278,11 @@ function validateRating(value) {
       { status: 400 },
     );
 }
-async function body(req) {
+async function body(req, limit = 100000) {
   let raw = "";
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > 100000)
+    if (raw.length > limit)
       throw Object.assign(new Error("Request too large."), { status: 413 });
   }
   try {
@@ -171,6 +301,7 @@ const files = {
   "/views/home.js": ["views/home.js", "text/javascript"],
   "/views/help.js": ["views/help.js", "text/javascript"],
   "/views/library.js": ["views/library.js", "text/javascript"],
+  "/views/lists.js": ["views/lists.js", "text/javascript"],
   "/views/search-dialog.js": ["views/search-dialog.js", "text/javascript"],
   "/views/show-dialog.js": ["views/show-dialog.js", "text/javascript"],
   "/views/stats.js": ["views/stats.js", "text/javascript"],
@@ -227,6 +358,11 @@ export const server = http.createServer(async (req, res) => {
       );
       return send(200, library);
     }
+    if (req.method === "POST" && path === "/api/import") {
+      const restored = validateImportedLibrary(await body(req, 10_000_000));
+      commit(restored);
+      return send(200, library);
+    }
     if (req.method === "GET" && path === "/api/search") {
       const q = (url.searchParams.get("q") || "").trim().slice(0, 200);
       const page = Number(url.searchParams.get("page") || 1);
@@ -239,6 +375,129 @@ export const server = http.createServer(async (req, res) => {
           `search/tv?query=${encodeURIComponent(q)}&include_adult=false&page=${page}`,
         ),
       );
+    }
+
+    // List routes keep metadata, membership, and manual ordering atomic.
+    if (path === "/api/lists" && req.method === "POST") {
+      const fields = validateListFields(await body(req));
+      const timestamp = new Date().toISOString();
+      const list = {
+        id: randomUUID(),
+        ...fields,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        entries: [],
+      };
+      commit({ ...library, lists: [...library.lists, list] });
+      return send(201, list);
+    }
+    const listMatch = path.match(
+      /^\/api\/lists\/([^/]+)(?:\/(items|order))?$/,
+    );
+    if (listMatch) {
+      const id = decodeURIComponent(listMatch[1]);
+      const action = listMatch[2];
+      if (req.method === "PATCH" && !action) {
+        const request = await body(req);
+        const fields = validateListFields(request, id);
+        return send(
+          200,
+          updateList(id, (list) => ({
+            ...list,
+            ...fields,
+            updatedAt: new Date().toISOString(),
+          })),
+        );
+      }
+      if (req.method === "DELETE" && !action) {
+        if (!library.lists.some((list) => list.id === id))
+          return send(404, { error: "List not found." });
+        commit({
+          ...library,
+          lists: library.lists.filter((list) => list.id !== id),
+        });
+        return send(200, { ok: true });
+      }
+      if (req.method === "PUT" && action === "items") {
+        const showIds = validateShowIds((await body(req)).showIds);
+        return send(
+          200,
+          updateList(id, (list) => {
+            const existing = new Map(
+              list.entries.map((entry) => [entry.showId, entry]),
+            );
+            const timestamp = new Date().toISOString();
+            return {
+              ...list,
+              entries: showIds.map(
+                (showId) =>
+                  existing.get(showId) || { showId, addedAt: timestamp },
+              ),
+              updatedAt: timestamp,
+            };
+          }),
+        );
+      }
+      if (req.method === "PUT" && action === "order") {
+        const showIds = (await body(req)).showIds;
+        return send(
+          200,
+          updateList(id, (list) => {
+            if (
+              !list.ordered ||
+              !Array.isArray(showIds) ||
+              showIds.length !== list.entries.length ||
+              new Set(showIds).size !== showIds.length ||
+              showIds.some(
+                (showId) =>
+                  !list.entries.some((entry) => entry.showId === showId),
+              )
+            )
+              throw Object.assign(new Error("Invalid list order."), {
+                status: 400,
+              });
+            const entries = new Map(
+              list.entries.map((entry) => [entry.showId, entry]),
+            );
+            return {
+              ...list,
+              entries: showIds.map((showId) => entries.get(showId)),
+              updatedAt: new Date().toISOString(),
+            };
+          }),
+        );
+      }
+    }
+
+    const showListsMatch = path.match(/^\/api\/shows\/(\d+)\/lists$/);
+    if (showListsMatch && req.method === "PUT") {
+      const showId = Number(showListsMatch[1]);
+      const show = library.shows.find((entry) => entry.id === showId);
+      if (!show || !savedShow(show))
+        return send(404, { error: "Show not found." });
+      const listIds = (await body(req)).listIds;
+      if (
+        !Array.isArray(listIds) ||
+        listIds.some((id) => typeof id !== "string") ||
+        new Set(listIds).size !== listIds.length ||
+        listIds.some((id) => !library.lists.some((list) => list.id === id))
+      )
+        return send(400, { error: "Invalid list IDs." });
+      const selected = new Set(listIds);
+      const timestamp = new Date().toISOString();
+      const lists = library.lists.map((list) => {
+        const contains = list.entries.some((entry) => entry.showId === showId);
+        if (contains === selected.has(list.id)) return list;
+        return {
+          ...list,
+          entries: selected.has(list.id)
+            ? [...list.entries, { showId, addedAt: timestamp }]
+            : list.entries.filter((entry) => entry.showId !== showId),
+          updatedAt: timestamp,
+        };
+      });
+      commit({ ...library, lists });
+      return send(200, lists);
     }
 
     // Show routes share an ID matcher; the optional suffix distinguishes refreshes.
@@ -387,11 +646,26 @@ export const server = http.createServer(async (req, res) => {
             )
               s.statusOverride = null;
           }
+          if (!savedShow(s)) {
+            const containing = listsContainingShow(id);
+            if (containing.length)
+              throw Object.assign(
+                new Error(
+                  `Remove this show from ${containing.map((list) => list.name).join(", ")} before deleting it from your saved shows.`,
+                ),
+                { status: 409 },
+              );
+          }
           return s;
         });
         return send(200, show);
       }
       if (req.method === "DELETE" && !match[2]) {
+        const containing = listsContainingShow(id);
+        if (containing.length)
+          return send(409, {
+            error: `Remove this show from ${containing.map((list) => list.name).join(", ")} before deleting it.`,
+          });
         commit({ ...library, shows: library.shows.filter((s) => s.id !== id) });
         return send(200, { ok: true });
       }
