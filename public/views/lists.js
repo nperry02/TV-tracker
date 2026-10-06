@@ -1,4 +1,4 @@
-import { inWatchlist, listEntries, statuses, watchStatus } from "../model.js";
+import { artworkPath, inWatchlist, listEntries, statuses, watchStatus } from "../model.js";
 import { collectionControls, collectionGenreFilter, collectionStatusFilter, $, esc, image, poster, viewToggle, year } from "../ui.js";
 import { galleryShowCard, listShowRow } from "./library.js";
 
@@ -27,7 +27,7 @@ function listCard(list, shows) {
       <span class="list-preview list-preview-${preview.length || "empty"}">
         ${preview.length ? preview.map(({ show }) => {
           // Missing backdrops retain artwork through the existing poster fallback.
-          const backdrop = image(show.backdrop_path, "w780");
+          const backdrop = image(artworkPath(show, "backdrop"), "w780");
           return backdrop ? `<img class="list-preview-image" src="${backdrop}" alt="" loading="lazy">` : poster(show, "list-preview-image", "w342");
         }).join("") : '<span class="list-preview-empty" aria-hidden="true">＋</span>'}
       </span>

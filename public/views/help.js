@@ -103,6 +103,7 @@ export function renderHelp(container) {
         <h2>Updates happen a little at a time.</h2>
         <p>When the app opens, it refreshes up to five stale shows: daily for Watching and Caught Up, weekly for Paused and Watchlist-only, and every 30 days for Completed and Dropped.</p>
         <p>You can also use Refresh show info in any show’s details to check it immediately.</p>
+        <p>Saved personal poster and backdrop choices take priority over TMDB defaults and survive metadata refreshes and backups.</p>
       </article>
       <article class="help-credit">
         <p class="eyebrow">SHOW DATA</p>

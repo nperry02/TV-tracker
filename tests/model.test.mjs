@@ -12,7 +12,20 @@ import {
   metadataRefreshInterval,
   metadataRefreshQueue,
   listEntries,
+  artworkPath,
+  validArtworkPath,
 } from "../public/model.js";
+
+test("artwork choices override defaults independently and reset cleanly", () => {
+  const show = { poster_path: "/default.jpg", backdrop_path: "/default-backdrop.jpg", posterOverride: "/chosen.jpg" };
+  assert.equal(artworkPath(show, "poster"), "/chosen.jpg");
+  assert.equal(artworkPath(show, "backdrop"), "/default-backdrop.jpg");
+  assert.equal(artworkPath({ ...show, posterOverride: null }, "poster"), "/default.jpg");
+  assert.equal(artworkPath({}, "backdrop"), null);
+  assert.equal(validArtworkPath("/chosen.jpg"), true);
+  for (const path of ["https://example.com/a.jpg", "/../a.jpg", "//host/a.jpg", "/a.svg", 5, ""])
+    assert.equal(validArtworkPath(path), false);
+});
 
 const episode = (season, number, date = "2026-01-01") => ({
   season_number: season,

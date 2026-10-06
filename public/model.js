@@ -6,6 +6,15 @@ export const statuses = [
   "Completed",
   "Dropped",
 ];
+
+// Artwork overrides are personal choices; refreshed TMDB defaults stay separate.
+export function artworkPath(show, kind) {
+  return show[`${kind}Override`] || show[`${kind}_path`] || null;
+}
+
+export function validArtworkPath(value) {
+  return typeof value === "string" && /^\/[\w.-]+\.(?:jpg|jpeg|png|webp)$/i.test(value);
+}
 export function inLibrary(show) {
   // Preserve membership of libraries saved before tracking and watchlist were separate.
   return typeof show.tracked === "boolean"

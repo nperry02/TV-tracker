@@ -1,3 +1,5 @@
+import { artworkPath } from "./model.js";
+
 export const $ = (selector) => document.querySelector(selector);
 
 // Accessible custom-select enhancement
@@ -152,8 +154,8 @@ export const stars = (rating) =>
     : '<span class="unrated">Not rated</span>';
 
 export const poster = (show, className = "", size) =>
-  image(show.poster_path, size)
-    ? `<img class="${className}" src="${image(show.poster_path, size)}" alt="" loading="lazy">`
+  image(artworkPath(show, "poster"), size)
+    ? `<img class="${className}" src="${image(artworkPath(show, "poster"), size)}" alt="" loading="lazy">`
     : `<span class="poster-placeholder ${className}">${esc(show.name)}</span>`;
 
 // Collection pages share one switch so its icons, labels, and semantics stay aligned.

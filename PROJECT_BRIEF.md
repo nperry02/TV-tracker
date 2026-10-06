@@ -10,6 +10,8 @@ This document records the requested product direction. The first working local w
 
 ## Metadata
 
+- Allow independent personal poster and backdrop choices from TMDB artwork fetched on demand. Persist only chosen paths, preserve them through metadata refresh, and allow resetting either choice to the current TMDB default.
+
 Use TMDB as the preferred initial source for TV search, posters, descriptions, genres, seasons, episodes, air dates, and series status. Its TV endpoints fit the requested scope; no second provider is currently needed.
 
 The user authorized reusing the existing TMDB credential from their Letterbox repository. It has been copied into this project's ignored `.env` file and validated successfully against TMDB's TV API. Keep credentials out of committed files and documentation.
