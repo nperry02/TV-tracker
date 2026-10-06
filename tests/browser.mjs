@@ -142,6 +142,26 @@ try {
   assert.equal(await listsSearch.evaluate((input) => input === document.activeElement), true);
   assert.equal(await page.locator(".list-card").count(), 1);
   await page.getByRole("button", { name: "Edit Weekend favorites" }).click();
+  // Tall editor content scrolls independently while every action stays visible.
+  const editorActionsFit = await page.locator("#list-dialog").evaluate((dialog) => {
+    const body = dialog.querySelector(".list-editor-body");
+    const spacer = document.createElement("div");
+    spacer.style.height = "1200px";
+    body.append(spacer);
+    const actions = dialog.querySelector(".list-dialog-actions");
+    const before = actions.getBoundingClientRect();
+    body.scrollTop = body.scrollHeight;
+    const after = actions.getBoundingClientRect();
+    const bounds = dialog.getBoundingClientRect();
+    const fits = body.scrollTop > 0 && Math.abs(before.top - after.top) < 1 &&
+      after.bottom <= bounds.bottom && after.bottom <= innerHeight &&
+      Math.abs(body.getBoundingClientRect().bottom - after.top) < 1 &&
+      getComputedStyle(dialog.querySelector("#list-edit-show-options")).overflowY === "visible";
+    spacer.remove();
+    body.scrollTop = 0;
+    return fits;
+  });
+  assert.equal(editorActionsFit, true, "List editor actions stay visible while content scrolls");
   await page.locator("#list-name").fill("Weekend watchlist");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await page.getByText("Weekend watchlist", { exact: true }).waitFor();
