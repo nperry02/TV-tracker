@@ -444,6 +444,7 @@ document.addEventListener("click", async (event) => {
       toast("List deleted. Your shows were not changed.");
     } catch (error) {
       report(error);
+    } finally {
       button.disabled = false;
     }
     return;
@@ -637,7 +638,7 @@ document.addEventListener("input", (event) => {
   replacement?.focus();
   replacement?.setSelectionRange(cursor, cursor);
 });
-// List metadata saves independently from membership, which is added next.
+// Save metadata first, then reconcile edited membership and manual ranks.
 $("#list-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const id = $("#list-id").value;
@@ -704,7 +705,15 @@ $("#list-members-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const id = $("#list-members-id").value;
   // Search filtering never drops selections that are temporarily out of view.
-  const showIds = shows.filter((show) => listMemberSelection.has(show.id)).map((show) => show.id);
+  const list = lists.find((entry) => entry.id === id);
+  if (!list) return;
+  // Retain existing ranks; newly selected shows append in library order.
+  const existingIds = list.entries.map((entry) => entry.showId);
+  const existing = new Set(existingIds);
+  const showIds = [
+    ...existingIds.filter((showId) => listMemberSelection.has(showId)),
+    ...shows.filter((show) => listMemberSelection.has(show.id) && !existing.has(show.id)).map((show) => show.id),
+  ];
   try {
     const updated = await api(`/api/lists/${encodeURIComponent(id)}/items`, { method: "PUT", body: { showIds } });
     lists = lists.map((list) => (list.id === id ? updated : list));

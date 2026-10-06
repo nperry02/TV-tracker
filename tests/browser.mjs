@@ -202,6 +202,7 @@ try {
   await page.locator('.list-show-card[data-list-show="1396"]').waitFor();
   await page.getByRole("button", { name: "Edit", exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
+  assert.equal(await page.getByRole("button", { name: "Delete list", exact: true }).isEnabled(), true);
   await page.getByRole("button", { name: "Delete list", exact: true }).click();
   await page.getByText("Make your first list.", { exact: true }).waitFor();
   await page.getByRole("link", { name: "My Shows", exact: true }).click();
@@ -1119,6 +1120,14 @@ try {
     await page.getByRole("spinbutton", { name: "Rank for Breaking Bad" }).fill("2");
     await page.getByRole("button", { name: "Save changes", exact: true }).click();
     await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
+    assert.deepEqual(
+      await page.locator(".list-show-card .card-heading h3").allTextContents(),
+      ["Test series 23", "Breaking Bad"],
+    );
+    // Saving membership without changes must preserve the edited manual order.
+    await page.getByRole("button", { name: "＋ Add shows", exact: true }).click();
+    await page.getByRole("button", { name: "Save shows", exact: true }).click();
+    await page.locator("#list-members-dialog").waitFor({ state: "hidden" });
     assert.deepEqual(
       await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Test series 23", "Breaking Bad"],
