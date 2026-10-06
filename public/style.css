@@ -1011,7 +1011,7 @@ dialog::backdrop {
   flex-wrap: wrap;
   gap: 20px;
   align-items: center;
-  padding: 20px 0;
+  padding: 12px 0;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -1128,9 +1128,13 @@ dialog::backdrop {
   background: transparent;
   color: var(--accent);
 }
+/* Keep membership actions aligned with the labeled status control. */
+.detail-controls #toggle-watchlist,
+.detail-controls #manage-show-lists {
+  align-self: end;
+}
 .detail-controls #toggle-watchlist {
   margin-left: auto;
-  align-self: end;
 }
 .detail-progress {
   display: flex;
