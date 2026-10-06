@@ -1,5 +1,5 @@
 import { inWatchlist, listEntries, statuses, watchStatus } from "../model.js";
-import { collectionControls, collectionGenreFilter, collectionStatusFilter, $, esc, poster, viewToggle, year } from "../ui.js";
+import { collectionControls, collectionGenreFilter, collectionStatusFilter, $, esc, image, poster, viewToggle, year } from "../ui.js";
 import { galleryShowCard, listShowRow } from "./library.js";
 
 export const listSortOptions = [
@@ -17,14 +17,19 @@ const rankedSortOption = ["manual", "Ranked order"];
 // Overview previews always reflect the order visitors will see inside the list.
 function listCard(list, shows) {
   const entries = listEntries(list, shows);
-  const preview = entries.slice(0, 4);
+  // Small lists use one cover; four or more shows form a backdrop mosaic.
+  const preview = entries.slice(0, entries.length >= 4 ? 4 : 1);
   const description = list.description
     ? `<p>${esc(list.description)}</p>`
     : '<p class="list-card-description-empty">No description</p>';
   return `<article class="list-card">
     <button class="list-card-open" type="button" data-open-list="${esc(list.id)}" aria-label="Open ${esc(list.name)}">
       <span class="list-preview list-preview-${preview.length || "empty"}">
-        ${preview.length ? preview.map(({ show }) => poster(show, "list-preview-poster", "w342")).join("") : '<span class="list-preview-empty" aria-hidden="true">＋</span>'}
+        ${preview.length ? preview.map(({ show }) => {
+          // Missing backdrops retain artwork through the existing poster fallback.
+          const backdrop = image(show.backdrop_path, "w780");
+          return backdrop ? `<img class="list-preview-image" src="${backdrop}" alt="" loading="lazy">` : poster(show, "list-preview-image", "w342");
+        }).join("") : '<span class="list-preview-empty" aria-hidden="true">＋</span>'}
       </span>
       ${list.ordered ? '<span class="list-card-rank-label">Ranked</span>' : ""}
       <span class="list-card-count">${entries.length} ${entries.length === 1 ? "show" : "shows"}</span>

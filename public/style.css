@@ -1932,6 +1932,9 @@ main {
   gap: 18px;
 }
 .list-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -1939,7 +1942,11 @@ main {
   background: #111a14;
 }
 .list-card-open {
-  display: block;
+  /* Share the cover and title rows so settings can occupy the title row. */
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-column: 1;
+  grid-row: 1 / 3;
   width: 100%;
   padding: 0;
   border: 0;
@@ -1953,19 +1960,23 @@ main {
 }
 .list-preview {
   display: grid;
-  height: 210px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Approximate widescreen artwork at the overview's full desktop width. */
+  height: 250px;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   background: #0c120e;
 }
-.list-preview-1 { grid-template-columns: 1fr; }
-.list-preview-2 { grid-template-columns: repeat(2, 1fr); }
-.list-preview-3 { grid-template-columns: repeat(3, 1fr); }
-.list-preview-poster,
+.list-preview-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+.list-preview-image,
 .list-preview .poster-placeholder {
   width: 100%;
   height: 100%;
   min-width: 0;
+  min-height: 0;
   border-radius: 0;
   object-fit: cover;
 }
@@ -2016,9 +2027,12 @@ main {
 }
 .list-card-description-empty { opacity: 0.62; }
 .list-card-edit {
-  position: absolute;
-  top: 222px;
-  right: 14px;
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+  justify-self: end;
+  z-index: 1;
+  margin: 12px 14px 0 0;
   width: 34px;
   height: 30px;
   padding: 0;
@@ -2241,6 +2255,7 @@ main {
 .show-list-option input { width: 18px; height: 18px; }
 @media (max-width: 900px) {
   .lists-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .list-preview { height: 210px; }
   .list-shows.poster-grid { grid-template-columns: repeat(4, minmax(100px, 1fr)); }
 }
 @media (max-width: 560px) {
