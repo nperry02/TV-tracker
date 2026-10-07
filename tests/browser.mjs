@@ -1022,6 +1022,7 @@ try {
   });
   // Artwork loads only on opening; both tabs share that one response.
   assert.equal(artworkRequests, 0);
+  assert.equal(await page.locator("#change-artwork .custom-artwork-indicator").count(), 0);
   await page.getByRole("button", { name: "Change artwork", exact: true }).click();
   const artworkPicker = page.locator("#artwork-dialog");
   await page.waitForFunction(() => !document.querySelector("#artwork-status").textContent.includes("Loading"));
@@ -1062,6 +1063,8 @@ try {
     await page.unroute("**/api/shows/1396");
     await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
     await artworkPicker.waitFor({ state: "hidden" });
+    assert.equal(await page.locator("#change-artwork .custom-artwork-indicator").textContent(), "*");
+    assert.equal(await page.locator("#change-artwork").getAttribute("title"), "Custom artwork selected");
     assert.ok((await page.locator(".detail-poster").getAttribute("src")).endsWith("/alternate-poster.jpg"));
     assert.ok((await page.locator(".detail-backdrop").getAttribute("src")).endsWith("/alternate-backdrop.jpg"));
     await page.locator("#refresh-show").click();
@@ -1075,6 +1078,7 @@ try {
     await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).check();
     await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
     await artworkPicker.waitFor({ state: "hidden" });
+    assert.equal(await page.locator("#change-artwork .custom-artwork-indicator").count(), 0);
     await page.unroute("**/api/shows/1396/images");
     // Failed image requests are retryable and never mutate saved choices.
     await page.route("**/api/shows/1396/images", (route) => route.fulfill({ status: 502, json: { error: "Artwork unavailable" } }));
