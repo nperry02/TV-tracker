@@ -970,6 +970,10 @@ dialog::backdrop {
   font-size: 11px;
   background: #162019dd;
 }
+.custom-artwork-indicator {
+  color: var(--accent);
+  font-weight: 750;
+}
 .detail-poster {
   flex-shrink: 0;
   width: 130px;
