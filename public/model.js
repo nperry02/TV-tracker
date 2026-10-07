@@ -6,6 +6,27 @@ export const statuses = [
   "Completed",
   "Dropped",
 ];
+
+// Artwork overrides are personal choices; refreshed TMDB defaults stay separate.
+export function artworkPath(show, kind) {
+  return show[`${kind}Override`] || show[`${kind}_path`] || null;
+}
+
+export function validArtworkPath(value) {
+  return typeof value === "string" && /^\/[\w.-]+\.(?:jpg|jpeg|png|webp)$/i.test(value);
+}
+
+// Stable sorting prioritizes readable posters and backdrops without overlaid text.
+export function artworkOptions(items, kind) {
+  const preferred = kind === "poster" ? "en" : null;
+  return [...items].sort((a, b) =>
+    Number(b.iso_639_1 === preferred) - Number(a.iso_639_1 === preferred));
+}
+
+// Existing gallery/list preferences remain valid; unknown saved values reset safely.
+export function collectionView(value) {
+  return ["gallery", "backdrop", "list"].includes(value) ? value : "gallery";
+}
 export function inLibrary(show) {
   // Preserve membership of libraries saved before tracking and watchlist were separate.
   return typeof show.tracked === "boolean"

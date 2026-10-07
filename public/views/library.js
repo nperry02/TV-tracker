@@ -1,4 +1,5 @@
 import {
+  artworkPath,
   inLibrary,
   inWatchlist,
   matchesLibraryFilters,
@@ -18,7 +19,8 @@ import {
   esc,
   poster,
   stars,
-  year,
+  image,
+  viewToggle,
 } from "../ui.js";
 
 // Card and list presentation helpers
@@ -68,6 +70,10 @@ function sortShows(shows, sort) {
 }
 
 export function renderLibrary(shows, libraryFilters, viewMode) {
+  // My Shows and list details use the same complete three-way view switch.
+  const focusedView = document.activeElement?.closest("#library-view-toggle [data-view]")?.dataset.view;
+  $("#library-view-toggle").outerHTML = viewToggle(viewMode, { label: "Library view" });
+  if (focusedView) $(`#library-view-toggle [data-view="${focusedView}"]`)?.focus({ preventScroll: true });
   // Preserve native details state because rendering replaces both filter menus.
   const { selectedStatuses, selectedGenres, watchlistOnly } = libraryFilters;
   const statusMenuOpen = $("#status-filter")?.open;
@@ -136,7 +142,7 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
 
   // Gallery and list views share the filtered collection but expose different detail.
   $("#library-grid").className =
-    viewMode === "list" ? "show-list" : "poster-grid";
+    viewMode === "list" ? "show-list" : `poster-grid${viewMode === "backdrop" ? " backdrop-gallery" : ""}`;
   $("#library-grid").innerHTML =
     viewMode === "list"
       ? `<div class="list-header" aria-hidden="true"><span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>${filtered
@@ -146,7 +152,7 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
           )
           .join("")}`
       : filtered
-          .map((show) => galleryShowCard(show))
+          .map((show) => galleryShowCard(show, viewMode))
           .join("");
 
   // Empty states distinguish no results, an empty Watchlist, and Watchlist-only saves.
@@ -163,10 +169,20 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   }
 }
 
-// Lists use the library's complete card and row components without restyling them.
-export function galleryShowCard(show) {
+// Lists and My Shows share gallery cards, including the backdrop overlay variant.
+export function galleryShowCard(show, viewMode = "gallery") {
   const showProgress = progress(show);
-  return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${poster(show)}<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></button>`;
+  const isBackdrop = viewMode === "backdrop";
+  const backdrop = isBackdrop ? image(artworkPath(show, "backdrop"), "w780") : "";
+  const artwork = backdrop ? `<img src="${backdrop}" alt="" loading="lazy">` : poster(show);
+  const badges = `<span class="card-badges">${inWatchlist(show) ? badge("Watchlist") : ""}</span>`;
+  // Both galleries use the same outlined status label beside the title.
+  const status = watchStatus(show);
+  const headingInfo = badge(status);
+  const details = `<div class="card-heading"><h3>${esc(show.name)}</h3>${headingInfo}</div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress>`;
+  // Backdrop details sit inside the image frame; poster cards keep their footer.
+  const overlay = isBackdrop ? `<div class="backdrop-card-overlay">${badges}<div class="backdrop-card-info">${details}</div></div>` : badges;
+  return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${artwork}${overlay}</div>${isBackdrop ? "" : details}</button>`;
 }
 
 export function listShowRow(show) {

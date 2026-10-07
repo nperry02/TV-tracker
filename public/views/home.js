@@ -1,4 +1,5 @@
 import {
+  artworkPath,
   inLibrary,
   matchesTab,
   progress,
@@ -38,7 +39,7 @@ export function renderHome(shows, mutationPending) {
     .map((show) => {
       const showProgress = progress(show);
       const next = showProgress.next;
-      const backdrop = image(show.backdrop_path, "w780");
+      const backdrop = image(artworkPath(show, "backdrop"), "w780");
       return `<article class="continue-card"><button class="continue-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(show, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(show.name)}</strong><small>${episodeCode(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></span></button><button class="next-watched" data-next="${show.id}" aria-label="Mark ${esc(show.name)} ${episodeCode(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
     })
     .join("");

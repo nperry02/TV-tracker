@@ -84,6 +84,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">☷</i>
           <h3>Personal lists</h3>
+          <p>Use the three view icons in My Shows or a list to choose poster gallery, backdrop gallery, or compact rows. Both galleries show an outlined watch status label beside the title instead of the premiere year. The backdrop gallery places details over landscape artwork. Missing backdrops fall back to posters.</p>
           <p>Search the Lists overview by list name or description.</p>
           <p>Collect shows already in My Shows or Watchlist. Search and filter each list using the familiar My Shows layouts. Edit ranked lists to change manual order with position fields; either list type can change its display order.</p>
           <p>List covers follow display order: four or more shows use a 2 × 2 backdrop grid; smaller lists use the first show's backdrop. Missing backdrops fall back to posters.</p>
@@ -95,7 +96,7 @@ export function renderHelp(container) {
       <article>
         <p class="eyebrow">PRIVATE BY DESIGN</p>
         <h2>Your library stays on this computer.</h2>
-        <p>Ratings, progress, lists, and cached show information are stored in <code>data/library.json</code>. List gallery/row preferences stay in this browser. Next Episode has no account or cloud sync.</p>
+        <p>Ratings, progress, lists, and cached show information are stored in <code>data/library.json</code>. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
         <p>Use <a href="/api/export" download>Back up library ↗</a> to download your shows, lists, membership, and manual list order. A show must be removed from its lists before it can be deleted completely.</p>
       </article>
       <article>
@@ -103,6 +104,8 @@ export function renderHelp(container) {
         <h2>Updates happen a little at a time.</h2>
         <p>When the app opens, it refreshes up to five stale shows: daily for Watching and Caught Up, weekly for Paused and Watchlist-only, and every 30 days for Completed and Dropped.</p>
         <p>You can also use Refresh show info in any show’s details to check it immediately.</p>
+        <p>Saved personal poster and backdrop choices take priority over TMDB defaults and survive metadata refreshes and backups.</p>
+        <p>Use Change artwork at the top of show details to choose a poster or backdrop. Options load only when you open the picker; Save changes applies your choices everywhere. Use TMDB default resets either image, and Cancel leaves saved artwork unchanged.</p>
       </article>
       <article class="help-credit">
         <p class="eyebrow">SHOW DATA</p>

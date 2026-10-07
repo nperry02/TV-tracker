@@ -52,6 +52,10 @@ try {
     viewport: { width: 1440, height: 1050 },
   });
   page.on("pageerror", (error) => errors.push(error.message));
+  let artworkRequests = 0;
+  page.on("request", (request) => {
+    if (/\/api\/shows\/\d+\/images$/.test(request.url())) artworkRequests++;
+  });
   page.setDefaultTimeout(live ? 60000 : 10000);
   const selectLibraryStatus = async (status) => {
     if (status === "Watchlist") {
@@ -208,6 +212,13 @@ try {
   await page.getByRole("heading", { name: "Ranked favorites", exact: true }).waitFor();
   assert.equal(await page.locator('.list-show-card[data-list-show="1396"]').count(), 1);
   assert.equal(await page.locator(".list-rank").textContent(), "1");
+  // Each list remembers backdrop view independently of the My Shows preference.
+  await page.getByRole("button", { name: "Backdrop gallery", exact: true }).click();
+  assert.equal(await page.locator(".list-shows.backdrop-gallery").count(), 1);
+  await page.reload();
+  await page.locator(".list-shows.backdrop-gallery .show-card").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Backdrop gallery", exact: true }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator(".list-rank").textContent(), "1");
   await page.getByRole("button", { name: "List", exact: true }).click();
   assert.equal(await page.locator(".list-shows-rows").count(), 1);
   await page.reload();
@@ -235,10 +246,60 @@ try {
   );
   assert.equal(await page.locator(".show-card").count(), 1);
   assert.equal(
-    await page.getByRole("button", { name: /Gallery/ }).getAttribute("aria-pressed"),
+    await page.getByRole("button", { name: "Poster gallery", exact: true }).getAttribute("aria-pressed"),
     "true",
   );
   assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
+  assert.equal(await page.locator("#library-grid .card-heading .status-badge").count(), await page.locator("#library-grid .show-card").count());
+  assert.equal(await page.locator("#library-grid .card-heading small").count(), 0);
+  assert.equal(await page.locator("#library-grid .card-badges .status-badge:not(.status-watchlist)").count(), 0);
+  // Three icon-only choices share information and ordering with wider backdrop cards.
+  const switchButtons = page.locator("#library-view-toggle button");
+  assert.equal(await switchButtons.count(), 3);
+  assert.deepEqual(await switchButtons.allTextContents(), ["", "", ""]);
+  const beforeView = await page.locator("#library-grid").evaluate((grid) => ({
+    columns: getComputedStyle(grid).gridTemplateColumns,
+    info: grid.querySelector(".show-card").textContent,
+  }));
+  await page.getByRole("button", { name: "Backdrop gallery", exact: true }).click();
+  assert.equal(await page.locator("#library-grid.backdrop-gallery").count(), 1);
+  const afterView = await page.locator("#library-grid").evaluate((grid) => ({
+    columns: getComputedStyle(grid).gridTemplateColumns,
+    info: grid.querySelector(".show-card").textContent,
+    ratio: getComputedStyle(grid.querySelector(".poster-wrap")).aspectRatio,
+  }));
+  assert.equal(beforeView.columns.split(" ").length, 6);
+  assert.equal(afterView.columns.split(" ").length, 4);
+  assert.equal(await page.locator("#library-grid .card-heading small").count(), 0);
+  assert.equal(await page.locator("#library-grid .card-heading .status-badge").count(), await page.locator("#library-grid .show-card").count());
+  assert.ok(await page.locator("#library-grid .card-heading .status-badge").first().textContent());
+  assert.equal(afterView.info, beforeView.info);
+  assert.equal(afterView.ratio, "16 / 9");
+  assert.equal(await page.locator("#library-grid .show-card").first().evaluate((card) => {
+    const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
+    const title = card.querySelector(".card-heading").getBoundingClientRect();
+    const badges = card.querySelector(".card-badges").getBoundingClientRect();
+    const progress = card.querySelector(".progress-track").getBoundingClientRect();
+    const label = card.querySelector(".status-badge");
+    return getComputedStyle(label, "::before").content === "none" &&
+      title.top > badges.bottom && progress.bottom <= frame.bottom &&
+      Math.abs(card.getBoundingClientRect().bottom - frame.bottom) < 1;
+  }), true, "Backdrop card information stays within the image frame");
+  if (!live) {
+    // Missing backdrops use posters; personal backdrop choices take priority.
+    assert.ok((await page.locator('#library-grid [data-show="1396"] img').getAttribute("src")).endsWith("/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg"));
+    await page.request.patch(`${base}/api/shows/1396`, { data: { backdropOverride: "/alternate-backdrop.jpg" } });
+  }
+  await page.reload();
+  await page.locator("#library-grid.backdrop-gallery .show-card").waitFor();
+  assert.equal(await page.getByRole("button", { name: "Backdrop gallery", exact: true }).getAttribute("aria-pressed"), "true");
+  if (!live) {
+    assert.ok((await page.locator('#library-grid [data-show="1396"] img').getAttribute("src")).endsWith("/alternate-backdrop.jpg"));
+    await page.request.patch(`${base}/api/shows/1396`, { data: { backdropOverride: null } });
+    await page.reload();
+    await page.locator("#library-grid.backdrop-gallery .show-card").waitFor();
+  }
+  await page.getByRole("button", { name: "Poster gallery", exact: true }).click();
   assert.equal(
     await page.locator('#watchlist-filter .count').textContent(),
     "0",
@@ -786,12 +847,17 @@ try {
       path: "test-results/desktop-list.png",
       fullPage: true,
     });
-    await page.getByRole("button", { name: /Gallery/ }).click();
+    await page.getByRole("button", { name: "Poster gallery", exact: true }).click();
     assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
   }
 
   // Responsive navigation and overflow checks
   mkdirSync("test-results", { recursive: true });
+  await page.getByRole("button", { name: "Backdrop gallery", exact: true }).click();
+  assert.equal(await page.locator("#library-grid.backdrop-gallery .show-card").count(), 6);
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.view), "backdrop");
+  await page.screenshot({ path: "test-results/desktop-backdrop-gallery.png", fullPage: true });
+  await page.getByRole("button", { name: "Poster gallery", exact: true }).click();
   await page.screenshot({
     path: `test-results/${live ? "live" : "desktop"}.png`,
     fullPage: true,
@@ -874,7 +940,7 @@ try {
     `List view fits mobile viewport: ${JSON.stringify(mobileListLayout)}`,
   );
   await page.screenshot({ path: "test-results/mobile-list.png", fullPage: true });
-  await page.getByRole("button", { name: /Gallery/ }).click();
+  await page.getByRole("button", { name: "Poster gallery", exact: true }).click();
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -882,6 +948,34 @@ try {
     true,
     "Gallery view fits mobile viewport",
   );
+  await page.getByRole("button", { name: "Backdrop gallery", exact: true }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
+    "Backdrop gallery fits mobile viewport");
+  const mobileArtworkRatio = await page.locator("#library-grid .poster-wrap").first().evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return bounds.width / bounds.height;
+  });
+  assert.ok(Math.abs(mobileArtworkRatio - 16 / 9) < 0.02);
+  // Multiple badges must not collide with the title on narrow landscape cards.
+  const mobileOverlayFits = await page.locator("#library-grid .show-card").first().evaluate((card) => {
+    const badges = card.querySelector(".card-badges");
+    const watchlist = document.createElement("span");
+    watchlist.className = "status-badge status-watchlist";
+    watchlist.textContent = "Watchlist";
+    badges.append(watchlist);
+    const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
+    const title = card.querySelector(".card-heading").getBoundingClientRect();
+    const progress = card.querySelector(".progress-track").getBoundingClientRect();
+    const status = card.querySelector(".card-heading .status-badge").getBoundingClientRect();
+    const name = card.querySelector(".card-heading h3").getBoundingClientRect();
+    const fits = title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom &&
+      name.right <= status.left && status.right <= frame.right;
+    watchlist.remove();
+    return fits;
+  });
+  assert.equal(mobileOverlayFits, true, "Mobile backdrop overlays fit with overlapping memberships");
+  await page.screenshot({ path: "test-results/mobile-backdrop-gallery.png", fullPage: true });
+  await page.getByRole("button", { name: "Poster gallery", exact: true }).click();
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
   await page.locator('.show-card[data-show="1396"]').click();
   const seasonOptions = page.locator(".season-options");
@@ -905,6 +999,71 @@ try {
     path: "test-results/mobile-detail.png",
     fullPage: true,
   });
+  // Artwork loads only on opening; both tabs share that one response.
+  assert.equal(artworkRequests, 0);
+  await page.getByRole("button", { name: "Change artwork", exact: true }).click();
+  const artworkPicker = page.locator("#artwork-dialog");
+  await page.waitForFunction(() => !document.querySelector("#artwork-status").textContent.includes("Loading"));
+  assert.equal(artworkRequests, 1);
+  await artworkPicker.getByRole("button", { name: "Backdrop", exact: true }).click();
+  assert.equal(artworkRequests, 1);
+  assert.equal(await artworkPicker.evaluate((dialog) => {
+    const footer = dialog.querySelector(".artwork-footer").getBoundingClientRect();
+    return dialog.scrollWidth <= dialog.clientWidth && footer.bottom <= innerHeight;
+  }), true, "Artwork picker and footer fit mobile viewport");
+  await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
+  if (!live) {
+    const openArtwork = async () => {
+      await page.getByRole("button", { name: "Change artwork", exact: true }).click();
+      await page.waitForFunction(() => !document.querySelector("#artwork-status").textContent.includes("Loading"));
+    };
+    // Selection stays pending until saved; browsing more adds no API request.
+    await openArtwork();
+    assert.equal(await artworkPicker.getByRole("radio").count(), 25);
+    await page.screenshot({ path: "test-results/artwork-picker.png", fullPage: true });
+    const beforeMore = artworkRequests;
+    await artworkPicker.getByRole("button", { name: "Show more", exact: true }).click();
+    assert.equal(await artworkPicker.getByRole("radio").count(), 31);
+    assert.equal(artworkRequests, beforeMore);
+    await artworkPicker.getByRole("radio", { name: "Poster 1", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
+    await openArtwork();
+    assert.equal(await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).isChecked(), true);
+    await artworkPicker.getByRole("radio", { name: "Poster 1", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Backdrop", exact: true }).click();
+    await artworkPicker.getByRole("radio", { name: "Backdrop 1", exact: true }).check();
+    // A failed save retains both selections and lets the user retry.
+    await page.route("**/api/shows/1396", (route) => route.request().method() === "PATCH"
+      ? route.fulfill({ status: 502, json: { error: "Artwork save unavailable" } }) : route.continue());
+    await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.locator("#artwork-save-error").waitFor();
+    assert.equal(await artworkPicker.getByRole("radio", { name: "Backdrop 1", exact: true }).isChecked(), true);
+    await page.unroute("**/api/shows/1396");
+    await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
+    await artworkPicker.waitFor({ state: "hidden" });
+    assert.ok((await page.locator(".detail-poster").getAttribute("src")).endsWith("/alternate-poster.jpg"));
+    assert.ok((await page.locator(".detail-backdrop").getAttribute("src")).endsWith("/alternate-backdrop.jpg"));
+    await page.locator("#refresh-show").click();
+    await page.waitForFunction(() => document.querySelector("#refresh-show")?.disabled === false);
+    assert.ok((await page.locator(".detail-backdrop").getAttribute("src")).endsWith("/alternate-backdrop.jpg"));
+    await page.route("**/api/shows/1396/images", (route) => route.fulfill({ json: { posters: [], backdrops: [] } }));
+    await openArtwork();
+    assert.equal(await artworkPicker.getByRole("radio", { name: "Saved selection", exact: true }).isChecked(), true);
+    await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Backdrop", exact: true }).click();
+    await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
+    await artworkPicker.waitFor({ state: "hidden" });
+    await page.unroute("**/api/shows/1396/images");
+    // Failed image requests are retryable and never mutate saved choices.
+    await page.route("**/api/shows/1396/images", (route) => route.fulfill({ status: 502, json: { error: "Artwork unavailable" } }));
+    await openArtwork();
+    await artworkPicker.getByRole("button", { name: "Try again", exact: true }).waitFor();
+    await page.unroute("**/api/shows/1396/images");
+    await artworkPicker.getByRole("button", { name: "Try again", exact: true }).click();
+    await artworkPicker.getByRole("radio", { name: "Poster 1", exact: true }).waitFor();
+    await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
+  }
   // Long metadata stays within a growing hero instead of overlapping its edges.
   const heroFits = await page.locator(".detail-hero").evaluate((hero) => {
     const overview = hero.querySelector(".overview");

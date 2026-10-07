@@ -4,6 +4,7 @@ import {
   inLibrary,
   metadataRefreshQueue,
   statuses,
+  collectionView,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -16,6 +17,7 @@ import {
 } from "./ui.js";
 import { renderStats } from "./views/stats.js";
 import { createSearchDialog } from "./views/search-dialog.js";
+import { createArtworkDialog } from "./views/artwork-dialog.js";
 import { renderHome } from "./views/home.js";
 import { renderHelp } from "./views/help.js";
 import { renderLibrary } from "./views/library.js";
@@ -47,9 +49,7 @@ function selectedListId() {
 }
 function listViewMode(id) {
   try {
-    return localStorage.getItem(`next-episode:list-view:${id}`) === "list"
-      ? "list"
-      : "gallery";
+    return collectionView(localStorage.getItem(`next-episode:list-view:${id}`));
   } catch {
     return "gallery";
   }
@@ -103,9 +103,7 @@ function saveLibraryFilters() {
 // View mode persists across browser sessions when storage is available.
 let viewMode = (() => {
   try {
-    return localStorage.getItem("next-episode:view") === "list"
-      ? "list"
-      : "gallery";
+    return collectionView(localStorage.getItem("next-episode:view"));
   } catch {
     return "gallery";
   }
@@ -140,9 +138,6 @@ function applyRoute({ scroll = false } = {}) {
   if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
 function render() {
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.view === viewMode));
-  });
   renderHome(shows, mutationPending);
   renderLibrary(shows, libraryFilters, viewMode);
   renderLists(
@@ -238,6 +233,16 @@ async function refreshShow(id, notify = true) {
   if (selectedId === id && $("#show-dialog").open) renderShow();
   if (notify) toast("Show information is up to date.");
 }
+
+// Artwork owns temporary image options; the app reconciles only saved choices.
+const artworkDialog = createArtworkDialog({
+  onSaved(updated) {
+    shows = shows.map((show) => show.id === updated.id ? updated : show);
+    render();
+    if (selectedId === updated.id && $("#show-dialog").open) renderShow();
+    toast("Artwork saved.");
+  },
+});
 
 // Search owns its paging state while the app supplies library updates and routing.
 const searchDialog = createSearchDialog({
@@ -338,6 +343,11 @@ document.addEventListener("click", async (event) => {
   }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.id === "change-artwork") {
+    const show = shows.find((entry) => entry.id === selectedId);
+    if (show && !mutationPending) artworkDialog.open(show);
+    return;
+  }
   if (button.id === "create-list" || button.dataset.createList !== undefined) {
     renderListDialog();
     enhanceSelects($("#list-dialog"));
@@ -367,6 +377,7 @@ document.addEventListener("click", async (event) => {
       localStorage.setItem(`next-episode:list-view:${button.dataset.listId}`, button.dataset.listView);
     } catch {}
     render();
+    $(`#list-detail [data-list-view="${button.dataset.listView}"]`)?.focus({ preventScroll: true });
     return;
   }
   if (button.dataset.clearListFilters !== undefined) {
@@ -794,6 +805,7 @@ matchMedia("(max-width: 800px)").addEventListener("change", (event) => {
 // A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))
   dialog.addEventListener("click", (event) => {
+    if (dialog.dataset.saving === "true") return;
     if (event.target !== dialog) return;
     const r = dialog.getBoundingClientRect();
     if (

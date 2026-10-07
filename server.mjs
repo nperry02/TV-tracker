@@ -16,6 +16,7 @@ import {
   inLibrary,
   inWatchlist,
   listSorts,
+  validArtworkPath,
 } from "./public/model.js";
 
 // Persistent library setup and compatibility normalization
@@ -146,6 +147,7 @@ function validateImportedLibrary(value) {
     tracked: inLibrary(show),
     watchlist: inWatchlist(show),
   }));
+  for (const show of next.shows) validateArtworkOverrides(show);
   if ("lists" in next && !Array.isArray(next.lists))
     throw Object.assign(new Error("Backup contains invalid lists."), {
       status: 400,
@@ -265,6 +267,15 @@ async function metadata(id) {
 }
 
 // Request validation and static asset routing
+function validateArtworkOverrides(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw Object.assign(new Error("Expected a show object."), { status: 400 });
+  for (const key of ["posterOverride", "backdropOverride"]) {
+    if (key in value && value[key] !== null && !validArtworkPath(value[key]))
+      throw Object.assign(new Error("Artwork must be a TMDB image path or null."), { status: 400 });
+  }
+}
+
 function validateRating(value) {
   if (
     value !== null &&
@@ -302,6 +313,7 @@ const files = {
   "/views/help.js": ["views/help.js", "text/javascript"],
   "/views/library.js": ["views/library.js", "text/javascript"],
   "/views/lists.js": ["views/lists.js", "text/javascript"],
+  "/views/artwork-dialog.js": ["views/artwork-dialog.js", "text/javascript"],
   "/views/search-dialog.js": ["views/search-dialog.js", "text/javascript"],
   "/views/show-dialog.js": ["views/show-dialog.js", "text/javascript"],
   "/views/stats.js": ["views/stats.js", "text/javascript"],
@@ -500,6 +512,20 @@ export const server = http.createServer(async (req, res) => {
       return send(200, lists);
     }
 
+    // Fetch artwork only on demand. Option collections never enter saved storage.
+    const imagesMatch = path.match(/^\/api\/shows\/(\d+)\/images$/);
+    if (imagesMatch && req.method === "GET") {
+      const id = Number(imagesMatch[1]);
+      if (!library.shows.some((show) => show.id === id))
+        return send(404, { error: "Show not found." });
+      const images = await tmdb(`tv/${id}/images`);
+      const options = (items) => (Array.isArray(items) ? items : [])
+        .filter((item) => validArtworkPath(item?.file_path))
+        .map(({ file_path, width, height, iso_639_1, vote_average, vote_count }) =>
+          ({ file_path, width, height, iso_639_1, vote_average, vote_count }));
+      return send(200, { posters: options(images.posters), backdrops: options(images.backdrops) });
+    }
+
     // Show routes share an ID matcher; the optional suffix distinguishes refreshes.
     const match = path.match(/^\/api\/shows\/(\d+)(\/refresh)?$/);
     if (match) {
@@ -544,7 +570,11 @@ export const server = http.createServer(async (req, res) => {
       }
       if (req.method === "PATCH" && !match[2]) {
         const b = await body(req);
+        validateArtworkOverrides(b);
         const show = update(id, (s) => {
+          // Overrides remain independent of metadata and never affect progress.
+          for (const key of ["posterOverride", "backdropOverride"])
+            if (key in b) s[key] = b[key];
           // Removing tracked membership clears progress but can preserve Watchlist.
           if ("tracked" in b) {
             if (typeof b.tracked !== "boolean")
