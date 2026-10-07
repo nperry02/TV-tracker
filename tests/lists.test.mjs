@@ -61,10 +61,15 @@ test("list APIs validate, persist, restore, and protect referenced shows", async
     return { status: response.status, data: await response.json() };
   }
 
-  // Legacy saves receive an empty list collection without rewriting the file.
+  // Legacy saves receive lists and a quiet, persisted update baseline on first load.
   let result = await request("/api/library");
   assert.deepEqual(result.data.lists, []);
-  assert.equal("lists" in JSON.parse(readFileSync(file)), false);
+  assert.deepEqual(JSON.parse(readFileSync(file)).lists, []);
+  assert.equal(result.data.shows[0].latestUpdate, null);
+  assert.ok(result.data.shows[0].updateSnapshot);
+  assert.equal((await request("/api/preferences", "PATCH", { includeActivity: "yes" })).status, 400);
+  assert.equal((await request("/api/preferences", "PATCH", { includeActivity: false })).data.includeActivity, false);
+  assert.equal((await request("/api/shows/1/update-read", "POST", { id: "stale" })).status, 409);
 
   result = await request("/api/lists", "POST", {
     name: "Favorites",

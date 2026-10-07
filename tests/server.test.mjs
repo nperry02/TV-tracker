@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { once } from "node:events";
+import { reconcileUpdates } from "../public/model.js";
 
 test("local API preserves progress, ratings, and overrides across restarts", async (t) => {
   // Build an isolated library with regular, future, unknown, and special episodes.
@@ -23,7 +24,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     { season_number: 2, episode_number: 3, air_date: "2099-01-01" },
     { season_number: 2, episode_number: 4, air_date: null },
   ];
-  const untouchedShow = {
+  const untouchedShow = reconcileUpdates({
     id: 2,
     name: "Untouched sentinel",
     watched: ["1:1"],
@@ -35,7 +36,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     episodes: [{ season_number: 1, episode_number: 1, air_date: "2020-01-01" }],
     seasons: [{ number: 1 }],
     customMetadata: { mustRemain: "exactly the same" },
-  };
+  });
   writeFileSync(
     file,
     JSON.stringify({

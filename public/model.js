@@ -420,3 +420,61 @@ export function libraryStats(shows, date = today()) {
     topRated: topRatedShows(tracked),
   };
 }
+
+// Latest-update detection and retention
+const retentionMs = 30 * 24 * 60 * 60 * 1000;
+const eventTypes = new Set(["series", "episodes", "premiere", "status"]);
+
+// Capture only the facts needed to identify meaningful changes on the next visit.
+export function updateSnapshot(show, date) {
+  return {
+    status: watchStatus(show, date),
+    seriesStatus: show.seriesStatus || "",
+    aired: (show.episodes || []).filter((episode) => episode.season_number > 0 && aired(episode, date)).map(episodeKey).sort(),
+    premieres: (show.episodes || []).filter((episode) => episode.season_number > 0 && episode.episode_number === 1 && episode.air_date > date)
+      .map((episode) => ({ season: episode.season_number, date: episode.air_date })),
+  };
+}
+
+// Reject malformed optional feed data while allowing libraries predating the feed.
+export function validUpdateData(show) {
+  const snapshot = show.updateSnapshot;
+  const entry = show.latestUpdate;
+  return (!snapshot || (typeof snapshot.status === "string" && typeof snapshot.seriesStatus === "string" &&
+    Array.isArray(snapshot.aired) && snapshot.aired.every((key) => typeof key === "string") &&
+    Array.isArray(snapshot.premieres) && snapshot.premieres.every((item) => Number.isSafeInteger(item.season) && typeof item.date === "string"))) &&
+    (!entry || (typeof entry.id === "string" && eventTypes.has(entry.type) && ["external", "personal"].includes(entry.source) &&
+      Number.isFinite(Date.parse(entry.detectedAt)) && (!entry.readAt || Number.isFinite(Date.parse(entry.readAt))) &&
+      typeof entry.before === "string" && typeof entry.after === "string" && typeof entry.message === "string"));
+}
+
+// Replace a show's latest news, preserving unread external news against personal edits.
+export function reconcileUpdates(show, { source = "external", now = new Date().toISOString(), includeActivity = true } = {}) {
+  const date = now.slice(0, 10);
+  const current = updateSnapshot(show, date);
+  const previous = show.updateSnapshot;
+  let entry = show.latestUpdate || null;
+  if (entry && Date.parse(now) - Date.parse(entry.detectedAt) >= retentionMs) entry = null;
+  let event;
+  if (previous) {
+    if (source === "external" && previous.seriesStatus !== current.seriesStatus && ["Ended", "Canceled"].includes(current.seriesStatus)) {
+      event = { type: "series", message: current.seriesStatus === "Canceled" ? "Series cancelled" : "Series ended" };
+    } else if (source === "external" && current.aired.some((key) => !previous.aired.includes(key))) {
+      event = { type: "episodes", message: "New episodes available" };
+    } else if (source === "external" && JSON.stringify(previous.premieres) !== JSON.stringify(current.premieres)) {
+      const changed = current.premieres.find((item) => !previous.premieres.some((old) => old.season === item.season && old.date === item.date));
+      // Passing a known premiere date is episode news, not a withdrawn announcement.
+      const removed = previous.premieres.find((item) => item.date > date && !current.premieres.some((next) => next.season === item.season));
+      if (changed) event = { type: "premiere", message: `Season ${changed.season} premieres ${changed.date}` };
+      else if (removed) event = { type: "premiere", message: `Season ${removed.season} premiere date is no longer announced` };
+    }
+    if (!event && previous.status !== current.status && (source === "external" || includeActivity)) {
+      event = { type: "status", message: `${previous.status} → ${current.status}` };
+    }
+  }
+  if (event && !(source === "personal" && entry?.source === "external" && !entry.readAt)) {
+    entry = { ...event, id: `${show.id}:${now}:${event.type}`, source, detectedAt: now, readAt: null,
+      before: previous.status, after: current.status };
+  }
+  return { ...show, updateSnapshot: current, latestUpdate: entry };
+}
