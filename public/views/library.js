@@ -170,13 +170,17 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
   }
 }
 
-// Lists use the library's complete card and row components without restyling them.
+// Lists and My Shows share gallery cards, including the backdrop overlay variant.
 export function galleryShowCard(show, viewMode = "gallery") {
   const showProgress = progress(show);
-  // Backdrop cards change only artwork; missing backdrops reuse the poster fallback.
-  const backdrop = viewMode === "backdrop" ? image(artworkPath(show, "backdrop"), "w780") : "";
+  const isBackdrop = viewMode === "backdrop";
+  const backdrop = isBackdrop ? image(artworkPath(show, "backdrop"), "w780") : "";
   const artwork = backdrop ? `<img src="${backdrop}" alt="" loading="lazy">` : poster(show);
-  return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${artwork}<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span></div><div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></button>`;
+  const badges = `<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span>`;
+  const details = `<div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress>`;
+  // Backdrop details sit inside the image frame; poster cards keep their footer.
+  const overlay = isBackdrop ? `<div class="backdrop-card-overlay">${badges}<div class="backdrop-card-info">${details}</div></div>` : badges;
+  return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${artwork}${overlay}</div>${isBackdrop ? "" : details}</button>`;
 }
 
 export function listShowRow(show) {

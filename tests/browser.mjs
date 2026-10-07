@@ -269,6 +269,14 @@ try {
   assert.equal(afterView.columns.split(" ").length, 4);
   assert.equal(afterView.info, beforeView.info);
   assert.equal(afterView.ratio, "16 / 9");
+  assert.equal(await page.locator("#library-grid .show-card").first().evaluate((card) => {
+    const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
+    const title = card.querySelector(".card-heading").getBoundingClientRect();
+    const badges = card.querySelector(".card-badges").getBoundingClientRect();
+    const progress = card.querySelector(".progress-track").getBoundingClientRect();
+    return title.top > badges.bottom && progress.bottom <= frame.bottom &&
+      Math.abs(card.getBoundingClientRect().bottom - frame.bottom) < 1;
+  }), true, "Backdrop card information stays within the image frame");
   if (!live) {
     // Missing backdrops use posters; personal backdrop choices take priority.
     assert.ok((await page.locator('#library-grid [data-show="1396"] img').getAttribute("src")).endsWith("/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg"));
@@ -940,6 +948,21 @@ try {
     return bounds.width / bounds.height;
   });
   assert.ok(Math.abs(mobileArtworkRatio - 16 / 9) < 0.02);
+  // Multiple badges must not collide with the title on narrow landscape cards.
+  const mobileOverlayFits = await page.locator("#library-grid .show-card").first().evaluate((card) => {
+    const badges = card.querySelector(".card-badges");
+    const watchlist = badges.firstElementChild.cloneNode(true);
+    watchlist.className = "status-badge status-watchlist";
+    watchlist.textContent = "Watchlist";
+    badges.append(watchlist);
+    const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
+    const title = card.querySelector(".card-heading").getBoundingClientRect();
+    const progress = card.querySelector(".progress-track").getBoundingClientRect();
+    const fits = title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom;
+    watchlist.remove();
+    return fits;
+  });
+  assert.equal(mobileOverlayFits, true, "Mobile backdrop overlays fit with overlapping memberships");
   await page.screenshot({ path: "test-results/mobile-backdrop-gallery.png", fullPage: true });
   await page.getByRole("button", { name: "Poster gallery", exact: true }).click();
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
