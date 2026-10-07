@@ -47,6 +47,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Viewing progress
 
+- Each watched episode has a compact repeat button that adds one rewatch, with a count excluding the original watch and an adjacent options menu for exact-count corrections. Read-only season and show indicators show the minimum repeat count across currently aired episodes (regular episodes only for shows); new releases can lower summaries without clearing saved counts. Rewatches never change progress, statuses, Continue Watching order, or Home Updates. No bulk rewatch action or separate viewing run.
 - Select the last watched episode within a season, e.g. “watched through season 2, episode 5.”
 - Support marking an entire season watched and convenient individual episode changes.
 - A “watched through” action should mark preceding regular episodes watched so the user does not have to enter their history episode by episode.
