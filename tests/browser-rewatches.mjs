@@ -116,6 +116,24 @@ export async function checkRewatches(page, base) {
     stored = (await (await page.request.get(`${base}/api/library`)).json()).shows.find((entry) => entry.id === 1396);
     assert.equal(stored.rewatchCounts["1:2"], undefined);
     assert.equal(stored.rewatchCounts["2:1"], 2);
+    // My Shows recency includes a repeat while the original progress time stays unchanged.
+    const sorting = structuredClone(backup);
+    const rewatched = sorting.shows.find((entry) => entry.id === 1396);
+    rewatched.lastWatchedAt = "2000-01-01T00:00:00.000Z";
+    delete rewatched.lastRewatchedAt;
+    sorting.shows.push({ ...structuredClone(rewatched), id: 900001,
+      name: "Newer viewing", lastWatchedAt: "2020-01-01T00:00:00.000Z" });
+    await page.request.post(`${base}/api/import`, { data: sorting });
+    await page.reload();
+    await page.locator("#sort").selectOption("last-updated");
+    assert.equal(await page.locator(".show-card").first().getAttribute("data-show"), "900001");
+    await page.locator('.show-card[data-show="1396"]').click();
+    await page.locator("#rewatch-1").click();
+    await page.waitForFunction(() => document.querySelector(".show-card")?.dataset.show === "1396");
+    await settled();
+    stored = (await (await page.request.get(`${base}/api/library`)).json()).shows.find((entry) => entry.id === 1396);
+    assert.equal(stored.lastWatchedAt, "2000-01-01T00:00:00.000Z");
+    assert.ok(Date.parse(stored.lastRewatchedAt) > Date.parse("2020-01-01"));
   } finally {
     await page.unroute("**/api/shows/1396");
     await page.request.post(`${base}/api/import`, { data: backup });

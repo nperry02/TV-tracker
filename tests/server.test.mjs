@@ -148,6 +148,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   }
   for (const key of ["watched", "statusOverride", "lastWatchedAt", "latestUpdate", "rating"])
     assert.deepEqual(result.data[key], beforeRewatch[key]);
+  assert.ok(Date.parse(result.data.lastRewatchedAt) >= Date.parse(firstWatchedAt));
+  const recordedAt = result.data.lastRewatchedAt;
   // Reject invalid repeat requests without mutating the saved count.
   for (const rewatch of [null, { action: "increment", season: 2, episode: 2 },
     { action: "increment", season: 99, episode: 1 }, { action: "other", season: 1, episode: 1 },
@@ -156,8 +158,10 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(JSON.parse(readFileSync(file)).shows[0].rewatchCounts["1:1"], 2);
   result = await patch({ rewatch: { action: "set", season: 1, episode: 1, count: 4 } });
   assert.equal(result.data.rewatchCounts["1:1"], 4);
+  assert.equal(result.data.lastRewatchedAt, recordedAt);
   result = await patch({ rewatch: { action: "set", season: 1, episode: 1, count: 0 } });
   assert.equal(result.data.rewatchCounts, undefined);
+  assert.equal(result.data.lastRewatchedAt, recordedAt);
   await patch({ rewatch: { action: "increment", season: 1, episode: 2 } });
   result = await patch({ progress: { action: "episode", season: 1, episode: 2, watched: false } });
   assert.equal(result.data.rewatchCounts, undefined);
@@ -253,6 +257,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(saved.shows[0].tracked, true);
   assert.equal(saved.shows[0].typicalRuntime, 45);
   assert.deepEqual(saved.shows[0].rewatchCounts, { "1:2": 1 });
+  assert.equal(saved.shows[0].lastRewatchedAt, exported.shows[0].lastRewatchedAt);
   assert.equal(saved.shows[0].episodes[0].runtime, 12);
   result = await patch({ tracked: false });
   assert.equal(result.data.tracked, false);
@@ -263,6 +268,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.deepEqual(result.data.watched, []);
   assert.equal(result.data.rewatchCounts, undefined);
   assert.equal(result.data.lastWatchedAt, null);
+  assert.equal(result.data.lastRewatchedAt, undefined);
   assert.deepEqual(
     JSON.parse(readFileSync(file)).shows.find((show) => show.id === 2),
     untouchedShow,

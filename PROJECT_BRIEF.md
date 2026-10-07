@@ -47,7 +47,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Viewing progress
 
-- Each watched episode has a compact repeat button that adds one rewatch, with a count excluding the original watch and an adjacent options menu for exact-count corrections. Read-only season and show indicators show the minimum repeat count across currently aired episodes (regular episodes only for shows); new releases can lower summaries without clearing saved counts. Rewatches never change progress, statuses, Continue Watching order, or Home Updates. No bulk rewatch action or separate viewing run.
+- Each watched episode has a compact repeat button that adds one rewatch, with a count excluding the original watch and an adjacent options menu for exact-count corrections. Read-only season and show indicators show the minimum repeat count across currently aired episodes (regular episodes only for shows); new releases can lower summaries without clearing saved counts. Recorded rewatches move a show up in My Shows Last updated order, but never change progress, statuses, Continue Watching order, or Home Updates. Editing repeat counts is a correction and does not change recency. No bulk rewatch action or separate viewing run.
 - Select the last watched episode within a season, e.g. “watched through season 2, episode 5.”
 - Support marking an entire season watched and convenient individual episode changes.
 - A “watched through” action should mark preceding regular episodes watched so the user does not have to enter their history episode by episode.
@@ -70,7 +70,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Keep the Home overview focused on library totals, Continue Watching, up to four top-rated shows, and latest updates.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
-- Sort by watch status, personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
+- Sort by watch status, personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress or recorded episode rewatch first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
 - Switch between a poster gallery (the first-use default), a backdrop gallery with four cards per desktop row, and a compact list using a shared icon-only three-way control. Both galleries use outlined watch status labels beside show titles instead of premiere years. Backdrop images are landscape with poster fallback. The list shows name, premiere date, watch status, rating, episode progress, and the last watched update, and the browser remembers the selected view.
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
 - Search TMDB and add shows to this library.
@@ -89,7 +89,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Stats
 
-- Recorded episode rewatches add to episode-watch and estimated watch-hour totals, including specials. Keep unique progress, completed seasons, statuses, ratings, and viewing order independent. Store optional per-episode repeat counts, excluding the original watch, and clear them when the associated watched progress is cleared. Preserve them in metadata refreshes and backups; older libraries default to zero.
+- Recorded episode rewatches add to episode-watch and estimated watch-hour totals, including specials. Keep unique progress, completed seasons, statuses, ratings, and Continue Watching order independent. Store optional per-episode repeat counts, excluding the original watch, and clear them when the associated watched progress is cleared. Preserve them in metadata refreshes and backups; older libraries default to zero.
 - Provide a dedicated Stats view inside the dashboard shell with lifetime library totals.
 - Show tracked shows, episodes watched, completed seasons, estimated watch hours, show-rating distribution, status counts, regular aired-episode progress, and the top genres by show count and Bayesian-weighted rating.
 - Keep Watchlist separate from viewing-status counts because it can overlap any status.

@@ -654,6 +654,7 @@ export const server = http.createServer(async (req, res) => {
             if (!b.tracked) {
               s.watched = [];
               delete s.rewatchCounts;
+              delete s.lastRewatchedAt;
               s.rating = null;
               s.seasonRatings = {};
               s.statusOverride = null;
@@ -752,7 +753,7 @@ export const server = http.createServer(async (req, res) => {
             )
               s.statusOverride = null;
           }
-          // Repeat writes change only counts, never progress, status, or activity ordering.
+          // Repeat writes preserve progress and status, with separate library recency.
           if ("rewatch" in b) {
             const operation = b.rewatch;
             const episode = s.episodes.find((e) => e.season_number === operation?.season &&
@@ -768,6 +769,8 @@ export const server = http.createServer(async (req, res) => {
             if (count) s.rewatchCounts[key] = count;
             else delete s.rewatchCounts[key];
             if (!Object.keys(s.rewatchCounts).length) delete s.rewatchCounts;
+            // Only recording a viewing changes recency; exact-count edits are corrections.
+            if (operation.action === "increment") s.lastRewatchedAt = new Date().toISOString();
           }
           if (!savedShow(s)) {
             const containing = listsContainingShow(id);

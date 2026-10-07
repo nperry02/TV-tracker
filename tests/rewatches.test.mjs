@@ -1,6 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { completeRewatches, episodeRewatches, validRewatchData, libraryStats, progress, watchStatus, reconcileUpdates } from "../public/model.js";
+import { completeRewatches, episodeRewatches, validRewatchData, libraryStats, progress, watchStatus, reconcileUpdates, lastViewingUpdate } from "../public/model.js";
+
+test("library recency includes repeats without replacing original progress recency", () => {
+  assert.equal(lastViewingUpdate({}), null);
+  assert.equal(lastViewingUpdate({ lastWatchedAt: "2026-01-01" }), "2026-01-01");
+  assert.equal(lastViewingUpdate({ lastRewatchedAt: "2026-02-01" }), "2026-02-01");
+  assert.equal(lastViewingUpdate({ lastWatchedAt: "2026-01-01", lastRewatchedAt: "2026-02-01" }), "2026-02-01");
+  assert.equal(lastViewingUpdate({ lastWatchedAt: "2026-03-01", lastRewatchedAt: "2026-02-01" }), "2026-03-01");
+  assert.equal(validRewatchData({ lastRewatchedAt: "invalid" }), false);
+});
 
 // Build a partially watched show with regular episodes, a special, and a future release.
 function fixture(overrides = {}) {

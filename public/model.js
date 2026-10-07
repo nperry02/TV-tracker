@@ -164,12 +164,20 @@ export function completeRewatches(show, season = null, date = today()) {
 
 // Validate optional repeat counts without requiring refreshed metadata to retain every key.
 export function validRewatchData(show) {
+  if ("lastRewatchedAt" in show && (typeof show.lastRewatchedAt !== "string" ||
+      !Number.isFinite(Date.parse(show.lastRewatchedAt)))) return false;
   if (!("rewatchCounts" in show)) return true;
   const counts = show.rewatchCounts;
   return counts !== null && typeof counts === "object" && !Array.isArray(counts) &&
     Object.entries(counts).every(([key, count]) => /^\d+:\d+$/.test(key) &&
       show.watched?.includes(key) && Number.isSafeInteger(count) && count > 0 &&
       count < Number.MAX_SAFE_INTEGER);
+}
+
+// Return the latest original or repeat viewing time for My Shows, leaving progress order separate.
+export function lastViewingUpdate(show) {
+  const dates = [show.lastWatchedAt, show.lastRewatchedAt].filter(Boolean);
+  return dates.sort((a, b) => Date.parse(b) - Date.parse(a))[0] || null;
 }
 // Return the current local calendar date in sortable YYYY-MM-DD form.
 export function today(d = new Date()) {
