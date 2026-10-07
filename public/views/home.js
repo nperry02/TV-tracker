@@ -5,11 +5,40 @@ import {
   progress,
   topRatedShows,
   watchStatus,
+  latestUpdates,
 } from "../model.js";
-import { $, episodeCode, esc, image, poster, stars } from "../ui.js";
+import { $, displayDate, episodeCode, esc, image, poster, stars } from "../ui.js";
+
+// Render one current update per show with separate source and read-state labels.
+function renderUpdates(shows, mutationPending, { includeActivity = true, expanded = false, pendingActivity = null } = {}) {
+  const entries = latestUpdates(shows, includeActivity);
+  const unread = entries.filter((show) => !show.latestUpdate.readAt).length;
+  $("#updates-unread").textContent = unread ? `${unread} unread` : "";
+  // Keep the selected value visible while saving; feed filtering changes only on success.
+  $("#include-activity").checked = pendingActivity ?? includeActivity;
+  $("#include-activity").disabled = mutationPending;
+  $("#updates-more").hidden = entries.length <= 10;
+  $("#updates-more").textContent = expanded ? "Show less" : "Show more";
+  $("#updates-more").setAttribute("aria-expanded", String(expanded));
+  $("#updates-list").innerHTML = entries.length ? entries.slice(0, expanded ? entries.length : 10).map((show) => {
+    const entry = show.latestUpdate;
+    const prominent = entry.source === "external" && watchStatus(show) !== "Dropped";
+    const source = entry.source === "external" ? "Show update" : "Your activity";
+    const transition = entry.type !== "status" && entry.before !== entry.after ? `${entry.before} → ${entry.after}` : "";
+    return `<article class="update-entry${prominent ? " update-external" : ""}${entry.readAt ? " update-read" : ""}">
+      <button class="update-show" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${poster(show, "update-poster", "w92")}</button>
+      <div class="update-copy"><div class="update-meta"><span class="update-source">${source}</span><time datetime="${esc(entry.detectedAt)}">${esc(displayDate(entry.detectedAt, true))}</time>${entry.readAt ? '<span class="update-read-label">Read</span>' : '<span class="update-unread-label">Unread</span>'}</div>
+        <button class="update-title" data-show="${show.id}">${esc(show.name)}</button>
+        <p>${esc(entry.message)}</p>${transition ? `<small>${esc(transition)}</small>` : ""}
+      </div>
+      ${entry.readAt ? "" : `<button class="update-mark-read" data-read-update="${show.id}" data-update-id="${esc(entry.id)}" aria-label="Mark ${esc(show.name)} update as read"${mutationPending ? " disabled" : ""}>Mark as read</button>`}
+    </article>`;
+  }).join("") : '<div class="updates-empty">No recent updates. Show news and status changes will appear here.</div>';
+}
 
 // Render library totals, eligible Continue Watching cards, and top-rated favorites.
-export function renderHome(shows, mutationPending) {
+export function renderHome(shows, mutationPending, updateOptions) {
+  renderUpdates(shows, mutationPending, updateOptions);
   // Overview cards summarize tracked membership rather than Watchlist overlap.
   const tracked = shows.filter((show) => matchesTab(show, "All"));
   const watching = shows.filter((show) => matchesTab(show, "Watching")).length;

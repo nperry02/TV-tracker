@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { once } from "node:events";
+import { reconcileUpdates } from "../public/model.js";
 
 const live = process.env.LIVE_TMDB === "1";
 
@@ -1412,6 +1413,99 @@ try {
   await page.screenshot({ path: "test-results/help.png", fullPage: true });
   await page.goBack();
   await page.locator("#library-view").waitFor();
+  if (!live) {
+    // Seed isolated feed records to verify presentation, retention, and backup/read persistence.
+    const saved = await (await page.request.get(`${base}/api/library`)).json();
+    const now = new Date().toISOString();
+    const template = saved.shows[0];
+    const feedShows = Array.from({ length: 13 }, (_, index) => {
+      const show = reconcileUpdates({ ...structuredClone(template), id: 20000 + index,
+        name: `Update show ${index}`, tracked: true, watchlist: false,
+        statusOverride: index === 2 ? "Dropped" : index === 4 ? "Paused" : "Watching",
+        refreshedAt: now, updateSnapshot: null, latestUpdate: null }, { now });
+      show.latestUpdate = {
+        id: `seed-${index}`, type: index % 2 ? "status" : "premiere",
+        source: index % 2 ? "personal" : "external", readAt: null,
+        detectedAt: new Date(Date.now() - (index === 12 ? 31 * 86400000 : index * 1000)).toISOString(),
+        before: "Watching", after: show.updateSnapshot.status,
+        message: index % 2 ? "Watching → Caught Up" : "Season 2 premieres next month",
+      };
+      return show;
+    });
+    const imported = await page.request.post(`${base}/api/import`, {
+      data: { version: 1, shows: feedShows, lists: [], preferences: { includeActivity: true } },
+    });
+    assert.equal(imported.status(), 200);
+    await page.goto(`${base}/#home`);
+    await page.reload();
+    await page.locator('.update-title[data-show="20000"]').waitFor();
+    assert.equal(await page.locator(".update-entry").count(), 10);
+    assert.equal(await page.locator("#updates-unread").textContent(), "12 unread");
+    await page.locator("#updates-more").click();
+    assert.equal(await page.locator(".update-entry").count(), 12);
+    assert.equal(await page.locator("#updates-more").getAttribute("aria-expanded"), "true");
+    assert.equal(await page.locator('.update-title[data-show="20012"]').count(), 0);
+    assert.equal(await page.locator('.update-title[data-show="20000"]').locator("..").locator("..").evaluate((row) => row.classList.contains("update-external")), true);
+    assert.equal(await page.locator('.update-title[data-show="20002"]').locator("..").locator("..").evaluate((row) => row.classList.contains("update-external")), false);
+    assert.equal(await page.locator('.update-title[data-show="20004"]').locator("..").locator("..").evaluate((row) => row.classList.contains("update-external")), true);
+
+    // Failed read requests preserve unread state; successful reads survive reload and export.
+    await page.route("**/api/shows/20000/update-read", (route) => route.fulfill({ status: 503, json: { error: "Read state unavailable" } }));
+    await page.locator('[data-read-update="20000"]').click();
+    await page.getByText("Read state unavailable", { exact: true }).waitFor();
+    assert.equal(await page.locator('[data-read-update="20000"]').count(), 1);
+    await page.unroute("**/api/shows/20000/update-read");
+    await page.locator('[data-read-update="20000"]').click();
+    await page.waitForFunction(() => !document.querySelector('[data-read-update="20000"]'));
+    assert.equal(await page.locator("#updates-unread").textContent(), "11 unread");
+    await page.reload();
+    await page.locator('.update-title[data-show="20000"]').waitFor();
+    assert.equal(await page.locator('[data-read-update="20000"]').count(), 0);
+    let backup = await (await page.request.get(`${base}/api/export`)).json();
+    assert.ok(backup.shows.find((show) => show.id === 20000).latestUpdate.readAt);
+
+    // Preference persistence hides personal entries, while fresh external news replaces read news.
+    await page.locator("#include-activity").uncheck();
+    await page.waitForFunction(() => document.querySelectorAll(".update-entry").length === 6);
+    await page.reload();
+    await page.locator('.update-title[data-show="20000"]').waitFor();
+    assert.equal(await page.locator("#include-activity").isChecked(), false);
+    assert.equal(await page.locator(".update-entry").count(), 6);
+    backup = await (await page.request.get(`${base}/api/export`)).json();
+    assert.equal(backup.preferences.includeActivity, false);
+    const changed = backup.shows.find((show) => show.id === 20000);
+    changed.latestUpdate = { ...changed.latestUpdate, id: "replacement", type: "series", message: "Series cancelled", detectedAt: now, readAt: null };
+    assert.equal((await page.request.post(`${base}/api/import`, { data: backup })).status(), 200);
+    assert.equal((await page.request.post(`${base}/api/shows/20000/update-read`, { data: { id: "seed-0" } })).status(), 409);
+    const edited = await (await page.request.patch(`${base}/api/shows/20000`, { data: { statusOverride: "Paused" } })).json();
+    assert.equal(edited.latestUpdate.id, "replacement");
+    await page.reload();
+    await page.locator('.update-title[data-show="20000"]').waitFor();
+    assert.equal(await page.locator('.update-title[data-show="20000"]').count(), 1);
+    await page.getByText("Series cancelled", { exact: true }).waitFor();
+    await page.locator('.update-title[data-show="20000"]').click();
+    await page.locator("#show-dialog").waitFor();
+    await page.locator('#show-dialog [data-close="show-dialog"]').click();
+
+    // Mobile rows retain readable controls and stay inside the viewport.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#updates-section").screenshot({ path: "test-results/updates-mobile.png" });
+    const mobileGeometry = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+      overflowing: [...document.querySelectorAll("#home-view section")].filter((node) => node.getBoundingClientRect().right > innerWidth)
+        .map((node) => ({ id: node.id, className: node.className, width: node.getBoundingClientRect().width })),
+    }));
+    assert.ok(mobileGeometry.scrollWidth <= mobileGeometry.width, `Updates fit mobile viewport: ${JSON.stringify(mobileGeometry)}`);
+    await page.setViewportSize({ width: 1440, height: 1050 });
+    await page.locator("#updates-section").screenshot({ path: "test-results/updates-desktop.png" });
+
+    // Advancing the browser date requests persisted date reconciliation without a reload.
+    await page.clock.install();
+    await page.reload();
+    await page.locator('.update-title[data-show="20000"]').waitFor();
+    const reconciled = page.waitForResponse((response) => response.url() === `${base}/api/library`);
+    await page.clock.fastForward(24 * 60 * 60 * 1000);
+    await reconciled;
+  }
   assert.deepEqual(errors, []);
   console.log(
     `${live ? "Live TMDB" : "Fixture"} browser checks passed: search, add, ratings, season progress, stats, overrides, reload persistence, filters, errors, and mobile layout.`,

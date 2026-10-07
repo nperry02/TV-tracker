@@ -1902,6 +1902,7 @@ main {
 }
 #home-view {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 #home-view .page-heading,
@@ -4054,4 +4055,41 @@ h1 {
 }
 @media (max-width: 650px) {
   .poster-grid.backdrop-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Home updates distinguish source and read state without depending on color alone. */
+.updates-section {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.updates-heading { flex-wrap: wrap; gap: 12px; }
+#updates-unread { margin-left: 8px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.updates-preference { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.updates-preference input { accent-color: var(--green); width: 16px; height: 16px; margin: 0; }
+.updates-description { color: var(--muted); font-size: 13px; margin: 8px 0 18px; }
+.update-entry { display: flex; gap: 16px; align-items: center; padding: 18px 0; border-top: 1px solid var(--border); }
+.update-show { flex: 0 0 48px; width: 48px; height: 72px; border: 0; border-radius: 6px; overflow: hidden; padding: 0; }
+.update-poster { width: 100%; height: 100%; object-fit: cover; }
+.update-show .poster-placeholder { width: 100%; height: 100%; font-size: 11px; }
+.update-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.update-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; color: var(--muted); font-size: 11px; }
+.update-source { font-weight: 600; }
+.update-external .update-source, .update-external .update-unread-label { color: var(--green); }
+.update-unread-label { font-weight: 600; }
+.update-title { display: block; border: 0; background: transparent; padding: 0; margin: 6px 0; font-size: 15px; text-align: left; }
+.update-title:hover { background: transparent; text-decoration: underline; }
+.update-copy p { margin: 0; font-size: 13px; color: var(--muted); }
+.update-external:not(.update-read) .update-copy p { color: var(--green); }
+.update-copy small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+.update-mark-read { flex-shrink: 0; font-size: 12px; }
+.update-read .update-source { color: var(--muted); }
+.updates-empty { padding: 20px 0 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+#updates-more { margin-top: 12px; }
+@media (max-width: 650px) {
+  .updates-section { padding: 18px; }
+  .update-entry { flex-wrap: wrap; gap: 12px; }
+  .update-copy { flex-basis: calc(100% - 60px); }
+  .update-mark-read { margin-left: 60px; }
 }

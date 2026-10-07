@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-10-05
+Last updated: 2026-10-07
 
 ## Purpose and scope
 
@@ -75,6 +75,15 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Search TMDB and add shows to this library.
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.
 - Allow removing a show from All Shows to return it to an unwatched state. Clear viewing status, ratings, and progress; preserve an independent Watchlist flag. If it is not on Watchlist, remove the saved entry entirely so it can be added again from search.
+
+## Home updates
+
+- Show one latest meaningful update per saved show below Continue Watching, newest first. Keep entries for 30 days from discovery; show ten initially with Show more/less.
+- Detect newly available regular episodes, future season premiere dates and their changes or removal, Ended/Canceled series changes, and viewing-status changes. Do not log routine refreshes, ratings, artwork edits, or progress that does not change viewing status.
+- External show updates use green accents and explicit Show update labels. Personal activity and news for Dropped shows use muted styling. Paused and Watchlist-only shows still receive news; personal-list membership never duplicates an entry.
+- New external news replaces the previous entry and is unread. Personal activity cannot replace unread external news. Mark as read keeps an entry until expiry. Include my activity defaults on; disabling it hides existing personal entries and stops recording new ones.
+- Persist detection baselines, latest entries, read state, and the preference in the normal library and backups. Existing/newly added shows start quietly without reconstructing historical news.
+- Detect metadata changes during successful refreshes and known air-date transitions on library load or date changes while open. Preserve the existing refresh schedule and all automatic/manual status rules; no push notifications or background service.
 
 ## Stats
 

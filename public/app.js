@@ -5,6 +5,8 @@ import {
   metadataRefreshQueue,
   statuses,
   collectionView,
+  today,
+  latestUpdates,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -41,6 +43,14 @@ let shows = [],
   pendingListShowId = null,
   listMemberSelection = new Set();
 const listFilters = new Map();
+
+// Feed preferences persist with the library; expansion stays local to this page session.
+let updatePreferences = { includeActivity: true },
+  updatesExpanded = false,
+  feedDate = null,
+  feedSyncPending = false,
+  pendingActivity = null,
+  metadataRefreshPending = 0;
 
 // Read the selected list ID from the current hash route.
 function selectedListId() {
@@ -144,7 +154,7 @@ function applyRoute({ scroll = false } = {}) {
 }
 // Redraw collection pages and statistics from saved state, then synchronize select controls.
 function render() {
-  renderHome(shows, mutationPending);
+  renderHome(shows, mutationPending, { ...updatePreferences, expanded: updatesExpanded, pendingActivity });
   renderLibrary(shows, libraryFilters, viewMode);
   renderLists(
     lists,
@@ -239,11 +249,63 @@ async function save(body, message, id = selectedId) {
 }
 // Fetch fresh metadata and redraw matching show details without replacing personal choices.
 async function refreshShow(id, notify = true) {
-  const updated = await api(`/api/shows/${id}/refresh`, { method: "POST" });
-  shows = shows.map((s) => (s.id === id ? updated : s));
+  metadataRefreshPending++;
+  try {
+    const updated = await api(`/api/shows/${id}/refresh`, { method: "POST" });
+    shows = shows.map((s) => (s.id === id ? updated : s));
+    render();
+    if (selectedId === id && $("#show-dialog").open) renderShow();
+    if (notify) toast("Show information is up to date.");
+  } finally {
+    metadataRefreshPending--;
+  }
+}
+
+// Persist read state or the activity preference without optimistic changes on failure.
+async function saveFeedChange(path, body, showId = null) {
+  if (mutationPending) return;
+  mutationPending = true;
+  if (showId === null) pendingActivity = body.includeActivity;
   render();
-  if (selectedId === id && $("#show-dialog").open) renderShow();
-  if (notify) toast("Show information is up to date.");
+  try {
+    const value = await api(path, { method: showId === null ? "PATCH" : "POST", body });
+    if (showId === null) updatePreferences = value;
+    else shows = shows.map((show) => show.id === showId ? value : show);
+  } catch (error) {
+    report(error);
+  } finally {
+    mutationPending = false;
+    pendingActivity = null;
+    render();
+    const target = showId === null ? $("#include-activity") : $(`#updates-list .update-title[data-show="${showId}"]`);
+    target?.focus({ preventScroll: true });
+  }
+}
+
+// Reconcile date transitions and expired entries while open, without racing edits.
+async function syncFeedDate() {
+  if (!feedDate || feedSyncPending || mutationPending || metadataRefreshPending) return;
+  const hasExpired = latestUpdates(shows).length < shows.filter((show) => show.latestUpdate).length;
+  if (feedDate === today() && !hasExpired) return;
+  feedSyncPending = true;
+  const originalShows = shows;
+  const date = today();
+  try {
+    const value = await api("/api/library");
+    // Newer mutations own browser state; a later timer retries skipped reconciliation.
+    if (shows !== originalShows || mutationPending || metadataRefreshPending) return;
+    const saved = new Map(value.shows.map((show) => [show.id, show]));
+    shows = shows.map((show) => saved.has(show.id) ? {
+      ...show, updateSnapshot: saved.get(show.id).updateSnapshot, latestUpdate: saved.get(show.id).latestUpdate,
+    } : show);
+    feedDate = date;
+    render();
+    if ($("#show-dialog").open) renderShow();
+  } catch {
+    // Keep saved data usable offline; the next visible date check retries quietly.
+  } finally {
+    feedSyncPending = false;
+  }
 }
 
 // Artwork owns temporary image options; the app reconciles only saved choices.
@@ -290,6 +352,15 @@ document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
+  if (button.id === "updates-more") {
+    updatesExpanded = !updatesExpanded;
+    render();
+    $("#updates-more").focus({ preventScroll: true });
+    return;
+  }
+  if (button.dataset.readUpdate) return saveFeedChange(
+    `/api/shows/${button.dataset.readUpdate}/update-read`, { id: button.dataset.updateId }, Number(button.dataset.readUpdate),
+  );
   if (button.dataset.tab) {
     // Statuses combine with OR; Watchlist is an independent intersecting filter.
     const tab = button.dataset.tab;
@@ -585,6 +656,9 @@ document.addEventListener("click", async (event) => {
 // Apply filter, sort, rating, membership, rank, and progress changes from delegated controls.
 document.addEventListener("change", (event) => {
   const el = event.target;
+  if (el.id === "include-activity") return saveFeedChange(
+    "/api/preferences", { includeActivity: el.checked },
+  );
   if (el.dataset.listSort) {
     const list = lists.find((entry) => entry.id === el.dataset.listSort);
     if (!list) return;
@@ -852,7 +926,10 @@ renderHelp($("#help-view"));
 // Load the saved library, apply the route, and refresh a bounded queue of stale metadata.
 async function boot() {
   try {
-    ({ shows, lists } = await api("/api/library"));
+    const value = await api("/api/library");
+    ({ shows, lists } = value);
+    updatePreferences = value.preferences || { includeActivity: true };
+    feedDate = today();
     render();
     applyRoute({ scroll: true });
     // Refresh failures stop the batch while leaving saved progress and ratings usable.
@@ -873,4 +950,7 @@ async function boot() {
     $("#retry-load").addEventListener("click", boot);
   }
 }
+// A minute timer covers an open tab; visibility handles browsers that suspend timers.
+setInterval(() => { if (!document.hidden) syncFeedDate(); }, 60_000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncFeedDate(); });
 boot();
