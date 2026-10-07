@@ -652,10 +652,11 @@ h1 {
 }
 .card-badges {
   position: absolute;
-  bottom: 10px;
+  top: 10px;
   left: 9px;
   right: 9px;
   display: flex;
+  justify-content: flex-end;
   gap: 4px;
   flex-wrap: wrap;
 }
@@ -2935,7 +2936,6 @@ h1 {
 .backdrop-card-info .card-meta,
 .backdrop-card-info .unrated { color: #d8e0d7; }
 .backdrop-card-info .progress-track { margin-top: 6px; background: #ffffff36; }
-.backdrop-gallery .list-show-card:has(.list-rank) .card-badges { margin-left: 34px; }
 @media (max-width: 650px) {
   .backdrop-card-overlay { padding: 8px; gap: 4px; }
   .backdrop-card-info .card-heading { gap: 4px; }

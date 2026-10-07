@@ -253,6 +253,18 @@ try {
   assert.equal(await page.locator("#library-grid .card-heading .status-badge").count(), await page.locator("#library-grid .show-card").count());
   assert.equal(await page.locator("#library-grid .card-heading small").count(), 0);
   assert.equal(await page.locator("#library-grid .card-badges .status-badge:not(.status-watchlist)").count(), 0);
+  assert.equal(await page.locator("#library-grid .card-badges").first().evaluate((badges) => {
+    const membership = document.createElement("span");
+    membership.className = "status-badge status-watchlist";
+    membership.textContent = "Watchlist";
+    badges.append(membership);
+    const artwork = badges.closest(".poster-wrap");
+    const frame = artwork.getBoundingClientRect();
+    const border = artwork.clientLeft;
+    const bounds = membership.getBoundingClientRect();
+    membership.remove();
+    return Math.abs(bounds.right - (frame.right - border - 9)) < 1 && Math.abs(bounds.top - (frame.top + border + 10)) < 1;
+  }), true, "Poster gallery Watchlist badges sit at the top right");
   // Three icon-only choices share information and ordering with wider backdrop cards.
   const switchButtons = page.locator("#library-view-toggle button");
   assert.equal(await switchButtons.count(), 3);
@@ -973,7 +985,11 @@ try {
     const progress = card.querySelector(".progress-track").getBoundingClientRect();
     const status = card.querySelector(".card-heading .status-badge").getBoundingClientRect();
     const name = card.querySelector(".card-heading h3").getBoundingClientRect();
-    const fits = title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom &&
+    const membership = watchlist.getBoundingClientRect();
+    const border = card.querySelector(".poster-wrap").clientLeft;
+    const fits = Math.abs(membership.right - (frame.right - border - 8)) < 1 &&
+      Math.abs(membership.top - (frame.top + border + 8)) < 1 &&
+      title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom &&
       name.right <= status.left && status.right <= frame.right;
     watchlist.remove();
     return fits;
