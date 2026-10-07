@@ -267,14 +267,18 @@ try {
   }));
   assert.equal(beforeView.columns.split(" ").length, 6);
   assert.equal(afterView.columns.split(" ").length, 4);
-  assert.equal(afterView.info, beforeView.info);
+  assert.equal(await page.locator("#library-grid .card-heading small").count(), 0);
+  assert.equal(await page.locator("#library-grid .card-heading .backdrop-status-label").count(), await page.locator("#library-grid .show-card").count());
+  assert.ok(await page.locator("#library-grid .card-heading .backdrop-status-label").first().textContent());
   assert.equal(afterView.ratio, "16 / 9");
   assert.equal(await page.locator("#library-grid .show-card").first().evaluate((card) => {
     const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
     const title = card.querySelector(".card-heading").getBoundingClientRect();
     const badges = card.querySelector(".card-badges").getBoundingClientRect();
     const progress = card.querySelector(".progress-track").getBoundingClientRect();
-    return title.top > badges.bottom && progress.bottom <= frame.bottom &&
+    const label = card.querySelector(".backdrop-status-label");
+    return getComputedStyle(label, "::before").content === "none" &&
+      title.top > badges.bottom && progress.bottom <= frame.bottom &&
       Math.abs(card.getBoundingClientRect().bottom - frame.bottom) < 1;
   }), true, "Backdrop card information stays within the image frame");
   if (!live) {
@@ -951,14 +955,17 @@ try {
   // Multiple badges must not collide with the title on narrow landscape cards.
   const mobileOverlayFits = await page.locator("#library-grid .show-card").first().evaluate((card) => {
     const badges = card.querySelector(".card-badges");
-    const watchlist = badges.firstElementChild.cloneNode(true);
+    const watchlist = document.createElement("span");
     watchlist.className = "status-badge status-watchlist";
     watchlist.textContent = "Watchlist";
     badges.append(watchlist);
     const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
     const title = card.querySelector(".card-heading").getBoundingClientRect();
     const progress = card.querySelector(".progress-track").getBoundingClientRect();
-    const fits = title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom;
+    const status = card.querySelector(".card-heading .backdrop-status-label").getBoundingClientRect();
+    const name = card.querySelector(".card-heading h3").getBoundingClientRect();
+    const fits = title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom &&
+      name.right <= status.left && status.right <= frame.right;
     watchlist.remove();
     return fits;
   });

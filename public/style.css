@@ -2934,7 +2934,17 @@ h1 {
 }
 .backdrop-card-info .card-heading { margin-top: 0; }
 .backdrop-card-info .card-heading h3 { min-width: 0; }
-.backdrop-card-info .card-heading small { flex-shrink: 0; }
+/* Reuse badge colors with a clearer border and no bullet for backdrop headings. */
+.backdrop-card-info .backdrop-status-label {
+  position: static;
+  flex-shrink: 0;
+  align-self: center;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-weight: 650;
+}
+.backdrop-status-label::before { content: none; }
 .backdrop-card-info .card-meta { margin-top: 4px; }
 .backdrop-card-info .card-meta > span { flex-shrink: 0; }
 .backdrop-card-info .card-heading small,

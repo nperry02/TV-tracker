@@ -176,8 +176,13 @@ export function galleryShowCard(show, viewMode = "gallery") {
   const isBackdrop = viewMode === "backdrop";
   const backdrop = isBackdrop ? image(artworkPath(show, "backdrop"), "w780") : "";
   const artwork = backdrop ? `<img src="${backdrop}" alt="" loading="lazy">` : poster(show);
-  const badges = `<span class="card-badges">${inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span>`;
-  const details = `<div class="card-heading"><h3>${esc(show.name)}</h3><small>${year(show)}</small></div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress>`;
+  const badges = `<span class="card-badges">${!isBackdrop && inLibrary(show) ? badge(watchStatus(show)) : ""}${inWatchlist(show) ? badge("Watchlist") : ""}</span>`;
+  // Backdrop headings replace the year with an outlined status label.
+  const status = watchStatus(show);
+  const headingInfo = isBackdrop
+    ? badge(status).replace("status-badge", "status-badge backdrop-status-label")
+    : `<small>${year(show)}</small>`;
+  const details = `<div class="card-heading"><h3>${esc(show.name)}</h3>${headingInfo}</div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress>`;
   // Backdrop details sit inside the image frame; poster cards keep their footer.
   const overlay = isBackdrop ? `<div class="backdrop-card-overlay">${badges}<div class="backdrop-card-info">${details}</div></div>` : badges;
   return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${artwork}${overlay}</div>${isBackdrop ? "" : details}</button>`;
