@@ -662,6 +662,10 @@ h1 {
 .poster-wrap .card-badges .status-badge {
   position: static;
 }
+.detail-heading .status-badge {
+  font-size: 12px;
+  padding: 4px 8px;
+}
 .detail-heading .status-badge + .status-badge {
   margin-left: 6px;
 }
