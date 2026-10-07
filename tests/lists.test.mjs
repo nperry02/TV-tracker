@@ -17,6 +17,7 @@ test("list APIs validate, persist, restore, and protect referenced shows", async
   writeFileSync(file, JSON.stringify({ version: 1, shows }));
 
   let child;
+  // Start the list fixture server with an isolated persistent library file.
   async function start() {
     child = spawn(process.execPath, ["server.mjs"], {
       env: { ...process.env, PORT: "0", TV_DATA_FILE: file },
@@ -36,6 +37,7 @@ test("list APIs validate, persist, restore, and protect referenced shows", async
       });
     });
   }
+  // Stop the fixture server and wait for shutdown before cleanup or restart.
   async function stop() {
     if (child?.exitCode === null) {
       const done = once(child, "exit");
@@ -49,6 +51,7 @@ test("list APIs validate, persist, restore, and protect referenced shows", async
   });
 
   let base = await start();
+  // Call the list fixture API with an optional JSON payload and capture its response.
   async function request(path, method = "GET", value) {
     const response = await fetch(`${base}${path}`, {
       method,

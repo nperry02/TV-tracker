@@ -25,6 +25,7 @@ import {
 } from "../ui.js";
 
 // Card and list presentation helpers
+// Describe the next unwatched episode or the current aired-episode progress.
 function progressLabel(show) {
   const showProgress = progress(show);
   if (showProgress.next)
@@ -34,6 +35,7 @@ function progressLabel(show) {
   return "Not started";
 }
 
+// Sort a filtered collection in place using the chosen library display order.
 function sortShows(shows, sort) {
   // Missing dates stay after dated shows; names make every ordering deterministic.
   shows.sort((a, b) => {
@@ -71,6 +73,7 @@ function sortShows(shows, sort) {
   });
 }
 
+// Render library counts, filters, and the selected collection layout from saved shows.
 export function renderLibrary(shows, libraryFilters, viewMode) {
   // My Shows and list details use the same complete three-way view switch.
   const focusedView = document.activeElement?.closest("#library-view-toggle [data-view]")?.dataset.view;
@@ -172,6 +175,7 @@ export function renderLibrary(shows, libraryFilters, viewMode) {
 }
 
 // Lists and My Shows share gallery cards, including the backdrop overlay variant.
+// Render a shared poster or backdrop card with status, rating, progress, and membership.
 export function galleryShowCard(show, viewMode = "gallery") {
   const showProgress = progress(show);
   const isBackdrop = viewMode === "backdrop";
@@ -187,6 +191,7 @@ export function galleryShowCard(show, viewMode = "gallery") {
   return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${artwork}${overlay}</div>${isBackdrop ? "" : details}</button>`;
 }
 
+// Render a compact show row with artwork, release date, status, rating, and progress.
 export function listShowRow(show) {
   return `<button class="show-card show-row" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><span class="list-title">${poster(show, "list-poster", "w92")}<span><strong>${esc(show.name)}</strong>${inWatchlist(show) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(show.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(show))}</span><span class="list-cell" data-label="Rating">${stars(show.rating)}</span><span class="list-cell" data-label="Progress">${esc(progressLabel(show))}</span><span class="list-cell" data-label="Last updated">${show.lastWatchedAt ? displayDate(show.lastWatchedAt, true) : "No updates yet"}</span></button>`;
 }

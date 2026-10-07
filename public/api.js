@@ -1,4 +1,4 @@
-// Send JSON requests through one error boundary so callers receive user-safe messages.
+// Send a JSON request and reject unsuccessful responses with the server's error message.
 export async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,

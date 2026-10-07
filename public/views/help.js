@@ -1,4 +1,5 @@
 // Static product guidance stays separate from the application shell.
+// Render app usage guidance, storage behavior, and third-party attribution.
 export function renderHelp(container) {
   container.innerHTML = `
     <header class="help-hero">

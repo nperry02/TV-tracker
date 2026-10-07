@@ -1,11 +1,13 @@
 import { artworkPath } from "./model.js";
 
+// Find the first element matching a document selector.
 export const $ = (selector) => document.querySelector(selector);
 
 // Accessible custom-select enhancement
 let openSelect;
 let selectId = 0;
 
+// Close a custom select menu and optionally restore focus to its trigger.
 function closeSelect(wrapper, restoreFocus = false) {
   if (!wrapper) return;
   const trigger = wrapper.querySelector(".custom-select-trigger");
@@ -16,6 +18,7 @@ function closeSelect(wrapper, restoreFocus = false) {
   if (restoreFocus) trigger.focus();
 }
 
+// Synchronize a custom select's label, disabled state, and menu with its native options.
 function syncSelect(wrapper) {
   const select = wrapper.querySelector("select");
   const trigger = wrapper.querySelector(".custom-select-trigger");
@@ -37,6 +40,7 @@ function syncSelect(wrapper) {
       item.dataset.value = option.value;
       item.innerHTML = `<i aria-hidden="true">${option.selected ? "✓" : ""}</i><span></span>`;
       item.querySelector("span").textContent = option.textContent;
+      // Apply the selected native value, notify listeners, and close the menu.
       item.addEventListener("click", () => {
         select.value = option.value;
         select.dispatchEvent(new Event("change", { bubbles: true }));
@@ -47,6 +51,7 @@ function syncSelect(wrapper) {
   );
 }
 
+// Close any other menu, synchronize this select, and focus its selected option.
 function openCustomSelect(wrapper) {
   if (openSelect && openSelect !== wrapper) closeSelect(openSelect);
   syncSelect(wrapper);
@@ -59,6 +64,7 @@ function openCustomSelect(wrapper) {
   menu.querySelector('[aria-selected="true"]')?.focus();
 }
 
+// Create or resynchronize accessible custom controls for native selects in a subtree.
 export function enhanceSelects(root = document) {
   root.querySelectorAll("select").forEach((select) => {
     // Render cycles reuse existing wrappers and only resynchronize their contents.
@@ -91,12 +97,16 @@ export function enhanceSelects(root = document) {
     menu.hidden = true;
     wrapper.append(trigger, menu);
     syncSelect(wrapper);
+    // Redirect native-select focus to its visible custom trigger.
     select.addEventListener("focus", () => trigger.focus());
+    // Reflect native value changes in the visible custom menu.
     select.addEventListener("change", () => syncSelect(wrapper));
+    // Toggle this custom select menu from its trigger.
     trigger.addEventListener("click", () => {
       if (menu.hidden) openCustomSelect(wrapper);
       else closeSelect(wrapper);
     });
+    // Handle opening, dismissal, and keyboard navigation between enabled options.
     wrapper.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -118,11 +128,13 @@ export function enhanceSelects(root = document) {
   });
 }
 
+// Close the active custom select when a click occurs outside its wrapper.
 document.addEventListener("click", (event) => {
   if (openSelect && !event.target.closest(".custom-select")) closeSelect(openSelect);
 });
 
 // Safe display and media formatting
+// Escape text for safe insertion into HTML markup and attributes.
 export const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -136,32 +148,40 @@ export const esc = (value) =>
       })[character],
   );
 
+// Build a sized TMDB image URL, returning an empty string when no path is available.
 export const image = (path, size = "w342") =>
   path && /^\/[\w.-]+$/.test(path)
     ? `https://image.tmdb.org/t/p/${size}${path}`
     : "";
 
+// Extract a show's premiere year from its first air date.
 export const year = (show) => (show.first_air_date || "").slice(0, 4);
+// Format an episode's season and number for display.
 export const episodeCode = (episode) =>
   `S${episode.season_number} E${episode.episode_number}`;
 
+// Render the shared outlined watch-status or Watchlist label.
 export const badge = (status) =>
   `<span class="status-badge status-${status.toLowerCase().replaceAll(" ", "-")}">${status}</span>`;
 
+// Render a show's star rating, or an explicit unrated label.
 export const stars = (rating) =>
   rating
     ? `<span class="stars" aria-label="${rating} out of 5 stars">${"★".repeat(Math.floor(rating))}${rating % 1 ? "½" : ""}</span>`
     : '<span class="unrated">Not rated</span>';
 
+// Render resolved poster artwork, falling back to a title placeholder.
 export const poster = (show, className = "", size) =>
   image(artworkPath(show, "poster"), size)
     ? `<img class="${className}" src="${image(artworkPath(show, "poster"), size)}" alt="" loading="lazy">`
     : `<span class="poster-placeholder ${className}">${esc(show.name)}</span>`;
 
 // Collection pages share one switch so its icons, labels, and semantics stay aligned.
+// Render the shared icon-only poster, backdrop, and list display switch.
 export function viewToggle(active, { kind = "library", id = "", label = "Collection view" } = {}) {
   const attribute = kind === "list" ? "data-list-view" : "data-view";
   const listId = kind === "list" ? ` data-list-id="${esc(id)}"` : "";
+  // Render the gallery glyph, rotating the backdrop variant through its CSS class.
   const galleryIcon = (backdrop = false) => `<svg class="view-icon gallery-view-icon${backdrop ? " backdrop-gallery-view-icon" : ""}" viewBox="0 0 15 15" aria-hidden="true"><rect x="2" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="2" y="8.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="8.5" width="4.5" height="6" rx="0.6"></rect></svg>`;
   const views = [
     ["gallery", "Poster gallery", galleryIcon()],
@@ -172,6 +192,7 @@ export function viewToggle(active, { kind = "library", id = "", label = "Collect
 }
 
 // List collections use the library toolbar structure and shared view switch.
+// Compose the shared collection toolbar from feature-supplied search and filter controls.
 export function collectionControls({
   label,
   statusControl,
@@ -187,6 +208,7 @@ export function collectionControls({
 }
 
 // Collection status filters share the same multi-select menu and status cues.
+// Render status and Watchlist filter options with counts and selection state.
 export function collectionStatusFilter({
   selected,
   options,
@@ -202,6 +224,7 @@ export function collectionStatusFilter({
   const dots = selectedLabels
     .map((status) => `<i class="status-filter-dot ${status.toLowerCase().replaceAll(" ", "-")}" aria-hidden="true"></i>`)
     .join("");
+  // Render one status-filter option with its count and current selection.
   const option = (status, label, isAll = false) => {
     const active = isAll ? allActive : selected.has(status);
     const value = isAll ? allValue : status;
@@ -212,13 +235,16 @@ export function collectionStatusFilter({
 }
 
 // Genre filtering uses the same multi-select dropdown in every show collection.
+// Render a multi-genre filter with a summary of the current selection.
 export function collectionGenreFilter({ selected, genres, attribute, id = "", open = false }) {
   const names = genres.filter(([value]) => selected.has(value)).map(([, name]) => name);
+  // Render one genre-filter option with its current selection.
   const option = (value, name, isAll = false) => `<button class="status-filter-option" type="button" ${attribute}="${esc(value)}" aria-pressed="${isAll ? !selected.size : selected.has(value)}"><span>${esc(name)}</span></button>`;
   return `<details class="status-filter genre-filter"${id ? ` id="${esc(id)}"` : ""}${open ? " open" : ""}><summary><span class="status-filter-selection"><span>${names.length ? names.join(" + ") : "All genres"}</span></span><i class="status-filter-chevron" aria-hidden="true"></i></summary><div class="status-filter-menu" role="group" aria-label="Filter by genre">${option("", "All genres", true)}${genres.map(([value, name]) => option(value, name)).join("")}</div></details>`;
 }
 
 // Dates without a time are interpreted locally to avoid timezone date shifts.
+// Format a local date or timestamp, with a fallback for missing or invalid values.
 export function displayDate(value, includeTime = false) {
   if (!value) return "Not recorded";
   const date = new Date(includeTime ? value : `${value}T00:00:00`);
@@ -233,6 +259,7 @@ export function displayDate(value, includeTime = false) {
 
 // Transient feedback
 let toastTimer;
+// Show temporary feedback in a popover, replacing the previous dismissal timer.
 export function toast(message) {
   clearTimeout(toastTimer);
   const element = $("#toast");
@@ -245,6 +272,7 @@ export function toast(message) {
   }, 6000);
 }
 
+// Display an operation's error message through the shared toast.
 export function report(error) {
   toast(error.message);
 }

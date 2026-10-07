@@ -16,6 +16,7 @@ export const listSortOptions = [
 const rankedSortOption = ["manual", "Ranked order"];
 
 // Overview previews always reflect the order visitors will see inside the list.
+// Render a list overview card with sorted artwork previews, metadata, and edit controls.
 function listCard(list, shows) {
   const entries = listEntries(list, shows);
   // Small lists use one cover; four or more shows form a backdrop mosaic.
@@ -43,6 +44,7 @@ function listCard(list, shows) {
   </article>`;
 }
 
+// Wrap a shared gallery card or row with its list context and optional manual rank.
 function listShowCard({ show, index: rankIndex }, list, viewMode) {
   return `<article class="list-show-card${viewMode === "list" ? " ranked-list-row" : ""}" data-list-show="${show.id}" data-list-id="${esc(list.id)}">
     ${list.ordered ? `<span class="list-rank">${rankIndex + 1}</span>` : ""}
@@ -50,6 +52,7 @@ function listShowCard({ show, index: rankIndex }, list, viewMode) {
   </article>`;
 }
 
+// Render a list's filtered members, display controls, and collection-specific empty state.
 function renderDetail(list, shows, viewMode, filters) {
   const allEntries = listEntries(list, shows);
   const statusMenuOpen = document.querySelector(".list-collection-controls .status-filter")?.open;
@@ -89,6 +92,7 @@ function renderDetail(list, shows, viewMode, filters) {
     <div class="list-shows ${viewMode === "list" ? `show-list list-shows-rows${list.ordered ? " ranked-list-rows" : ""}` : `poster-grid${viewMode === "backdrop" ? " backdrop-gallery" : ""}`}">${viewMode === "list" && entries.length ? `<div class="list-header" aria-hidden="true">${list.ordered ? "<span>#</span>" : ""}<span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>` : ""}${entries.length ? entries.map((entry) => listShowCard(entry, list, viewMode)).join("") : allEntries.length ? '<div class="empty list-detail-empty"><h2>No shows match these filters.</h2><p>Try another search, status, genre, or rating.</p><button type="button" data-clear-list-filters>Clear filters</button></div>' : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div></div>`;
 }
 
+// Render the searched overview or the selected list detail page.
 export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery", filters = { query: "", statuses: new Set(), watchlist: false, genres: new Set(), rating: "" }, overviewQuery = "") {
   const selected = lists.find((list) => list.id === selectedListId);
   $("#lists-overview").hidden = Boolean(selected);
@@ -106,6 +110,7 @@ export function renderLists(lists, shows, selectedListId = null, viewMode = "gal
   $("#lists-grid").hidden = !matches.length;
 }
 
+// Render searchable membership checkboxes while preserving unsaved selections.
 export function renderMemberOptions(list, shows, query = "", selectedIds = null) {
   const selected = selectedIds || new Set(list.entries.map((entry) => entry.showId));
   const matches = shows.filter((show) => show.name.toLowerCase().includes(query.trim().toLowerCase()));
@@ -114,12 +119,14 @@ export function renderMemberOptions(list, shows, query = "", selectedIds = null)
     : '<p class="muted">No saved shows match your search.</p>';
 }
 
+// Render the lists available for a show and mark its existing memberships.
 export function renderShowListOptions(show, lists) {
   $("#show-lists-options").innerHTML = lists.length
     ? lists.map((list) => `<label class="show-list-option"><input type="checkbox" name="listId" value="${esc(list.id)}"${list.entries.some((entry) => entry.showId === show.id) ? " checked" : ""}><span><strong>${esc(list.name)}</strong><small>${list.entries.length} ${list.entries.length === 1 ? "show" : "shows"}</small></span></label>`).join("")
     : '<p class="muted">You have not created any lists yet.</p>';
 }
 
+// Populate create or edit controls and render saved members in manual order.
 export function renderListDialog(list = null, shows = []) {
   const editing = Boolean(list);
   $("#list-dialog-title").textContent = editing ? "Edit list" : "Create a list";

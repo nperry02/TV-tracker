@@ -4,6 +4,7 @@ import { esc } from "../ui.js";
 const infoIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
 
 // Compact display formatting
+// Convert watched minutes into a compact hour total, with a fallback for unknown values.
 function formatHours(minutes) {
   if (minutes == null) return "—";
   const hours = minutes / 60;
@@ -11,6 +12,7 @@ function formatHours(minutes) {
 }
 
 // One compact SVG keeps the histogram dependency-free and easy to inspect.
+// Render an accessible SVG histogram of half-star rating counts.
 function ratingChart(buckets) {
   const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
   const scaleMax = Math.ceil(max / 5) * 5;
@@ -33,6 +35,7 @@ function ratingChart(buckets) {
   return `<svg class="rating-chart" viewBox="0 0 564 176" role="list" aria-label="Show ratings from half a star to five stars">${gridLines}${bars}</svg>`;
 }
 
+// Render lifetime metrics and accessible charts from the model's library statistics.
 export function renderStats(shows, container) {
   // The model owns all calculations; this renderer only shapes accessible sections.
   const data = libraryStats(shows);

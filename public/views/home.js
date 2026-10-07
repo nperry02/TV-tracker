@@ -8,6 +8,7 @@ import {
 } from "../model.js";
 import { $, episodeCode, esc, image, poster, stars } from "../ui.js";
 
+// Render library totals, eligible Continue Watching cards, and top-rated favorites.
 export function renderHome(shows, mutationPending) {
   // Overview cards summarize tracked membership rather than Watchlist overlap.
   const tracked = shows.filter((show) => matchesTab(show, "All"));

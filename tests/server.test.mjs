@@ -56,6 +56,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     }),
   );
   let child;
+  // Start an isolated fixture server and resolve its dynamically assigned address.
   async function start() {
     child = spawn(process.execPath, ["server.mjs"], {
       env: {
@@ -81,6 +82,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
       });
     });
   }
+  // Stop the fixture server and wait for its process to exit.
   async function stop() {
     if (child && child.exitCode === null) {
       const done = once(child, "exit");
@@ -95,6 +97,7 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
     rmSync(directory, { recursive: true, force: true });
   });
   let base = await start();
+  // Send a show mutation to the fixture API and return its status and JSON response.
   async function patch(body) {
     const res = await fetch(`${base}/api/shows/1`, {
       method: "PATCH",
