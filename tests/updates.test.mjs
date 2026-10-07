@@ -37,14 +37,14 @@ test("paused and dropped shows get news without changing their manual status", (
   }
 });
 
-test("personal changes respect unread news and activity preferences", () => {
+test("personal changes respect unread news and are otherwise always recorded", () => {
   const baseline = reconcileUpdates(fixture(), { now: "2026-10-09T12:00:00Z" });
   const news = reconcileUpdates({ ...baseline, seriesStatus: "Canceled" }, { now: "2026-10-09T13:00:00Z" });
   const personal = reconcileUpdates({ ...news, statusOverride: "Paused" }, { source: "personal", now: "2026-10-09T14:00:00Z" });
   assert.deepEqual(personal.latestUpdate, news.latestUpdate);
   const read = { ...news, latestUpdate: { ...news.latestUpdate, readAt: "2026-10-09T14:00:00Z" } };
   assert.equal(reconcileUpdates({ ...read, statusOverride: "Paused" }, { source: "personal", now: "2026-10-09T15:00:00Z" }).latestUpdate.source, "personal");
-  assert.equal(reconcileUpdates({ ...baseline, statusOverride: "Paused" }, { source: "personal", includeActivity: false, now: "2026-10-09T15:00:00Z" }).latestUpdate, null);
+  assert.equal(reconcileUpdates({ ...baseline, statusOverride: "Paused" }, { source: "personal", now: "2026-10-09T15:00:00Z" }).latestUpdate.source, "personal");
 });
 
 test("expiry is exactly 30 days and malformed backup records are rejected", () => {
@@ -81,12 +81,11 @@ test("a finished ended show transitions to Completed and personal progress can e
   assert.equal(watched.latestUpdate.source, "personal");
 });
 
-test("feed filtering sorts latest first and hides expired or excluded personal activity", () => {
+test("feed sorts latest first, includes personal activity, and excludes expired entries", () => {
   const entries = [
     { id: 1, latestUpdate: { source: "external", detectedAt: "2026-10-01T12:00:00Z" } },
     { id: 2, latestUpdate: { source: "personal", detectedAt: "2026-10-02T12:00:00Z", readAt: "2026-10-03T12:00:00Z" } },
     { id: 3, latestUpdate: { source: "external", detectedAt: "2026-08-01T12:00:00Z" } },
   ];
-  assert.deepEqual(latestUpdates(entries, true, "2026-10-03T12:00:00Z").map((show) => show.id), [2, 1]);
-  assert.deepEqual(latestUpdates(entries, false, "2026-10-03T12:00:00Z").map((show) => show.id), [1]);
+  assert.deepEqual(latestUpdates(entries, "2026-10-03T12:00:00Z").map((show) => show.id), [2, 1]);
 });

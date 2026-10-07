@@ -44,12 +44,11 @@ let shows = [],
   listMemberSelection = new Set();
 const listFilters = new Map();
 
-// Feed preferences persist with the library; expansion stays local to this page session.
-let updatePreferences = { includeActivity: true },
-  updatesExpanded = false,
+// Feed expansion stays local; read state persists with each show's update.
+let updatesExpanded = false,
+  pendingReadId = null,
   feedDate = null,
   feedSyncPending = false,
-  pendingActivity = null,
   metadataRefreshPending = 0;
 
 // Read the selected list ID from the current hash route.
@@ -154,7 +153,9 @@ function applyRoute({ scroll = false } = {}) {
 }
 // Redraw collection pages and statistics from saved state, then synchronize select controls.
 function render() {
-  renderHome(shows, mutationPending, { ...updatePreferences, expanded: updatesExpanded, pendingActivity });
+  renderHome(shows, mutationPending, {
+    expanded: updatesExpanded, pendingReadId,
+  });
   renderLibrary(shows, libraryFilters, viewMode);
   renderLists(
     lists,
@@ -261,24 +262,47 @@ async function refreshShow(id, notify = true) {
   }
 }
 
-// Persist read state or the activity preference without optimistic changes on failure.
-async function saveFeedChange(path, body, showId = null) {
+// Persist read state, retaining the unread entry when its request fails.
+async function markUpdateRead(showId, entryId) {
   if (mutationPending) return;
   mutationPending = true;
-  if (showId === null) pendingActivity = body.includeActivity;
+  // Keep the check selected while saving; persisted read state changes only on success.
+  pendingReadId = showId;
   render();
   try {
-    const value = await api(path, { method: showId === null ? "PATCH" : "POST", body });
-    if (showId === null) updatePreferences = value;
-    else shows = shows.map((show) => show.id === showId ? value : show);
+    const value = await api(`/api/shows/${showId}/update-read`, { method: "POST", body: { id: entryId } });
+    shows = shows.map((show) => show.id === showId ? value : show);
   } catch (error) {
     report(error);
   } finally {
     mutationPending = false;
-    pendingActivity = null;
+    pendingReadId = null;
     render();
-    const target = showId === null ? $("#include-activity") : $(`#updates-list .update-title[data-show="${showId}"]`);
+    const target = $(`#updates-list input[data-read-update="${showId}"]`) || $(`#updates-list .update-title[data-show="${showId}"]`);
     target?.focus({ preventScroll: true });
+  }
+}
+
+// Mark the current unread feed in one save, preserving news that replaces it during the request.
+async function markAllUpdatesRead() {
+  if (mutationPending) return;
+  // Snapshot all unread entries, including the ones beyond the initial ten rows.
+  const updates = latestUpdates(shows).filter((show) => !show.latestUpdate.readAt)
+    .map((show) => ({ showId: show.id, id: show.latestUpdate.id }));
+  if (!updates.length) return;
+  mutationPending = true;
+  render();
+  try {
+    const value = await api("/api/updates/read-all", { method: "POST", body: { updates } });
+    const saved = new Map(value.shows.map((show) => [show.id, show]));
+    shows = shows.map((show) => saved.get(show.id) || show);
+    toast("Updates marked as read.");
+  } catch (error) {
+    report(error);
+  } finally {
+    mutationPending = false;
+    render();
+    $("#updates-list").focus({ preventScroll: true });
   }
 }
 
@@ -352,15 +376,13 @@ document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
+  if (button.id === "updates-unread") return markAllUpdatesRead();
   if (button.id === "updates-more") {
     updatesExpanded = !updatesExpanded;
     render();
     $("#updates-more").focus({ preventScroll: true });
     return;
   }
-  if (button.dataset.readUpdate) return saveFeedChange(
-    `/api/shows/${button.dataset.readUpdate}/update-read`, { id: button.dataset.updateId }, Number(button.dataset.readUpdate),
-  );
   if (button.dataset.tab) {
     // Statuses combine with OR; Watchlist is an independent intersecting filter.
     const tab = button.dataset.tab;
@@ -656,9 +678,11 @@ document.addEventListener("click", async (event) => {
 // Apply filter, sort, rating, membership, rank, and progress changes from delegated controls.
 document.addEventListener("change", (event) => {
   const el = event.target;
-  if (el.id === "include-activity") return saveFeedChange(
-    "/api/preferences", { includeActivity: el.checked },
-  );
+  // Read checkboxes persist through the guarded API.
+  if (el.dataset.readUpdate) {
+    if (!el.checked) return;
+    return markUpdateRead(Number(el.dataset.readUpdate), el.dataset.updateId);
+  }
   if (el.dataset.listSort) {
     const list = lists.find((entry) => entry.id === el.dataset.listSort);
     if (!list) return;
@@ -928,7 +952,6 @@ async function boot() {
   try {
     const value = await api("/api/library");
     ({ shows, lists } = value);
-    updatePreferences = value.preferences || { includeActivity: true };
     feedDate = today();
     render();
     applyRoute({ scroll: true });

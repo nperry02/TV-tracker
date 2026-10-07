@@ -829,7 +829,7 @@ try {
     await page.screenshot({ path: "test-results/desktop-stats.png", fullPage: true });
     await page.getByRole("link", { name: "Home", exact: true }).click();
     await page.locator("#home-view").waitFor();
-    assert.equal(await page.locator("#home-top-rated-grid .stats-show").count(), 5);
+    assert.equal(await page.locator("#home-top-rated-grid .stats-show").count(), 4);
     await page.locator("#home-top-rated-grid .stats-show").first().click();
     await page.locator("#show-dialog[open]").waitFor();
     await page.getByRole("button", { name: "Close show", exact: true }).click();
@@ -1433,7 +1433,7 @@ try {
       return show;
     });
     const imported = await page.request.post(`${base}/api/import`, {
-      data: { version: 1, shows: feedShows, lists: [], preferences: { includeActivity: true } },
+      data: { version: 1, shows: feedShows, lists: [], preferences: { includeActivity: false } },
     });
     assert.equal(imported.status(), 200);
     await page.goto(`${base}/#home`);
@@ -1441,6 +1441,22 @@ try {
     await page.locator('.update-title[data-show="20000"]').waitFor();
     assert.equal(await page.locator(".update-entry").count(), 10);
     assert.equal(await page.locator("#updates-unread").textContent(), "12 unread");
+    assert.equal(await page.locator("#updates-unread").getAttribute("title"), "Mark all as read");
+    assert.equal(await page.locator("#updates-unread").evaluate((node) => node.tagName), "BUTTON");
+    const desktopLayout = await page.evaluate(() => {
+      const favorites = document.querySelector(".home-top-rated").getBoundingClientRect();
+      const updates = document.querySelector("#updates-section").getBoundingClientRect();
+      return { beside: updates.left >= favorites.right, aligned: Math.abs(updates.top - favorites.top) < 2,
+        sameHeight: Math.abs(updates.height - favorites.height) < 2,
+        scrollable: document.querySelector("#updates-list").scrollHeight > document.querySelector("#updates-list").clientHeight };
+    });
+    assert.deepEqual(desktopLayout, { beside: true, aligned: true, sameHeight: true, scrollable: true });
+    // The shared info tooltip explains retention on hover and keyboard focus.
+    await page.locator(".updates-info").hover();
+    await page.waitForFunction(() => getComputedStyle(document.querySelector("#updates-help")).opacity === "1");
+    assert.match(await page.locator("#updates-help").textContent(), /kept for 30 days/);
+    await page.locator(".updates-info").focus();
+    assert.equal(await page.locator(".updates-info").evaluate((node) => node === document.activeElement), true);
     await page.locator("#updates-more").click();
     assert.equal(await page.locator(".update-entry").count(), 12);
     assert.equal(await page.locator("#updates-more").getAttribute("aria-expanded"), "true");
@@ -1450,13 +1466,17 @@ try {
     assert.equal(await page.locator('.update-title[data-show="20004"]').locator("..").locator("..").evaluate((row) => row.classList.contains("update-external")), true);
 
     // Failed read requests preserve unread state; successful reads survive reload and export.
+    assert.equal(await page.locator('[data-read-update="20000"]').getAttribute("type"), "checkbox");
+    assert.equal(await page.locator('[data-read-update="20000"]').locator("..").getAttribute("title"), "Mark as read");
     await page.route("**/api/shows/20000/update-read", (route) => route.fulfill({ status: 503, json: { error: "Read state unavailable" } }));
     await page.locator('[data-read-update="20000"]').click();
     await page.getByText("Read state unavailable", { exact: true }).waitFor();
     assert.equal(await page.locator('[data-read-update="20000"]').count(), 1);
+    assert.equal(await page.locator('[data-read-update="20000"]').isChecked(), false);
     await page.unroute("**/api/shows/20000/update-read");
     await page.locator('[data-read-update="20000"]').click();
     await page.waitForFunction(() => !document.querySelector('[data-read-update="20000"]'));
+    assert.equal(await page.locator('.update-title[data-show="20000"]').locator("..").locator("..").locator('.update-read-control input').isChecked(), true);
     assert.equal(await page.locator("#updates-unread").textContent(), "11 unread");
     await page.reload();
     await page.locator('.update-title[data-show="20000"]').waitFor();
@@ -1464,19 +1484,24 @@ try {
     let backup = await (await page.request.get(`${base}/api/export`)).json();
     assert.ok(backup.shows.find((show) => show.id === 20000).latestUpdate.readAt);
 
-    // Preference persistence hides personal entries, while fresh external news replaces read news.
-    await page.locator("#include-activity").uncheck();
-    await page.waitForFunction(() => document.querySelectorAll(".update-entry").length === 6);
-    await page.reload();
-    await page.locator('.update-title[data-show="20000"]').waitFor();
-    assert.equal(await page.locator("#include-activity").isChecked(), false);
-    assert.equal(await page.locator(".update-entry").count(), 6);
+    // Legacy activity flags are ignored; personal activity is always visible and recorded.
+    assert.equal(await page.locator("#include-activity").count(), 0);
+    assert.equal("preferences" in backup, false);
+    const activity = await (await page.request.patch(`${base}/api/shows/20001`, { data: { statusOverride: "Paused" } })).json();
+    assert.equal(activity.latestUpdate.source, "personal");
+    assert.equal(activity.latestUpdate.after, "Paused");
     backup = await (await page.request.get(`${base}/api/export`)).json();
-    assert.equal(backup.preferences.includeActivity, false);
     const changed = backup.shows.find((show) => show.id === 20000);
     changed.latestUpdate = { ...changed.latestUpdate, id: "replacement", type: "series", message: "Series cancelled", detectedAt: now, readAt: null };
     assert.equal((await page.request.post(`${base}/api/import`, { data: backup })).status(), 200);
     assert.equal((await page.request.post(`${base}/api/shows/20000/update-read`, { data: { id: "seed-0" } })).status(), 409);
+    // Bulk saves skip replaced news instead of accidentally clearing its unread state.
+    assert.equal((await page.request.post(`${base}/api/updates/read-all`, { data: { updates: null } })).status(), 400);
+    const guardedBatch = await (await page.request.post(`${base}/api/updates/read-all`, {
+      data: { updates: [{ showId: 20000, id: "seed-0" }, { showId: 20001, id: activity.latestUpdate.id }] },
+    })).json();
+    assert.equal(guardedBatch.shows.find((show) => show.id === 20000).latestUpdate.readAt, null);
+    assert.ok(guardedBatch.shows.find((show) => show.id === 20001).latestUpdate.readAt);
     const edited = await (await page.request.patch(`${base}/api/shows/20000`, { data: { statusOverride: "Paused" } })).json();
     assert.equal(edited.latestUpdate.id, "replacement");
     await page.reload();
@@ -1491,12 +1516,33 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator("#updates-section").screenshot({ path: "test-results/updates-mobile.png" });
     const mobileGeometry = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+      stacked: document.querySelector("#updates-section").getBoundingClientRect().top >= document.querySelector(".home-top-rated").getBoundingClientRect().bottom,
       overflowing: [...document.querySelectorAll("#home-view section")].filter((node) => node.getBoundingClientRect().right > innerWidth)
         .map((node) => ({ id: node.id, className: node.className, width: node.getBoundingClientRect().width })),
     }));
     assert.ok(mobileGeometry.scrollWidth <= mobileGeometry.width, `Updates fit mobile viewport: ${JSON.stringify(mobileGeometry)}`);
+    assert.equal(mobileGeometry.stacked, true);
     await page.setViewportSize({ width: 1440, height: 1050 });
     await page.locator("#updates-section").screenshot({ path: "test-results/updates-desktop.png" });
+
+    // Failed bulk saves leave the feed unread; success includes collapsed rows and survives reload.
+    assert.equal(await page.locator(".update-entry").count(), 10);
+    const beforeBulk = await page.locator("#updates-unread").textContent();
+    await page.route("**/api/updates/read-all", (route) => route.fulfill({ status: 503, json: { error: "Bulk read unavailable" } }));
+    await page.locator("#updates-unread").click();
+    await page.getByText("Bulk read unavailable", { exact: true }).waitFor();
+    assert.equal(await page.locator("#updates-unread").textContent(), beforeBulk);
+    await page.unroute("**/api/updates/read-all");
+    await page.locator("#updates-unread").click();
+    await page.waitForFunction(() => document.querySelector("#updates-unread").disabled && !document.querySelector("#updates-unread").textContent);
+    await page.reload();
+    await page.locator('.update-title[data-show="20000"]').waitFor();
+    assert.equal(await page.locator("#updates-unread").textContent(), "");
+    assert.equal(await page.locator("#updates-unread").isDisabled(), true);
+    assert.equal(await page.locator("#updates-unread").isVisible(), false);
+    const allRead = await (await page.request.get(`${base}/api/export`)).json();
+    assert.ok(allRead.shows.filter((show) => show.latestUpdate).every((show) => show.latestUpdate.readAt));
+    assert.ok(allRead.shows.find((show) => show.id === 20011).latestUpdate.readAt);
 
     // Advancing the browser date requests persisted date reconciliation without a reload.
     await page.clock.install();

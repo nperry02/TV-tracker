@@ -424,12 +424,11 @@ export function libraryStats(shows, date = today()) {
 const UPDATE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const UPDATE_EVENT_TYPES = new Set(["series", "episodes", "premiere", "status"]);
 
-// Return unexpired latest entries in discovery order, respecting the activity preference.
-export function latestUpdates(shows, includeActivity = true, now = new Date().toISOString()) {
+// Return unexpired latest entries in discovery order, including personal activity.
+export function latestUpdates(shows, now = new Date().toISOString()) {
   const timestamp = Date.parse(now);
   return shows.filter((show) => show.latestUpdate &&
-    timestamp - Date.parse(show.latestUpdate.detectedAt) < UPDATE_RETENTION_MS &&
-    (includeActivity || show.latestUpdate.source !== "personal"))
+    timestamp - Date.parse(show.latestUpdate.detectedAt) < UPDATE_RETENTION_MS)
     .sort((a, b) => Date.parse(b.latestUpdate.detectedAt) - Date.parse(a.latestUpdate.detectedAt) || a.id - b.id);
 }
 
@@ -458,7 +457,7 @@ export function validUpdateData(show) {
 }
 
 // Replace a show's latest news, preserving unread external news against personal edits.
-export function reconcileUpdates(show, { source = "external", now = new Date().toISOString(), includeActivity = true } = {}) {
+export function reconcileUpdates(show, { source = "external", now = new Date().toISOString() } = {}) {
   const date = today(new Date(now));
   const current = updateSnapshot(show, date);
   const previous = show.updateSnapshot;
@@ -479,7 +478,7 @@ export function reconcileUpdates(show, { source = "external", now = new Date().t
       if (changed) event = { type: "premiere", message: `Season ${changed.season} premieres ${changed.date}` };
       else if (removed) event = { type: "premiere", message: `Season ${removed.season} premiere date is no longer announced` };
     }
-    if (!event && previous.status !== current.status && (source === "external" || includeActivity)) {
+    if (!event && previous.status !== current.status) {
       event = { type: "status", message: `${previous.status} → ${current.status}` };
     }
   }

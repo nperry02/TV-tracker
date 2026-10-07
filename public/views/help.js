@@ -74,9 +74,10 @@ export function renderHelp(container) {
         </article>
         <article>
           <h3>Home updates</h3>
+          <p>Home places Updates beside your four top-rated shows on desktop and below them on smaller screens. The desktop feed matches the height of Top-rated shows; scroll inside it to browse entries. The info icon beside Updates explains its 30-day retention.</p>
           <p>Updates shows the latest meaningful change for each saved show for 30 days from discovery. New episodes, season premiere dates or date changes, and a series ending or being cancelled appear as Show updates. Paused and Watchlist shows get news too; Dropped-show news uses muted styling.</p>
-          <p>Your viewing-status changes appear as muted Your activity entries. Turn off Include my activity on Home to hide these entries and stop recording new ones. Ratings, artwork edits, and ordinary progress changes do not create updates.</p>
-          <p>New show news replaces the previous entry. Your activity cannot replace unread show news. Mark as read removes its unread indicator; it stays in the feed until its 30 days expire. Show more reveals entries beyond the newest ten.</p>
+          <p>Your viewing-status changes appear as muted Your activity entries. Your activity is always included. Ratings, artwork edits, and ordinary progress changes do not create updates.</p>
+          <p>New show news replaces the previous entry. Your activity cannot replace unread show news. Check the box beside Unread to mark an entry read; hovering over it shows Mark as read. Click the unread-count button in the header to mark the entire current feed read, including entries beyond the newest ten; its hover hint says Mark all as read. The count disappears when everything is read. New news discovered during that save stays unread. Read entries stay in the feed until their 30 days expire. Show more reveals entries beyond the newest ten.</p>
           <p>News is discovered when show information refreshes, or when a known episode air date arrives while the app is open or on your next visit. Existing shows start with a quiet baseline, so the feed does not reconstruct older news. Cancellation does not mark unwatched episodes as watched, and Paused or manually chosen statuses remain respected.</p>
         </article>
         <article>
@@ -104,7 +105,7 @@ export function renderHelp(container) {
       <article>
         <p class="eyebrow">PRIVATE BY DESIGN</p>
         <h2>Your library stays on this computer.</h2>
-        <p>Ratings, progress, lists, cached show information, latest updates, read state, and the activity preference are stored in <code>data/library.json</code> and included in backups. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
+        <p>Ratings, progress, lists, cached show information, latest updates, and read state are stored in <code>data/library.json</code> and included in backups. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
         <p>Use <a href="/api/export" download>Back up library ↗</a> to download your shows, lists, membership, and manual list order. A show must be removed from its lists before it can be deleted completely.</p>
       </article>
       <article>

@@ -40,6 +40,8 @@ library.shows = library.shows.map((s) => ({
 if ("lists" in library && !Array.isArray(library.lists))
   throw new Error("Unsupported library file. Your data has not been changed.");
 library.lists ||= [];
+// Saved activity flags do not control recording or visibility.
+delete library.preferences;
 
 // Write a complete temporary file before replacing the saved library atomically.
 // Persist a complete library snapshot atomically, then replace the in-memory copy.
@@ -61,9 +63,7 @@ function update(id, transform, source = "personal") {
     });
   const next = structuredClone(library);
   const baseline = reconcileUpdates(next.shows[index]);
-  next.shows[index] = reconcileUpdates(transform(baseline), {
-    source, includeActivity: next.preferences?.includeActivity !== false,
-  });
+  next.shows[index] = reconcileUpdates(transform(baseline), { source });
   commit(next);
   return next.shows[index];
 }
@@ -163,9 +163,8 @@ function validateImportedLibrary(value) {
   for (const show of next.shows) validateArtworkOverrides(show);
   if (next.shows.some((show) => !validUpdateData(show)))
     throw Object.assign(new Error("Backup contains invalid update data."), { status: 400 });
-  if (next.preferences && (typeof next.preferences !== "object" ||
-      typeof next.preferences.includeActivity !== "boolean"))
-    throw Object.assign(new Error("Backup contains invalid update preferences."), { status: 400 });
+  // Restore old backups without reviving the removed activity toggle.
+  delete next.preferences;
   if ("lists" in next && !Array.isArray(next.lists))
     throw Object.assign(new Error("Backup contains invalid lists."), {
       status: 400,
@@ -392,12 +391,23 @@ export const server = http.createServer(async (req, res) => {
       if (JSON.stringify(next) !== JSON.stringify(library)) commit(next);
       return send(200, library);
     }
-    if (req.method === "PATCH" && path === "/api/preferences") {
+    if (req.method === "POST" && path === "/api/updates/read-all") {
       const value = await body(req);
-      if (typeof value.includeActivity !== "boolean")
-        return send(400, { error: "Include activity must be a boolean." });
-      commit({ ...library, preferences: { ...library.preferences, includeActivity: value.includeActivity } });
-      return send(200, library.preferences);
+      if (!Array.isArray(value?.updates) || value.updates.some((entry) =>
+        !entry || !Number.isSafeInteger(entry.showId) || entry.showId <= 0 || typeof entry.id !== "string"))
+        return send(400, { error: "Expected update identifiers." });
+      const requested = new Map(value.updates.map((entry) => [entry.showId, entry.id]));
+      const now = new Date().toISOString();
+      // Reconcile first so a newly released or refreshed entry stays unread if its ID changed.
+      const next = { ...library, shows: library.shows.map((show) => {
+        const current = reconcileUpdates(show, { now });
+        const entry = current.latestUpdate;
+        if (entry && !entry.readAt && requested.get(show.id) === entry.id)
+          current.latestUpdate = { ...entry, readAt: now };
+        return current;
+      }) };
+      if (JSON.stringify(next) !== JSON.stringify(library)) commit(next);
+      return send(200, { shows: library.shows });
     }
     const readUpdate = path.match(/^\/api\/shows\/(\d+)\/update-read$/);
     if (req.method === "POST" && readUpdate) {

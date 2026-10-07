@@ -66,7 +66,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 ## Your Shows
 
 - Present the library as a responsive dashboard with Home, My Shows, Lists, and Stats navigation in the header.
-- Keep the Home overview focused on library totals, Continue Watching, and up to five top-rated shows.
+- Keep the Home overview focused on library totals, Continue Watching, up to four top-rated shows, and latest updates.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
 - Sort by watch status, personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
@@ -78,11 +78,12 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Home updates
 
-- Show one latest meaningful update per saved show below Continue Watching, newest first. Keep entries for 30 days from discovery; show ten initially with Show more/less.
+- On desktop, place a narrow Updates column to the right of Top-rated shows, matching its height with an internally scrollable feed. Stack beneath Top-rated on smaller screens. Show one latest meaningful update per saved show, newest first. Keep entries for 30 days from discovery; show ten initially with Show more/less.
 - Detect newly available regular episodes, future season premiere dates and their changes or removal, Ended/Canceled series changes, and viewing-status changes. Do not log routine refreshes, ratings, artwork edits, or progress that does not change viewing status.
 - External show updates use green accents and explicit Show update labels. Personal activity and news for Dropped shows use muted styling. Paused and Watchlist-only shows still receive news; personal-list membership never duplicates an entry.
-- New external news replaces the previous entry and is unread. Personal activity cannot replace unread external news. Mark as read keeps an entry until expiry. Include my activity defaults on; disabling it hides existing personal entries and stops recording new ones.
-- Persist detection baselines, latest entries, read state, and the preference in the normal library and backups. Existing/newly added shows start quietly without reconstructing historical news.
+- New external news replaces the previous entry and is unread. Personal activity cannot replace unread external news. A checkbox beside Unread marks an entry read, with a Mark as read hover hint; read entries remain until expiry. Personal activity is always included; there is no activity toggle. An info tooltip beside Updates explains retention.
+- Persist detection baselines, latest entries, and read state in the normal library and backups. Existing/newly added shows start quietly without reconstructing historical news.
+- Clicking the unread-count button (with a Mark all as read hover hint) saves all current unread entries in one operation, including entries beyond the initial ten. Hide the count when none remain. Match entry identifiers so newly replaced news stays unread.
 - Detect metadata changes during successful refreshes and known air-date transitions on library load or date changes while open. Preserve the existing refresh schedule and all automatic/manual status rules; no push notifications or background service.
 
 ## Stats
