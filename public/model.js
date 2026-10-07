@@ -22,6 +22,11 @@ export function artworkOptions(items, kind) {
   return [...items].sort((a, b) =>
     Number(b.iso_639_1 === preferred) - Number(a.iso_639_1 === preferred));
 }
+
+// Existing gallery/list preferences remain valid; unknown saved values reset safely.
+export function collectionView(value) {
+  return ["gallery", "backdrop", "list"].includes(value) ? value : "gallery";
+}
 export function inLibrary(show) {
   // Preserve membership of libraries saved before tracking and watchlist were separate.
   return typeof show.tracked === "boolean"

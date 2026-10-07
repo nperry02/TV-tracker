@@ -2878,15 +2878,6 @@ h1 {
   font-size: 15px;
   white-space: nowrap;
 }
-.view-toggle button:first-child {
-  flex: 1.15;
-}
-.view-toggle button:last-child {
-  flex: 0.85;
-}
-.view-toggle button span {
-  font-size: 11px;
-}
 .view-toggle .view-icon {
   width: 15px;
   height: 15px;
@@ -2900,6 +2891,13 @@ h1 {
 .view-toggle .gallery-view-icon {
   fill: currentColor;
   stroke: none;
+}
+.view-toggle .backdrop-gallery-view-icon {
+  transform: rotate(90deg);
+}
+/* Both galleries share card details; backdrop artwork uses a landscape frame. */
+.backdrop-gallery .poster-wrap {
+  aspect-ratio: 16 / 9;
 }
 .library-controls .custom-select-trigger {
   height: var(--library-control-height);
@@ -3997,4 +3995,15 @@ h1 {
   .stats-panel {
     padding: 17px;
   }
+}
+
+/* Wider backdrop cards use the same responsive grid in My Shows and Lists. */
+.poster-grid.backdrop-gallery {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .poster-grid.backdrop-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+  .poster-grid.backdrop-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

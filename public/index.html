@@ -93,23 +93,7 @@
                 aria-label="Search your library"
             /></label>
             <div class="filters">
-              <div class="view-toggle" role="group" aria-label="Library view">
-                <button type="button" data-view="gallery" aria-pressed="true">
-                  <svg class="view-icon gallery-view-icon" viewBox="0 0 15 15" aria-hidden="true">
-                    <rect x="2" y="0.5" width="4.5" height="6" rx="0.6"></rect>
-                    <rect x="8.5" y="0.5" width="4.5" height="6" rx="0.6"></rect>
-                    <rect x="2" y="8.5" width="4.5" height="6" rx="0.6"></rect>
-                    <rect x="8.5" y="8.5" width="4.5" height="6" rx="0.6"></rect>
-                  </svg>
-                  <span>Gallery</span>
-                </button>
-                <button type="button" data-view="list" aria-pressed="false">
-                  <svg class="view-icon" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5"></path>
-                  </svg>
-                  <span>List</span>
-                </button>
-              </div>
+              <div id="library-view-toggle" class="view-toggle"></div>
               <div class="genre-filter-wrap" id="genre-filter-wrap"></div>
               <label class="rating-filter-control"
                 ><span class="sr-only">Your rating</span

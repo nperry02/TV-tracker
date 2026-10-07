@@ -162,7 +162,13 @@ export const poster = (show, className = "", size) =>
 export function viewToggle(active, { kind = "library", id = "", label = "Collection view" } = {}) {
   const attribute = kind === "list" ? "data-list-view" : "data-view";
   const listId = kind === "list" ? ` data-list-id="${esc(id)}"` : "";
-  return `<div class="view-toggle" role="group" aria-label="${esc(label)}"><button type="button" ${attribute}="gallery"${listId} aria-pressed="${active === "gallery"}"><svg class="view-icon gallery-view-icon" viewBox="0 0 15 15" aria-hidden="true"><rect x="2" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="2" y="8.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="8.5" width="4.5" height="6" rx="0.6"></rect></svg><span>Gallery</span></button><button type="button" ${attribute}="list"${listId} aria-pressed="${active === "list"}"><svg class="view-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5"></path></svg><span>List</span></button></div>`;
+  const galleryIcon = (backdrop = false) => `<svg class="view-icon gallery-view-icon${backdrop ? " backdrop-gallery-view-icon" : ""}" viewBox="0 0 15 15" aria-hidden="true"><rect x="2" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="0.5" width="4.5" height="6" rx="0.6"></rect><rect x="2" y="8.5" width="4.5" height="6" rx="0.6"></rect><rect x="8.5" y="8.5" width="4.5" height="6" rx="0.6"></rect></svg>`;
+  const views = [
+    ["gallery", "Poster gallery", galleryIcon()],
+    ["backdrop", "Backdrop gallery", galleryIcon(true)],
+    ["list", "List", '<svg class="view-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h1M6 4h7.5M2.5 8h1M6 8h7.5M2.5 12h1M6 12h7.5"></path></svg>'],
+  ];
+  return `<div class="view-toggle"${kind === "library" ? ' id="library-view-toggle"' : ""} role="group" aria-label="${esc(label)}">${views.map(([value, name, icon]) => `<button type="button" ${attribute}="${value}"${listId} aria-pressed="${active === value}" aria-label="${name}" title="${name}">${icon}</button>`).join("")}</div>`;
 }
 
 // List collections use the library toolbar structure and shared view switch.

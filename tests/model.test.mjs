@@ -15,6 +15,7 @@ import {
   artworkPath,
   validArtworkPath,
   artworkOptions,
+  collectionView,
 } from "../public/model.js";
 
 test("artwork choices override defaults independently and reset cleanly", () => {
@@ -33,6 +34,11 @@ test("artwork options prioritize English posters and text-free backdrops stably"
   assert.deepEqual(artworkOptions(items, "poster").map((item) => item.file_path), ["/en.jpg", "/ja.jpg", "/plain.jpg"]);
   assert.deepEqual(artworkOptions(items, "backdrop").map((item) => item.file_path), ["/plain.jpg", "/ja.jpg", "/en.jpg"]);
   assert.equal(items[0].file_path, "/ja.jpg");
+});
+
+test("collection views preserve all supported preferences and default unknown values", () => {
+  for (const view of ["gallery", "backdrop", "list"]) assert.equal(collectionView(view), view);
+  for (const value of [null, "", "unknown"]) assert.equal(collectionView(value), "gallery");
 });
 
 const episode = (season, number, date = "2026-01-01") => ({

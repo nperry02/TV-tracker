@@ -84,6 +84,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">☷</i>
           <h3>Personal lists</h3>
+          <p>Use the three view icons in My Shows or a list to choose poster gallery, backdrop gallery, or compact rows. Both galleries show the same details; the backdrop gallery uses landscape artwork, falling back to posters when needed.</p>
           <p>Search the Lists overview by list name or description.</p>
           <p>Collect shows already in My Shows or Watchlist. Search and filter each list using the familiar My Shows layouts. Edit ranked lists to change manual order with position fields; either list type can change its display order.</p>
           <p>List covers follow display order: four or more shows use a 2 × 2 backdrop grid; smaller lists use the first show's backdrop. Missing backdrops fall back to posters.</p>
@@ -95,7 +96,7 @@ export function renderHelp(container) {
       <article>
         <p class="eyebrow">PRIVATE BY DESIGN</p>
         <h2>Your library stays on this computer.</h2>
-        <p>Ratings, progress, lists, and cached show information are stored in <code>data/library.json</code>. List gallery/row preferences stay in this browser. Next Episode has no account or cloud sync.</p>
+        <p>Ratings, progress, lists, and cached show information are stored in <code>data/library.json</code>. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
         <p>Use <a href="/api/export" download>Back up library ↗</a> to download your shows, lists, membership, and manual list order. A show must be removed from its lists before it can be deleted completely.</p>
       </article>
       <article>

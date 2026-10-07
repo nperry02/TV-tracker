@@ -4,6 +4,7 @@ import {
   inLibrary,
   metadataRefreshQueue,
   statuses,
+  collectionView,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -48,9 +49,7 @@ function selectedListId() {
 }
 function listViewMode(id) {
   try {
-    return localStorage.getItem(`next-episode:list-view:${id}`) === "list"
-      ? "list"
-      : "gallery";
+    return collectionView(localStorage.getItem(`next-episode:list-view:${id}`));
   } catch {
     return "gallery";
   }
@@ -104,9 +103,7 @@ function saveLibraryFilters() {
 // View mode persists across browser sessions when storage is available.
 let viewMode = (() => {
   try {
-    return localStorage.getItem("next-episode:view") === "list"
-      ? "list"
-      : "gallery";
+    return collectionView(localStorage.getItem("next-episode:view"));
   } catch {
     return "gallery";
   }
@@ -141,9 +138,6 @@ function applyRoute({ scroll = false } = {}) {
   if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
 function render() {
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.view === viewMode));
-  });
   renderHome(shows, mutationPending);
   renderLibrary(shows, libraryFilters, viewMode);
   renderLists(
@@ -383,6 +377,7 @@ document.addEventListener("click", async (event) => {
       localStorage.setItem(`next-episode:list-view:${button.dataset.listId}`, button.dataset.listView);
     } catch {}
     render();
+    $(`#list-detail [data-list-view="${button.dataset.listView}"]`)?.focus({ preventScroll: true });
     return;
   }
   if (button.dataset.clearListFilters !== undefined) {

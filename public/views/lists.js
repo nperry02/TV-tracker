@@ -45,7 +45,7 @@ function listCard(list, shows) {
 function listShowCard({ show, index: rankIndex }, list, viewMode) {
   return `<article class="list-show-card${viewMode === "list" ? " ranked-list-row" : ""}" data-list-show="${show.id}" data-list-id="${esc(list.id)}">
     ${list.ordered ? `<span class="list-rank">${rankIndex + 1}</span>` : ""}
-    ${viewMode === "list" ? listShowRow(show) : galleryShowCard(show)}
+    ${viewMode === "list" ? listShowRow(show) : galleryShowCard(show, viewMode)}
   </article>`;
 }
 
@@ -85,7 +85,7 @@ function renderDetail(list, shows, viewMode, filters) {
   $("#list-detail").innerHTML = `<header class="list-detail-header"><div><a class="list-back" href="#lists">← Back to Lists</a><h1>${esc(list.name)}</h1>${list.description ? `<p>${esc(list.description)}</p>` : ""}</div><div class="list-detail-actions"><button type="button" data-edit-list="${esc(list.id)}">Edit</button><button class="primary" type="button" data-add-list-shows="${esc(list.id)}">＋ Add shows</button></div></header>
     ${controls}
     <div class="library-results"><p class="result-count list-result-count">${entries.length} of ${allEntries.length} ${allEntries.length === 1 ? "show" : "shows"}</p>
-    <div class="list-shows ${viewMode === "list" ? `show-list list-shows-rows${list.ordered ? " ranked-list-rows" : ""}` : "poster-grid"}">${viewMode === "list" && entries.length ? `<div class="list-header" aria-hidden="true">${list.ordered ? "<span>#</span>" : ""}<span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>` : ""}${entries.length ? entries.map((entry) => listShowCard(entry, list, viewMode)).join("") : allEntries.length ? '<div class="empty list-detail-empty"><h2>No shows match these filters.</h2><p>Try another search, status, genre, or rating.</p><button type="button" data-clear-list-filters>Clear filters</button></div>' : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div></div>`;
+    <div class="list-shows ${viewMode === "list" ? `show-list list-shows-rows${list.ordered ? " ranked-list-rows" : ""}` : `poster-grid${viewMode === "backdrop" ? " backdrop-gallery" : ""}`}">${viewMode === "list" && entries.length ? `<div class="list-header" aria-hidden="true">${list.ordered ? "<span>#</span>" : ""}<span>Show</span><span>Released</span><span>Status</span><span>Rating</span><span>Progress</span><span>Last updated</span></div>` : ""}${entries.length ? entries.map((entry) => listShowCard(entry, list, viewMode)).join("") : allEntries.length ? '<div class="empty list-detail-empty"><h2>No shows match these filters.</h2><p>Try another search, status, genre, or rating.</p><button type="button" data-clear-list-filters>Clear filters</button></div>' : '<div class="empty list-detail-empty"><h2>No shows in this list yet.</h2><p>Add shows already saved in My Shows or Watchlist.</p><button class="primary" type="button" data-add-list-shows="' + esc(list.id) + '">Add shows</button></div>'}</div></div>`;
 }
 
 export function renderLists(lists, shows, selectedListId = null, viewMode = "gallery", filters = { query: "", statuses: new Set(), watchlist: false, genres: new Set(), rating: "" }, overviewQuery = "") {
