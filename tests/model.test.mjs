@@ -42,11 +42,13 @@ test("collection views preserve all supported preferences and default unknown va
   for (const value of [null, "", "unknown"]) assert.equal(collectionView(value), "gallery");
 });
 
+// Build a dated episode fixture for progress and availability assertions.
 const episode = (season, number, date = "2026-01-01") => ({
   season_number: season,
   episode_number: number,
   air_date: date,
 });
+// Build a returning-series fixture with overridable progress and membership fields.
 const show = (changes) => ({
   episodes: [episode(1, 1), episode(1, 2)],
   watched: [],
@@ -354,6 +356,7 @@ test("list entries preserve ranks and sort missing values last", () => {
       { showId: 2, addedAt: "2026-02-01T00:00:00.000Z" },
     ],
   };
+  // Extract the displayed member IDs for list-order assertions.
   const ids = (value) => listEntries(value, shows).map(({ show }) => show.id);
   assert.deepEqual(ids(list), [2, 1, 3]);
   assert.deepEqual(ids({ ...list, sort: "manual" }), [3, 1, 2]);
@@ -367,6 +370,7 @@ test("list entries preserve ranks and sort missing values last", () => {
 test("metadata refreshes active shows most often and limits startup work", () => {
   const day = 24 * 60 * 60 * 1000;
   const now = new Date("2026-09-27T12:00:00.000Z");
+  // Create a metadata timestamp a chosen number of days before the fixed test clock.
   const dated = (daysAgo) =>
     new Date(now.getTime() - daysAgo * day).toISOString();
   const entries = [
@@ -398,6 +402,7 @@ test("metadata refreshes active shows most often and limits startup work", () =>
 
 
 test("watch status sorting groups derived and manual statuses without changing ranks", () => {
+  // Build a show fixture with an explicit status and independent tracked membership.
   const make = (id, name, statusOverride, tracked = true) => ({ id, name, statusOverride, tracked, watched: [], episodes: [], watchlist: !tracked });
   const shows = [make(1, "Zulu", "Watching"), make(2, "Alpha", "Watching"), make(3, "Paused", "Paused"), make(4, "Caught", "Caught Up"), make(5, "Completed", "Completed"), make(6, "Dropped", "Dropped"), make(7, "Watchlist", null, false), make(8, "Beta", null)];
   const entries = [...shows].reverse().map(({ id }) => ({ showId: id, addedAt: "2026-01-01" }));

@@ -42,11 +42,13 @@ let shows = [],
   listMemberSelection = new Set();
 const listFilters = new Map();
 
+// Read the selected list ID from the current hash route.
 function selectedListId() {
   return location.hash.startsWith("#lists/")
     ? decodeURIComponent(location.hash.slice(7))
     : null;
 }
+// Restore a list's display mode, falling back to poster gallery if storage fails.
 function listViewMode(id) {
   try {
     return collectionView(localStorage.getItem(`next-episode:list-view:${id}`));
@@ -54,6 +56,7 @@ function listViewMode(id) {
     return "gallery";
   }
 }
+// Return a list's in-memory filters, creating an empty selection on first use.
 function filtersForList(id) {
   if (!listFilters.has(id))
     listFilters.set(id, {
@@ -87,6 +90,7 @@ const libraryFilters = (() => {
     };
   }
 })();
+// Persist library filter selections for this tab when session storage is available.
 function saveLibraryFilters() {
   try {
     sessionStorage.setItem(
@@ -110,6 +114,7 @@ let viewMode = (() => {
 })();
 
 // Hash routing and top-level rendering
+// Show the requested page, update navigation, and optionally reset scroll position.
 function applyRoute({ scroll = false } = {}) {
   const requestedRoute = location.hash.slice(1);
   const routeName = requestedRoute.split("/")[0];
@@ -137,6 +142,7 @@ function applyRoute({ scroll = false } = {}) {
   if (route === "lists") enhanceSelects($("#lists-view"));
   if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
 }
+// Redraw collection pages and statistics from saved state, then synchronize select controls.
 function render() {
   renderHome(shows, mutationPending);
   renderLibrary(shows, libraryFilters, viewMode);
@@ -151,6 +157,7 @@ function render() {
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
+// Select a show and initial season, close search, and open its detail dialog.
 function openShow(id) {
   selectedId = Number(id);
   const show = shows.find((s) => s.id === selectedId);
@@ -160,6 +167,7 @@ function openShow(id) {
   if ($("#search-dialog").open) $("#search-dialog").close();
   if (!$("#show-dialog").open) $("#show-dialog").showModal();
 }
+// Redraw the selected show while preserving the mobile season-options disclosure.
 function renderShow() {
   const show = shows.find((entry) => entry.id === selectedId);
   if (show) {
@@ -174,6 +182,7 @@ function renderShow() {
 }
 
 // Hover previews separate the shared fill from the difference to the saved rating.
+// Preview star fills and differences from the saved rating without changing it.
 function previewRating(control, value) {
   const savedValue = control.dataset.value ? Number(control.dataset.value) : null;
   const comparing = savedValue != null && value !== savedValue;
@@ -194,9 +203,11 @@ function previewRating(control, value) {
 }
 
 // Mutations redraw disabled controls immediately, then restore dialog context.
+// Save a show mutation, reconcile page state, and restore the active dialog's focus and scroll.
 async function save(body, message, id = selectedId) {
   if (mutationPending) return;
   mutationPending = true;
+  // Check that the mutation still belongs to the currently open show dialog.
   const isCurrentDialog = () => selectedId === id && $("#show-dialog").open;
   const scroll = $("#show-dialog").scrollTop;
   const focused = document.activeElement;
@@ -226,6 +237,7 @@ async function save(body, message, id = selectedId) {
     target?.focus({ preventScroll: true });
   }
 }
+// Fetch fresh metadata and redraw matching show details without replacing personal choices.
 async function refreshShow(id, notify = true) {
   const updated = await api(`/api/shows/${id}/refresh`, { method: "POST" });
   shows = shows.map((s) => (s.id === id ? updated : s));
@@ -236,6 +248,7 @@ async function refreshShow(id, notify = true) {
 
 // Artwork owns temporary image options; the app reconciles only saved choices.
 const artworkDialog = createArtworkDialog({
+  // Reconcile a saved artwork selection into application state and redraw its show.
   onSaved(updated) {
     shows = shows.map((show) => show.id === updated.id ? updated : show);
     render();
@@ -246,7 +259,9 @@ const artworkDialog = createArtworkDialog({
 
 // Search owns its paging state while the app supplies library updates and routing.
 const searchDialog = createSearchDialog({
+  // Return the latest saved collection to search result rendering.
   getShows: () => shows,
+  // Reconcile a newly saved search result into the collection and redraw the pages.
   onShowAdded: (show) => {
     if (shows.some((entry) => entry.id === show.id))
       shows = shows.map((entry) => (entry.id === show.id ? show : entry));
@@ -257,6 +272,7 @@ const searchDialog = createSearchDialog({
 });
 
 // Delegated button actions cover content that renderers replace after each change.
+// Dispatch delegated navigation, dialog, collection, and show actions from clicked controls.
 document.addEventListener("click", async (event) => {
   // Native details filters close when interaction moves elsewhere on the page.
   document.querySelectorAll(".library-controls .status-filter[open]").forEach((filter) => {
@@ -566,6 +582,7 @@ document.addEventListener("click", async (event) => {
 });
 
 // Native control changes update filters or persist show-level fields.
+// Apply filter, sort, rating, membership, rank, and progress changes from delegated controls.
 document.addEventListener("change", (event) => {
   const el = event.target;
   if (el.dataset.listSort) {
@@ -637,6 +654,7 @@ document.addEventListener("change", (event) => {
       },
     });
 });
+// Redraw a list when its title-search field changes.
 document.addEventListener("input", (event) => {
   const input = event.target.closest("[data-list-query]");
   if (!input) return;
@@ -650,6 +668,7 @@ document.addEventListener("input", (event) => {
   replacement?.setSelectionRange(cursor, cursor);
 });
 // Save metadata first, then reconcile edited membership and manual ranks.
+// Save list metadata and edited member order, then reconcile the returned list state.
 $("#list-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const id = $("#list-id").value;
@@ -703,15 +722,18 @@ $("#list-form").addEventListener("submit", async (event) => {
     submit.disabled = false;
   }
 });
+// Filter the membership picker without losing pending checkbox selections.
 $("#list-members-query").addEventListener("input", () => {
   const list = lists.find((entry) => entry.id === $("#list-members-id").value);
   if (list) renderMemberOptions(list, shows, $("#list-members-query").value, listMemberSelection);
 });
+// Track pending membership changes independently of the filtered checkbox markup.
 $("#list-members-options").addEventListener("change", (event) => {
   if (event.target.name !== "showId") return;
   const id = Number(event.target.value);
   event.target.checked ? listMemberSelection.add(id) : listMemberSelection.delete(id);
 });
+// Save selected membership while preserving existing member order and appending new shows.
 $("#list-members-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const id = $("#list-members-id").value;
@@ -733,6 +755,7 @@ $("#list-members-form").addEventListener("submit", async (event) => {
     toast("List shows saved.");
   } catch (error) { report(error); }
 });
+// Save the selected show's list memberships and redraw both list and show views.
 $("#show-lists-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const showId = Number($("#show-lists-id").value);
@@ -747,6 +770,7 @@ $("#show-lists-form").addEventListener("submit", async (event) => {
 });
 
 // Ranked order changes only inside Edit List and persists with the form save.
+// Renumber editable list positions after rows are moved or removed.
 function refreshEditRanks() {
   const rows = [...$("#list-edit-show-options").querySelectorAll(".list-edit-show")];
   rows.forEach((row, index) => {
@@ -758,6 +782,7 @@ function refreshEditRanks() {
 $("#library-query").addEventListener("input", render);
 // The static overview input retains its value and focus across renders/navigation.
 $("#lists-query").addEventListener("input", render);
+// Clear the overview search, redraw all lists, and return focus to the search field.
 $("#clear-lists-search").addEventListener("click", () => {
   $("#lists-query").value = "";
   render();
@@ -768,6 +793,7 @@ document.addEventListener("pointerover", (event) => {
   const input = event.target.closest("[data-rating-kind]");
   if (input) previewRating(input.closest(".rating-control"), Number(input.value));
 });
+// Restore saved star fills when the pointer leaves a rating target.
 document.addEventListener("pointerout", (event) => {
   const input = event.target.closest("[data-rating-kind]");
   if (!input) return;
@@ -794,6 +820,7 @@ document.addEventListener("keydown", (event) => {
     searchDialog.open();
   }
 });
+// Apply hash navigation and start the destination page at the top.
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
 
 // Keep season actions expanded on desktop and collapsed after crossing to mobile.
@@ -804,6 +831,7 @@ matchMedia("(max-width: 800px)").addEventListener("change", (event) => {
 
 // A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))
+  // Dismiss a backdrop click outside the panel unless a dialog save is in progress.
   dialog.addEventListener("click", (event) => {
     if (dialog.dataset.saving === "true") return;
     if (event.target !== dialog) return;
@@ -821,6 +849,7 @@ for (const dialog of document.querySelectorAll("dialog"))
 renderHelp($("#help-view"));
 
 // Startup renders saved data first, then refreshes a bounded stale-metadata queue.
+// Load the saved library, apply the route, and refresh a bounded queue of stale metadata.
 async function boot() {
   try {
     ({ shows, lists } = await api("/api/library"));

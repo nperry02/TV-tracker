@@ -57,6 +57,7 @@ try {
     if (/\/api\/shows\/\d+\/images$/.test(request.url())) artworkRequests++;
   });
   page.setDefaultTimeout(live ? 60000 : 10000);
+  // Choose a library status or toggle Watchlist through the visible filter controls.
   const selectLibraryStatus = async (status) => {
     if (status === "Watchlist") {
       await page.locator("#watchlist-filter").click();
@@ -67,6 +68,7 @@ try {
       await filter.locator("summary").click();
     await filter.locator(`[data-tab="${status}"]`).click();
   };
+  // Open the genre filter and choose an option through its rendered control.
   const selectLibraryGenre = async (genre) => {
     const filter = page.locator("#genre-filter");
     if (!(await filter.evaluate((details) => details.open)))
@@ -641,6 +643,7 @@ try {
     );
     await page.getByRole("link", { name: "My Shows", exact: true }).click();
     await page.locator("#library-view").waitFor({ state: "visible" });
+    // Read toolbar control positions to verify their desktop alignment.
     const toolbarControlTops = () =>
       page.locator(".library-controls").evaluate((toolbar) =>
         [
@@ -738,6 +741,7 @@ try {
       true,
     );
     await page.locator("#rating-filter").selectOption("");
+    // Read rendered library show IDs for display-sort assertions.
     const showOrder = () =>
       page
         .locator(".show-card")
@@ -1035,6 +1039,7 @@ try {
   }), true, "Artwork picker and footer fit mobile viewport");
   await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
   if (!live) {
+    // Open the artwork picker and wait for its loading state to finish.
     const openArtwork = async () => {
       await page.getByRole("button", { name: "Change artwork", exact: true }).click();
       await page.waitForFunction(() => !document.querySelector("#artwork-status").textContent.includes("Loading"));
@@ -1107,6 +1112,7 @@ try {
   await page.getByRole("button", { name: "Add a show", exact: true }).click();
   if (!live) {
     // Search pagination covers recovery, Watchlist-only records, and stale responses.
+    // Submit a search query and wait for its result status to settle.
     const searchFor = async (query) => {
       await page
         .getByRole("searchbox", { name: "Search TMDB", exact: true })

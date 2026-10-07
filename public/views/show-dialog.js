@@ -19,6 +19,7 @@ import {
 } from "../ui.js";
 
 // Each visible star contains two native radio targets to preserve half-star ratings.
+// Render accessible half-star radio controls, saved fills, and an optional clear action.
 function ratingControl(id, value, label, mutationPending, compact = false) {
   const stars = Array.from({ length: 5 }, (_, index) => {
     const half = index + 0.5;
@@ -31,6 +32,7 @@ function ratingControl(id, value, label, mutationPending, compact = false) {
   return `<fieldset class="rating-control${compact ? " compact" : ""}" id="${id}" data-value="${value ?? ""}"${mutationPending ? " disabled" : ""}><legend class="field-label">${label}</legend><div class="rating-entry"><div class="star-rating" title="${description}">${stars}</div><button type="button" class="rating-clear" id="clear-${id}" data-clear-rating="${id}" aria-label="Clear rating" title="Clear rating"${value == null ? " hidden" : ""}>×</button></div><output class="sr-only">${description}</output></fieldset>`;
 }
 
+// Choose the next episode's season, falling back to the first regular or available season.
 export function initialShowSeason(show) {
   // Prefer the season containing the next episode, then the first regular season.
   return (
@@ -40,6 +42,7 @@ export function initialShowSeason(show) {
   );
 }
 
+// Render saved show details, artwork controls, ratings, list membership, and season progress.
 export function renderShowDialog(show, selectedSeason, mutationPending, lists = []) {
   // Rebuild the dialog from the latest saved show snapshot after each mutation.
   const showProgress = progress(show);

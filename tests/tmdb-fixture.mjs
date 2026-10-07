@@ -55,6 +55,7 @@ catalog.push(
 );
 
 // Emulate only the TMDB routes exercised by browser tests and reject other traffic.
+// Return deterministic TMDB fixture responses and reject unexpected network calls.
 globalThis.fetch = async (input) => {
   const url = new URL(input);
   if (url.hostname !== "api.themoviedb.org")
@@ -62,6 +63,7 @@ globalThis.fetch = async (input) => {
   const path = url.pathname.replace("/3/", "");
   const imagesMatch = path.match(/^tv\/(\d+)\/images$/);
   if (imagesMatch) {
+    // Build image metadata for alternate-artwork fixture responses.
     const option = (file_path, iso_639_1, width, height) =>
       ({ file_path, iso_639_1, width, height, vote_average: 8, vote_count: 10 });
     return Response.json({

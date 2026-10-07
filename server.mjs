@@ -40,6 +40,7 @@ if ("lists" in library && !Array.isArray(library.lists))
 library.lists ||= [];
 
 // Write a complete temporary file before replacing the saved library atomically.
+// Persist a complete library snapshot atomically, then replace the in-memory copy.
 function commit(next) {
   writeFileSync(`${dataFile}.tmp`, JSON.stringify(next, null, 2), {
     mode: 0o600,
@@ -49,6 +50,7 @@ function commit(next) {
 }
 
 // Clone mutations keep the in-memory library unchanged when validation fails.
+// Clone the library, transform one saved show, and persist the result.
 function update(id, transform) {
   const index = library.shows.findIndex((s) => s.id === id);
   if (index < 0)
@@ -61,6 +63,7 @@ function update(id, transform) {
   return next.shows[index];
 }
 
+// Clone the library, transform one saved list, and persist the result.
 function updateList(id, transform) {
   const index = library.lists.findIndex((list) => list.id === id);
   if (index < 0)
@@ -71,12 +74,15 @@ function updateList(id, transform) {
   return next.lists[index];
 }
 
+// Check whether a show belongs to either the tracked library or Watchlist.
 const savedShow = (show) => inLibrary(show) || inWatchlist(show);
+// Find lists referencing a show before membership changes or deletion.
 const listsContainingShow = (id, source = library) =>
   source.lists.filter((list) =>
     list.entries.some((entry) => entry.showId === id),
   );
 
+// Validate and normalize list metadata, including unique names and supported sorts.
 function validateListFields(value, currentId = null, source = library) {
   const name = typeof value.name === "string" ? value.name.trim() : "";
   const description =
@@ -113,6 +119,7 @@ function validateListFields(value, currentId = null, source = library) {
   return { name, description, ordered: value.ordered, sort: value.sort };
 }
 
+// Validate unique member IDs and require every show to be saved in the library.
 function validateShowIds(showIds, source = library) {
   if (
     !Array.isArray(showIds) ||
@@ -131,6 +138,7 @@ function validateShowIds(showIds, source = library) {
   return showIds;
 }
 
+// Validate and normalize a backup before replacing the saved library.
 function validateImportedLibrary(value) {
   if (value?.version !== 1 || !Array.isArray(value.shows))
     throw Object.assign(new Error("Unsupported backup file."), { status: 400 });
@@ -188,6 +196,7 @@ function validateImportedLibrary(value) {
 }
 
 // TMDB requests and metadata shaping
+// Fetch authenticated TMDB JSON with a timeout and user-facing connection errors.
 async function tmdb(path) {
   const token = process.env.TMDB_TOKEN || process.env.TMDB_API_KEY;
   if (!token)
@@ -224,6 +233,7 @@ async function tmdb(path) {
     );
   return res.json();
 }
+// Fetch series and season metadata, flatten episodes, and retain valid runtime values.
 async function metadata(id) {
   const s = await tmdb(`tv/${id}`);
   const episodes = [];
@@ -267,6 +277,7 @@ async function metadata(id) {
 }
 
 // Request validation and static asset routing
+// Reject malformed show payloads and artwork choices outside TMDB image paths.
 function validateArtworkOverrides(value) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw Object.assign(new Error("Expected a show object."), { status: 400 });
@@ -276,6 +287,7 @@ function validateArtworkOverrides(value) {
   }
 }
 
+// Accept unrated or half-star ratings from 0.5 through 5; reject other values.
 function validateRating(value) {
   if (
     value !== null &&
@@ -289,6 +301,7 @@ function validateRating(value) {
       { status: 400 },
     );
 }
+// Read a size-limited request body and parse JSON with useful validation errors.
 async function body(req, limit = 100000) {
   let raw = "";
   for await (const chunk of req) {
@@ -321,7 +334,9 @@ const files = {
 };
 
 // Local HTTP API
+// Route local API and static-file requests through a shared response and error boundary.
 export const server = http.createServer(async (req, res) => {
+  // Serialize an API response as JSON with the supplied HTTP status.
   const send = (status, value) => {
     res.writeHead(status, {
       "Content-Type": "application/json",
@@ -519,6 +534,7 @@ export const server = http.createServer(async (req, res) => {
       if (!library.shows.some((show) => show.id === id))
         return send(404, { error: "Show not found." });
       const images = await tmdb(`tv/${id}/images`);
+      // Keep valid TMDB image paths and return only artwork metadata needed by the picker.
       const options = (items) => (Array.isArray(items) ? items : [])
         .filter((item) => validArtworkPath(item?.file_path))
         .map(({ file_path, width, height, iso_639_1, vote_average, vote_count }) =>
@@ -535,6 +551,7 @@ export const server = http.createServer(async (req, res) => {
         const destination = request?.destination ?? "library";
         if (!["library", "watchlist"].includes(destination))
           return send(400, { error: "Invalid destination." });
+        // Merge the requested membership into an existing show without clearing progress.
         const addToDestination = (current) =>
           destination === "watchlist"
             ? { ...current, watchlist: true }

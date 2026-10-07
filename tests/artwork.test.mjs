@@ -11,6 +11,7 @@ test("artwork API persists choices through refresh, backup, and restart", async 
   const directory = mkdtempSync(join(tmpdir(), "tv-artwork-"));
   const file = join(directory, "library.json");
   let child;
+  // Start the artwork fixture server against the test's temporary library.
   async function start() {
     child = spawn(process.execPath, ["--import", "./tests/tmdb-fixture.mjs", "server.mjs"], {
       env: { ...process.env, PORT: "0", TV_DATA_FILE: file, TMDB_TOKEN: "fixture" },
@@ -27,6 +28,7 @@ test("artwork API persists choices through refresh, backup, and restart", async 
       });
     });
   }
+  // Stop the fixture server before restart checks or temporary-library cleanup.
   async function stop() {
     if (child?.exitCode === null) {
       const exited = once(child, "exit");
@@ -36,6 +38,7 @@ test("artwork API persists choices through refresh, backup, and restart", async 
   }
   t.after(async () => { await stop(); rmSync(directory, { recursive: true, force: true }); });
   let base = await start();
+  // Send a JSON request to the current fixture server and return status and response data.
   async function request(path, method = "GET", body) {
     const response = await fetch(`${base}${path}`, {
       method,

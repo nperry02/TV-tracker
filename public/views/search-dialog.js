@@ -2,6 +2,7 @@ import { api } from "../api.js";
 import { inLibrary, inWatchlist } from "../model.js";
 import { $, esc, poster, report, toast, year } from "../ui.js";
 
+// Create a paged TMDB search dialog with independent query and addition state.
 export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
   // Incrementing runs prevent stale search responses from replacing newer results.
   let searchRun = 0;
@@ -18,6 +19,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
   const addingShows = new Set();
 
   // Render search status, result actions, and pagination from the local state snapshot.
+  // Render search results, membership actions, request feedback, and pagination controls.
   function render() {
     $("#search-message").textContent =
       state.error ||
@@ -47,6 +49,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
         : "Load more shows";
   }
 
+  // Fetch the next search page, deduplicate results, and ignore superseded responses.
   async function loadMore() {
     if (state.loading) return;
     const run = ++searchRun;
@@ -80,6 +83,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
   }
 
   // A new query resets pagination before loading its first page.
+  // Start a new submitted query by clearing previous results and pagination.
   function search(event) {
     event.preventDefault();
     const query = $("#tmdb-query").value.trim();
@@ -96,6 +100,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
     loadMore();
   }
 
+  // Save a search result to the requested collection while preventing duplicate additions.
   async function add(id, watchlistOnly) {
     if (addingShows.has(id)) return;
     addingShows.add(id);
@@ -119,6 +124,7 @@ export function createSearchDialog({ getShows, onShowAdded, onOpenShow }) {
     }
   }
 
+  // Open the search dialog with its retained results and focus the query field.
   function open() {
     render();
     $("#search-dialog").showModal();

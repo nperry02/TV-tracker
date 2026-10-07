@@ -8,15 +8,18 @@ export const statuses = [
 ];
 
 // Artwork overrides are personal choices; refreshed TMDB defaults stay separate.
+// Resolve a personal artwork override before falling back to the TMDB default.
 export function artworkPath(show, kind) {
   return show[`${kind}Override`] || show[`${kind}_path`] || null;
 }
 
+// Check that an artwork choice is a supported relative TMDB image path.
 export function validArtworkPath(value) {
   return typeof value === "string" && /^\/[\w.-]+\.(?:jpg|jpeg|png|webp)$/i.test(value);
 }
 
 // Stable sorting prioritizes readable posters and backdrops without overlaid text.
+// Order artwork stably, prioritizing English posters or text-free backdrops.
 export function artworkOptions(items, kind) {
   const preferred = kind === "poster" ? "en" : null;
   return [...items].sort((a, b) =>
@@ -24,9 +27,11 @@ export function artworkOptions(items, kind) {
 }
 
 // Existing gallery/list preferences remain valid; unknown saved values reset safely.
+// Normalize saved collection display preferences, defaulting unknown values to gallery.
 export function collectionView(value) {
   return ["gallery", "backdrop", "list"].includes(value) ? value : "gallery";
 }
+// Determine tracked membership, preserving libraries saved before explicit membership flags.
 export function inLibrary(show) {
   // Preserve membership of libraries saved before tracking and watchlist were separate.
   return typeof show.tracked === "boolean"
@@ -35,23 +40,27 @@ export function inLibrary(show) {
         show.watched.length || show.statusOverride || show.watchlist === false,
       );
 }
+// Determine Watchlist membership, including the implied flag in legacy libraries.
 export function inWatchlist(show) {
   // Older saves implied Watchlist when a show had no progress or manual status.
   return typeof show.watchlist === "boolean"
     ? show.watchlist
     : !show.watched.length && !show.statusOverride;
 }
+// Test library or Watchlist membership against a collection tab.
 export function matchesTab(show, tab) {
   if (tab === "Watchlist") return inWatchlist(show);
   if (tab === "All") return inLibrary(show);
   return inLibrary(show) && watchStatus(show) === tab;
 }
+// Match any selected status and intersect it with optional Watchlist membership.
 export function matchesLibraryFilters(show, selectedStatuses, watchlistOnly) {
   // Watchlist intersects selected statuses because it is independent membership.
   if (watchlistOnly && !inWatchlist(show)) return false;
   if (!selectedStatuses.size) return watchlistOnly || inLibrary(show);
   return inLibrary(show) && selectedStatuses.has(watchStatus(show));
 }
+// Require a show to contain every selected genre.
 export function matchesGenres(show, selectedGenres) {
   // Multiple genre selections use AND behavior.
   return [...selectedGenres].every((selectedGenre) =>
@@ -72,6 +81,7 @@ export const listSorts = [
   "rating-low",
   "watch-status",
 ];
+// Resolve list members and apply display sorting without changing stored manual ranks.
 export function listEntries(list, shows) {
   const showsById = new Map(shows.map((show) => [show.id, show]));
   const entries = list.entries
@@ -79,6 +89,7 @@ export function listEntries(list, shows) {
     .filter(({ show }) => show);
   if (list.ordered && list.sort === "manual") return entries;
 
+  // Compare a list field in either direction while keeping absent values last.
   const missingLast = (a, b, value, direction = 1) => {
     const valueA = value(a.show);
     const valueB = value(b.show);
@@ -88,22 +99,31 @@ export function listEntries(list, shows) {
     return direction * (valueA < valueB ? -1 : valueA > valueB ? 1 : 0);
   };
   const comparators = {
+    // Group statuses with title ordering while preserving exact ties by original index.
     "watch-status": (a, b) => compareWatchStatus(a.show, b.show) || a.index - b.index,
+    // Retain the stored entry order for ranked lists.
     manual: (a, b) => a.index - b.index,
+    // Order list members by oldest membership date, preserving exact ties.
     "added-oldest": (a, b) =>
       a.entry.addedAt.localeCompare(b.entry.addedAt) || a.index - b.index,
+    // Order list members by newest membership date, preserving exact ties.
     "added-newest": (a, b) =>
       b.entry.addedAt.localeCompare(a.entry.addedAt) || a.index - b.index,
+    // Order list titles alphabetically, preserving exact ties.
     "title-asc": (a, b) =>
       a.show.name.localeCompare(b.show.name) || a.index - b.index,
+    // Order list titles in reverse alphabetical order, preserving exact ties.
     "title-desc": (a, b) =>
       b.show.name.localeCompare(a.show.name) || a.index - b.index,
+    // Order premiere dates newest first, leaving unknown dates last.
     "release-newest": (a, b) =>
       missingLast(a, b, (show) => show.first_air_date || null, -1) ||
       a.index - b.index,
+    // Order premiere dates oldest first, leaving unknown dates last.
     "release-oldest": (a, b) =>
       missingLast(a, b, (show) => show.first_air_date || null) ||
       a.index - b.index,
+    // Order personal ratings highest first, leaving unrated shows last.
     "rating-high": (a, b) =>
       missingLast(
         a,
@@ -111,6 +131,7 @@ export function listEntries(list, shows) {
         (show) => (Number.isFinite(show.rating) ? show.rating : null),
         -1,
       ) || a.index - b.index,
+    // Order personal ratings lowest first, leaving unrated shows last.
     "rating-low": (a, b) =>
       missingLast(
         a,
@@ -122,13 +143,17 @@ export function listEntries(list, shows) {
 }
 
 // Episode ordering, availability, and progress
+// Build the season-and-episode key used to store watched progress.
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
+// Return the current local calendar date in sortable YYYY-MM-DD form.
 export function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+// Treat episodes with a known air date on or before the chosen date as available.
 export const aired = (e, date = today()) =>
   Boolean(e.air_date && e.air_date <= date);
+// Return nonspecial episodes ordered by season and episode number.
 export function regularEpisodes(show) {
   return show.episodes
     .filter((e) => e.season_number > 0)
@@ -138,6 +163,7 @@ export function regularEpisodes(show) {
         a.episode_number - b.episode_number,
     );
 }
+// Summarize aired progress, last watched, next unwatched, and upcoming regular episodes.
 export function progress(show, date = today()) {
   const episodes = regularEpisodes(show);
   const available = episodes.filter((e) => aired(e, date));
@@ -152,6 +178,7 @@ export function progress(show, date = today()) {
     upcoming: episodes.find((e) => e.air_date > date),
   };
 }
+// Use a manual status when present; otherwise derive status from progress and series state.
 export function watchStatus(show, date = today()) {
   // Explicit corrections always take precedence over derived progress.
   if (show.statusOverride) return show.statusOverride;
@@ -172,7 +199,9 @@ export function watchStatus(show, date = today()) {
 
 // Group by the interface's status order; Watchlist-only saves come last.
 // Titles provide a consistent order inside groups without changing manual ranks.
+// Compare shows by the interface's status order, then alphabetically by title.
 export function compareWatchStatus(a, b, date = today()) {
+  // Map a derived watch status to its sort position, placing untracked shows last.
   const rank = (show) => {
     const index = statuses.indexOf(watchStatus(show, date));
     return index < 0 ? statuses.length : index;
@@ -186,6 +215,7 @@ export function compareWatchStatus(a, b, date = today()) {
 // five overdue shows sequentially. There is no background timer; later starts or
 // reloads continue through the remaining eligible shows.
 const DAY = 24 * 60 * 60 * 1000;
+// Choose the refresh interval from membership and current watch status.
 export function metadataRefreshInterval(show, date = today()) {
   // Active shows refresh most often; stable library states back off gradually.
   if (!inLibrary(show) && inWatchlist(show)) return 7 * DAY;
@@ -194,6 +224,7 @@ export function metadataRefreshInterval(show, date = today()) {
   if (status === "Paused") return 7 * DAY;
   return 30 * DAY;
 }
+// Select a limited queue of stale shows, prioritizing active statuses and oldest metadata.
 export function metadataRefreshQueue(
   shows,
   now = new Date(),
@@ -221,9 +252,11 @@ export function metadataRefreshQueue(
 }
 
 // Statistics helpers
+// Normalize a finite positive runtime or return null when it is unavailable.
 const positiveRuntime = (value) =>
   Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null;
 
+// Find the middle runtime, averaging the two central values for an even sample.
 function median(values) {
   if (!values.length) return null;
   const sorted = [...values].sort((a, b) => a - b);
@@ -233,6 +266,7 @@ function median(values) {
     : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
+// Select up to five rated tracked shows, breaking ties by progress recency and title.
 export function topRatedShows(shows) {
   return shows
     .filter(inLibrary)
@@ -247,6 +281,7 @@ export function topRatedShows(shows) {
     .slice(0, 5);
 }
 
+// Aggregate tracked-library ratings, statuses, progress, runtime estimates, and genre rankings.
 export function libraryStats(shows, date = today()) {
   // Overview and ratings include tracked shows; Watchlist is counted separately.
   const tracked = shows.filter(inLibrary);

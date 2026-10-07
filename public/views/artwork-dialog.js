@@ -4,12 +4,14 @@ import { $, esc, image } from "../ui.js";
 
 const BATCH_SIZE = 24;
 
+// Create the artwork picker with transient options and independent pending image choices.
 export function createArtworkDialog({ onSaved }) {
   const dialog = $("#artwork-dialog");
   let show, kind = "poster", options, pending, visible, controller;
   let generation = 0, loading = false, saving = false, loadError = "";
 
   // Rendering replaces only choices; the static footer and dialog retain focus.
+  // Render the active artwork tab, thumbnail batch, request status, and save controls.
   function render() {
     dialog.querySelectorAll("[data-artwork-tab]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.artworkTab === kind));
@@ -22,6 +24,7 @@ export function createArtworkDialog({ onSaved }) {
     // Keep an older saved choice selectable even if TMDB no longer lists it.
     if (current && !choices.some((item) => item.file_path === current))
       choices.unshift({ file_path: current, saved: true });
+    // Render one accessible artwork choice with its thumbnail and available metadata.
     const tile = (path, label, value, item = {}) => {
       const src = image(path, kind === "poster" ? "w185" : "w300");
       return `<label class="artwork-choice"><input type="radio" name="artwork-choice" value="${esc(value || "")}" aria-label="${esc(label)}"${(chosen || "") === (value || "") ? " checked" : ""}${saving ? " disabled" : ""}><span class="artwork-thumbnail">${src ? `<img src="${src}" alt="" loading="lazy">` : ""}<span class="artwork-image-fallback"${src ? " hidden" : ""}>${src ? "Image unavailable" : "No image"}</span></span><strong>${esc(label)}</strong>${item.width && item.height ? `<small>${item.width} × ${item.height}${item.iso_639_1 ? ` · ${esc(item.iso_639_1)}` : " · No language"}</small>` : ""}</label>`;
@@ -44,6 +47,7 @@ export function createArtworkDialog({ onSaved }) {
   }
 
   // One request supplies both tabs. Closing aborts it and invalidates late results.
+  // Fetch both image collections once and discard results after the picker closes or reloads.
   async function load() {
     controller?.abort();
     controller = new AbortController();
@@ -84,6 +88,7 @@ export function createArtworkDialog({ onSaved }) {
       render();
     }
   });
+  // Keep the chosen image pending and enable saving only when a choice has changed.
   dialog.addEventListener("change", (event) => {
     if (saving || event.target.name !== "artwork-choice") return;
     pending[kind] = event.target.value || null;
@@ -91,11 +96,13 @@ export function createArtworkDialog({ onSaved }) {
     $("#artwork-save").disabled = loading ||
       ["poster", "backdrop"].every((type) => pending[type] === (show[`${type}Override`] || null));
   });
+  // Replace a failed image thumbnail with its unavailable-image fallback.
   dialog.addEventListener("error", (event) => {
     if (event.target.tagName !== "IMG") return;
     event.target.hidden = true;
     event.target.nextElementSibling.hidden = false;
   }, true);
+  // Save both pending choices together and retain selections if the request fails.
   $("#artwork-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     if (saving || loading || $("#artwork-save").disabled) return;
@@ -119,7 +126,9 @@ export function createArtworkDialog({ onSaved }) {
       if (dialog.open) render();
     }
   });
+  // Prevent Escape from dismissing the picker while a save is in flight.
   dialog.addEventListener("cancel", (event) => { if (saving) event.preventDefault(); });
+  // Abort loading, discard transient options, and return focus to Change artwork.
   dialog.addEventListener("close", () => {
     ++generation;
     controller?.abort();
@@ -130,6 +139,7 @@ export function createArtworkDialog({ onSaved }) {
   });
 
   return {
+    // Initialize the picker from saved artwork choices and begin loading alternate images.
     open(currentShow) {
       show = currentShow;
       kind = "poster";
