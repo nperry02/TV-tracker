@@ -740,6 +740,11 @@ try {
     );
     await page.locator("#sort").selectOption("last-updated");
     assert.equal((await showOrder()).at(0), 60059);
+    await page.locator("#sort").selectOption("watch-status");
+    const sortedStatuses = await page.locator("#library-grid .card-heading .status-badge").allTextContents();
+    const statusOrder = ["Watching", "Paused", "Caught Up", "Completed", "Dropped", "Not started"];
+    assert.equal(sortedStatuses.length, (await showOrder()).length);
+    assert.deepEqual(sortedStatuses.map(status => statusOrder.indexOf(status)), [...sortedStatuses.map(status => statusOrder.indexOf(status))].sort((a, b) => a - b));
     await page.locator("#sort").selectOption("release-newest");
     assert.deepEqual(
       await showOrder(),
@@ -1319,6 +1324,8 @@ try {
       await page.locator(".list-show-card .card-heading h3").allTextContents(),
       ["Breaking Bad", "Test series 23"],
     );
+    await page.locator("[data-list-sort]").selectOption("watch-status");
+    await page.waitForFunction(() => document.querySelector("[data-list-sort]")?.value === "watch-status");
     await page.locator("[data-list-sort]").selectOption("title-desc");
     await page.waitForFunction(() => document.querySelector(".list-show-card .card-heading h3")?.textContent === "Test series 23");
     assert.equal(await page.getByRole("button", { name: /Move .* (up|down)/ }).count(), 0);

@@ -70,6 +70,7 @@ export const listSorts = [
   "release-oldest",
   "rating-high",
   "rating-low",
+  "watch-status",
 ];
 export function listEntries(list, shows) {
   const showsById = new Map(shows.map((show) => [show.id, show]));
@@ -87,6 +88,7 @@ export function listEntries(list, shows) {
     return direction * (valueA < valueB ? -1 : valueA > valueB ? 1 : 0);
   };
   const comparators = {
+    "watch-status": (a, b) => compareWatchStatus(a.show, b.show) || a.index - b.index,
     manual: (a, b) => a.index - b.index,
     "added-oldest": (a, b) =>
       a.entry.addedAt.localeCompare(b.entry.addedAt) || a.index - b.index,
@@ -166,6 +168,16 @@ export function watchStatus(show, date = today()) {
   )
     return "Completed";
   return "Caught Up";
+}
+
+// Group by the interface's status order; Watchlist-only saves come last.
+// Titles provide a consistent order inside groups without changing manual ranks.
+export function compareWatchStatus(a, b, date = today()) {
+  const rank = (show) => {
+    const index = statuses.indexOf(watchStatus(show, date));
+    return index < 0 ? statuses.length : index;
+  };
+  return rank(a) - rank(b) || a.name.localeCompare(b.name);
 }
 
 // Metadata refresh scheduling

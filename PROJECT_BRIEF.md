@@ -69,7 +69,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Keep the Home overview focused on library totals, Continue Watching, and up to five top-rated shows.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
-- Sort by personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
+- Sort by watch status, personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
 - Switch between a poster gallery (the first-use default), a backdrop gallery with four cards per desktop row, and a compact list using a shared icon-only three-way control. Both galleries use outlined watch status labels beside show titles instead of premiere years. Backdrop images are landscape with poster fallback. The list shows name, premiere date, watch status, rating, episode progress, and the last watched update, and the browser remembers the selected view.
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
 - Search TMDB and add shows to this library.
@@ -89,7 +89,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 - Provide private personal lists containing shows already saved in My Shows or Watchlist. Lists do not create show records or change status, progress, ratings, Watchlist membership, or Stats.
 - Give each list a unique case-insensitive name, optional description, and dedicated overview and detail pages. Preview the first four displayed show backdrops in a 2 × 2 grid for lists with at least four shows; smaller lists use the first show's backdrop alone. Fall back to posters when backdrops are missing.
-- Support unranked lists that initially display in oldest-added order. Both list types can change display order from the list page using added order, title, premiere date, or personal rating; missing dates and ratings remain last.
+- Support unranked lists that initially display in oldest-added order. Both list types can change display order from the list page using added order, title, watch status, premiere date, or personal rating; missing dates and ratings remain last.
 - Support ranked lists with durable manual ranks changed only in Edit List through accessible position fields. Alternate display sorting and switching to unranked never destroy the manual order restored by Ranked order.
 - Manage membership from either the list or show details. Prevent complete deletion of a show until it is removed from every list that names it; deleting a list never deletes its shows.
 - Reuse the My Shows gallery cards and compact rows on list details. Allow title search and status, genre, and rating filters within the current list without changing membership.

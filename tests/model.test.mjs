@@ -16,6 +16,7 @@ import {
   validArtworkPath,
   artworkOptions,
   collectionView,
+  compareWatchStatus,
 } from "../public/model.js";
 
 test("artwork choices override defaults independently and reset cleanly", () => {
@@ -393,4 +394,16 @@ test("metadata refreshes active shows most often and limits startup work", () =>
     metadataRefreshQueue(entries, now, 20).map((entry) => entry.id),
     [8, 11, 10, 9, 2, 4, 7, 6],
   );
+});
+
+
+test("watch status sorting groups derived and manual statuses without changing ranks", () => {
+  const make = (id, name, statusOverride, tracked = true) => ({ id, name, statusOverride, tracked, watched: [], episodes: [], watchlist: !tracked });
+  const shows = [make(1, "Zulu", "Watching"), make(2, "Alpha", "Watching"), make(3, "Paused", "Paused"), make(4, "Caught", "Caught Up"), make(5, "Completed", "Completed"), make(6, "Dropped", "Dropped"), make(7, "Watchlist", null, false), make(8, "Beta", null)];
+  const entries = [...shows].reverse().map(({ id }) => ({ showId: id, addedAt: "2026-01-01" }));
+  assert.deepEqual([...shows].reverse().sort(compareWatchStatus).map(show => show.id), [2, 8, 1, 3, 4, 5, 6, 7]);
+  const list = { ordered: true, sort: "watch-status", entries };
+  assert.deepEqual(listEntries(list, shows).map(({ show }) => show.id), [2, 8, 1, 3, 4, 5, 6, 7]);
+  assert.deepEqual(listEntries({ ...list, sort: "manual" }, shows).map(({ show }) => show.id), [8, 7, 6, 5, 4, 3, 2, 1]);
+  assert.deepEqual(list.entries, entries);
 });
