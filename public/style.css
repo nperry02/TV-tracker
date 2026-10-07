@@ -944,7 +944,7 @@ dialog::backdrop {
   justify-content: end;
   min-height: 430px;
   overflow: hidden;
-  padding: 56px 32px 28px;
+  padding: 16px 32px 28px;
   background: #253328;
 }
 .detail-hero-main {
@@ -967,11 +967,18 @@ dialog::backdrop {
   position: relative;
 }
 /* Keep content in flow so long titles and overviews expand the hero. */
-.detail-hero-content { min-width: 0; }
-.detail-hero > .icon-button {
-  position: absolute;
-  right: 16px;
-  top: 16px;
+.detail-hero-content { min-width: 0; margin-top: auto; }
+.detail-hero-actions {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.detail-hero-actions #change-artwork {
+  padding: 7px 10px;
+  font-size: 11px;
+  background: #162019dd;
 }
 .detail-poster {
   flex-shrink: 0;
@@ -1609,7 +1616,7 @@ dialog::backdrop {
   }
   .detail-hero {
     min-height: 320px;
-    padding: 45px 20px 25px;
+    padding: 16px 20px 25px;
   }
   .detail-hero-main {
     gap: 16px;
