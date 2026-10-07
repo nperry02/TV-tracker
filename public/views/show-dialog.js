@@ -58,7 +58,7 @@ export function renderShowDialog(show, selectedSeason, mutationPending, lists = 
             })
             .join("")
         : '<p class="muted">No episodes announced for this season yet.</p>'
-    }</div><div class="detail-bottom"><div class="detail-refresh"><small>Show info refreshed ${new Date(show.refreshedAt).toLocaleDateString()}.</small><button id="refresh-show">↻ Refresh show info</button><small>to update the show's details and check for new episodes.</small></div><button class="text-button" id="remove-show">${inLibrary(show) ? "Remove from All Shows" : "Remove saved show"}</button></div></div>`;
+    }</div><div class="detail-bottom"><div class="detail-refresh"><small>Show info refreshed ${new Date(show.refreshedAt).toLocaleDateString()}.</small><button id="refresh-show">↻ Refresh show info</button><button id="change-artwork">Change artwork</button><small>to update the show's details and check for new episodes.</small></div><button class="text-button" id="remove-show">${inLibrary(show) ? "Remove from All Shows" : "Remove saved show"}</button></div></div>`;
 
   // Narrow layouts collapse season rating and progress actions into one menu.
   const seasonActions = $(".season-actions");

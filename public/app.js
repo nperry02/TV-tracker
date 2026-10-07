@@ -16,6 +16,7 @@ import {
 } from "./ui.js";
 import { renderStats } from "./views/stats.js";
 import { createSearchDialog } from "./views/search-dialog.js";
+import { createArtworkDialog } from "./views/artwork-dialog.js";
 import { renderHome } from "./views/home.js";
 import { renderHelp } from "./views/help.js";
 import { renderLibrary } from "./views/library.js";
@@ -239,6 +240,16 @@ async function refreshShow(id, notify = true) {
   if (notify) toast("Show information is up to date.");
 }
 
+// Artwork owns temporary image options; the app reconciles only saved choices.
+const artworkDialog = createArtworkDialog({
+  onSaved(updated) {
+    shows = shows.map((show) => show.id === updated.id ? updated : show);
+    render();
+    if (selectedId === updated.id && $("#show-dialog").open) renderShow();
+    toast("Artwork saved.");
+  },
+});
+
 // Search owns its paging state while the app supplies library updates and routing.
 const searchDialog = createSearchDialog({
   getShows: () => shows,
@@ -338,6 +349,11 @@ document.addEventListener("click", async (event) => {
   }
   if (button.id === "nav-menu-toggle") return $("#nav-drawer").showModal();
   if (button.id === "credits") return $("#credits-dialog").showModal();
+  if (button.id === "change-artwork") {
+    const show = shows.find((entry) => entry.id === selectedId);
+    if (show && !mutationPending) artworkDialog.open(show);
+    return;
+  }
   if (button.id === "create-list" || button.dataset.createList !== undefined) {
     renderListDialog();
     enhanceSelects($("#list-dialog"));
@@ -794,6 +810,7 @@ matchMedia("(max-width: 800px)").addEventListener("change", (event) => {
 // A click on a dialog backdrop closes it without intercepting panel clicks.
 for (const dialog of document.querySelectorAll("dialog"))
   dialog.addEventListener("click", (event) => {
+    if (dialog.dataset.saving === "true") return;
     if (event.target !== dialog) return;
     const r = dialog.getBoundingClientRect();
     if (

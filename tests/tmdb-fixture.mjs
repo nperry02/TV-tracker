@@ -65,7 +65,8 @@ globalThis.fetch = async (input) => {
     const option = (file_path, iso_639_1, width, height) =>
       ({ file_path, iso_639_1, width, height, vote_average: 8, vote_count: 10 });
     return Response.json({
-      posters: [option("/alternate-poster.jpg", "en", 600, 900)],
+      posters: [option("/alternate-poster.jpg", "en", 600, 900),
+        ...Array.from({ length: 29 }, (_, index) => option(`/poster-option-${index}.jpg`, index % 2 ? "ja" : "en", 600, 900))],
       backdrops: [option("/alternate-backdrop.jpg", null, 1280, 720)],
       logos: [{ file_path: "/unused-logo.png" }],
     });

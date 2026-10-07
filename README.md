@@ -57,6 +57,7 @@ running it. Stop it with Ctrl+C.
 - Create private ranked or unranked lists from shows already saved in My Shows or Watchlist. New unranked lists begin in added order. Change either kind of list's display order from its detail page; edit ranked lists to rearrange their durable manual ranks with position fields.
 - Add or remove shows from a list page or use Manage lists in show details. Search and filter a list by status, genre, or rating, and use the same gallery cards and compact rows as My Shows. Each list remembers its own gallery/list layout in the current browser, while list names, descriptions, membership, and manual order live in the library file.
 - Rate shows and individual seasons independently, from 0.5 to 5 stars.
+- Choose a show's poster and backdrop with Change artwork in show details. Browse TMDB options on demand, save only selected paths, and reset either image to the TMDB default. Personal artwork choices survive refreshes and backups and apply throughout the app.
 - Mark individual episodes or aired episodes in a season watched. “Watched through here” fills in earlier regular episodes across seasons.
 - Mark the next unwatched episode directly from the library or show details. “Watched through this season” fills in earlier seasons too.
 - “Pick up where you left off” shows up to three Watching shows with remaining episodes, ordered by the most recently added watched progress. Correcting/removing progress does not move a show to the front.

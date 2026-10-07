@@ -1916,6 +1916,108 @@ main {
 }
 
 /* List overview and metadata editor */
+/* Artwork picker: header and actions frame one scrolling thumbnail gallery. */
+.artwork-dialog {
+  width: min(760px, calc(100vw - 32px));
+  padding: 0;
+  overflow: hidden;
+}
+#artwork-form {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: calc(90dvh - 2px);
+}
+#artwork-form > .dialog-top {
+  margin: 24px 24px 0;
+}
+#artwork-show-name {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+.artwork-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 24px;
+}
+.artwork-tabs {
+  display: flex;
+  gap: 8px;
+}
+.artwork-tabs [aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+#artwork-status {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 16px 0;
+}
+.artwork-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.artwork-options[data-kind="backdrop"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.artwork-choice {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  min-width: 0;
+  font-size: 12px;
+}
+.artwork-choice:has(input:checked) {
+  border-color: var(--accent);
+  background: #23361d;
+}
+.artwork-choice:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.artwork-choice input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.artwork-thumbnail {
+  display: grid;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #0c120e;
+}
+[data-kind="backdrop"] .artwork-thumbnail { aspect-ratio: 16 / 9; }
+.artwork-thumbnail img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+}
+.artwork-image-fallback { align-self: center; text-align: center; color: var(--muted); }
+.artwork-choice small { color: var(--muted); font-size: 10px; }
+#artwork-more { margin-top: 16px; }
+.artwork-footer {
+  display: flex;
+  justify-content: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+#artwork-save-error { flex-basis: 100%; margin: 0; color: #f2a39b; }
+@media (max-width: 560px) {
+  .artwork-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #artwork-form > .dialog-top { margin: 20px 16px 0; }
+  .artwork-body { padding: 16px; }
+  .artwork-footer { padding: 16px; }
+}
+
 .lists-page {
   max-width: 1380px;
   margin: 0 auto;

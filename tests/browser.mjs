@@ -52,6 +52,10 @@ try {
     viewport: { width: 1440, height: 1050 },
   });
   page.on("pageerror", (error) => errors.push(error.message));
+  let artworkRequests = 0;
+  page.on("request", (request) => {
+    if (/\/api\/shows\/\d+\/images$/.test(request.url())) artworkRequests++;
+  });
   page.setDefaultTimeout(live ? 60000 : 10000);
   const selectLibraryStatus = async (status) => {
     if (status === "Watchlist") {
@@ -905,6 +909,71 @@ try {
     path: "test-results/mobile-detail.png",
     fullPage: true,
   });
+  // Artwork loads only on opening; both tabs share that one response.
+  assert.equal(artworkRequests, 0);
+  await page.getByRole("button", { name: "Change artwork", exact: true }).click();
+  const artworkPicker = page.locator("#artwork-dialog");
+  await page.waitForFunction(() => !document.querySelector("#artwork-status").textContent.includes("Loading"));
+  assert.equal(artworkRequests, 1);
+  await artworkPicker.getByRole("button", { name: "Backdrop", exact: true }).click();
+  assert.equal(artworkRequests, 1);
+  assert.equal(await artworkPicker.evaluate((dialog) => {
+    const footer = dialog.querySelector(".artwork-footer").getBoundingClientRect();
+    return dialog.scrollWidth <= dialog.clientWidth && footer.bottom <= innerHeight;
+  }), true, "Artwork picker and footer fit mobile viewport");
+  await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
+  if (!live) {
+    const openArtwork = async () => {
+      await page.getByRole("button", { name: "Change artwork", exact: true }).click();
+      await page.waitForFunction(() => !document.querySelector("#artwork-status").textContent.includes("Loading"));
+    };
+    // Selection stays pending until saved; browsing more adds no API request.
+    await openArtwork();
+    assert.equal(await artworkPicker.getByRole("radio").count(), 25);
+    await page.screenshot({ path: "test-results/artwork-picker.png", fullPage: true });
+    const beforeMore = artworkRequests;
+    await artworkPicker.getByRole("button", { name: "Show more", exact: true }).click();
+    assert.equal(await artworkPicker.getByRole("radio").count(), 31);
+    assert.equal(artworkRequests, beforeMore);
+    await artworkPicker.getByRole("radio", { name: "Poster 1", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
+    await openArtwork();
+    assert.equal(await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).isChecked(), true);
+    await artworkPicker.getByRole("radio", { name: "Poster 1", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Backdrop", exact: true }).click();
+    await artworkPicker.getByRole("radio", { name: "Backdrop 1", exact: true }).check();
+    // A failed save retains both selections and lets the user retry.
+    await page.route("**/api/shows/1396", (route) => route.request().method() === "PATCH"
+      ? route.fulfill({ status: 502, json: { error: "Artwork save unavailable" } }) : route.continue());
+    await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
+    await page.locator("#artwork-save-error").waitFor();
+    assert.equal(await artworkPicker.getByRole("radio", { name: "Backdrop 1", exact: true }).isChecked(), true);
+    await page.unroute("**/api/shows/1396");
+    await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
+    await artworkPicker.waitFor({ state: "hidden" });
+    assert.ok((await page.locator(".detail-poster").getAttribute("src")).endsWith("/alternate-poster.jpg"));
+    assert.ok((await page.locator(".detail-backdrop").getAttribute("src")).endsWith("/alternate-backdrop.jpg"));
+    await page.locator("#refresh-show").click();
+    await page.waitForFunction(() => document.querySelector("#refresh-show")?.disabled === false);
+    assert.ok((await page.locator(".detail-backdrop").getAttribute("src")).endsWith("/alternate-backdrop.jpg"));
+    await page.route("**/api/shows/1396/images", (route) => route.fulfill({ json: { posters: [], backdrops: [] } }));
+    await openArtwork();
+    assert.equal(await artworkPicker.getByRole("radio", { name: "Saved selection", exact: true }).isChecked(), true);
+    await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Backdrop", exact: true }).click();
+    await artworkPicker.getByRole("radio", { name: "Use TMDB default", exact: true }).check();
+    await artworkPicker.getByRole("button", { name: "Save changes", exact: true }).click();
+    await artworkPicker.waitFor({ state: "hidden" });
+    await page.unroute("**/api/shows/1396/images");
+    // Failed image requests are retryable and never mutate saved choices.
+    await page.route("**/api/shows/1396/images", (route) => route.fulfill({ status: 502, json: { error: "Artwork unavailable" } }));
+    await openArtwork();
+    await artworkPicker.getByRole("button", { name: "Try again", exact: true }).waitFor();
+    await page.unroute("**/api/shows/1396/images");
+    await artworkPicker.getByRole("button", { name: "Try again", exact: true }).click();
+    await artworkPicker.getByRole("radio", { name: "Poster 1", exact: true }).waitFor();
+    await artworkPicker.getByRole("button", { name: "Cancel", exact: true }).click();
+  }
   // Long metadata stays within a growing hero instead of overlapping its edges.
   const heroFits = await page.locator(".detail-hero").evaluate((hero) => {
     const overview = hero.querySelector(".overview");

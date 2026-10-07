@@ -337,5 +337,17 @@
       </form>
     </dialog>
     <div id="toast" role="status" popover="manual" hidden></div>
+    <dialog id="artwork-dialog" class="artwork-dialog" aria-labelledby="artwork-title">
+      <form id="artwork-form">
+        <div class="dialog-top"><div><h2 id="artwork-title">Change artwork</h2><p id="artwork-show-name"></p></div><button class="icon-button" type="button" data-close="artwork-dialog" aria-label="Close artwork picker">×</button></div>
+        <div class="artwork-body">
+          <div class="artwork-tabs" role="group" aria-label="Artwork type"><button type="button" data-artwork-tab="poster" aria-pressed="true">Poster</button><button type="button" data-artwork-tab="backdrop" aria-pressed="false">Backdrop</button></div>
+          <p id="artwork-status" role="status"></p>
+          <div id="artwork-options" class="artwork-options"></div>
+          <button id="artwork-more" type="button" hidden>Show more</button>
+        </div>
+        <div class="artwork-footer"><p id="artwork-save-error" role="alert" hidden></p><button type="button" data-close="artwork-dialog">Cancel</button><button id="artwork-save" class="primary" type="submit">Save changes</button></div>
+      </form>
+    </dialog>
   </body>
 </html>

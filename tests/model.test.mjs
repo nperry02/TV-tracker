@@ -14,6 +14,7 @@ import {
   listEntries,
   artworkPath,
   validArtworkPath,
+  artworkOptions,
 } from "../public/model.js";
 
 test("artwork choices override defaults independently and reset cleanly", () => {
@@ -25,6 +26,13 @@ test("artwork choices override defaults independently and reset cleanly", () => 
   assert.equal(validArtworkPath("/chosen.jpg"), true);
   for (const path of ["https://example.com/a.jpg", "/../a.jpg", "//host/a.jpg", "/a.svg", 5, ""])
     assert.equal(validArtworkPath(path), false);
+});
+
+test("artwork options prioritize English posters and text-free backdrops stably", () => {
+  const items = [{ iso_639_1: "ja", file_path: "/ja.jpg" }, { iso_639_1: null, file_path: "/plain.jpg" }, { iso_639_1: "en", file_path: "/en.jpg" }];
+  assert.deepEqual(artworkOptions(items, "poster").map((item) => item.file_path), ["/en.jpg", "/ja.jpg", "/plain.jpg"]);
+  assert.deepEqual(artworkOptions(items, "backdrop").map((item) => item.file_path), ["/plain.jpg", "/ja.jpg", "/en.jpg"]);
+  assert.equal(items[0].file_path, "/ja.jpg");
 });
 
 const episode = (season, number, date = "2026-01-01") => ({

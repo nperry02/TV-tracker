@@ -313,6 +313,7 @@ const files = {
   "/views/help.js": ["views/help.js", "text/javascript"],
   "/views/library.js": ["views/library.js", "text/javascript"],
   "/views/lists.js": ["views/lists.js", "text/javascript"],
+  "/views/artwork-dialog.js": ["views/artwork-dialog.js", "text/javascript"],
   "/views/search-dialog.js": ["views/search-dialog.js", "text/javascript"],
   "/views/show-dialog.js": ["views/show-dialog.js", "text/javascript"],
   "/views/stats.js": ["views/stats.js", "text/javascript"],
