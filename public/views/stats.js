@@ -1,7 +1,5 @@
 import { libraryStats, statuses } from "../model.js";
-import { esc } from "../ui.js";
-
-const infoIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
+import { esc, infoIcon, infoTooltip } from "../ui.js";
 
 // Compact display formatting
 // Convert watched minutes into a compact hour total, with a fallback for unknown values.
@@ -71,7 +69,7 @@ export function renderStats(shows, container) {
     <section class="stats-overview" aria-label="Library overview">
       <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></i><strong>${data.trackedShows.toLocaleString()}</strong><span>Tracked shows</span></article>
       <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m10 8 6 4-6 4Z"></path></svg></i><strong>${data.episodesWatched.toLocaleString()}</strong><span>Episodes watched</span></article>
-      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg></i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "<small>h</small>"}</strong><span class="stats-overview-label">Est. hours watched <span class="stats-info runtime-info" tabindex="0" aria-label="How watch time is estimated" aria-describedby="runtime-estimate-help">${infoIcon}<span id="runtime-estimate-help" role="tooltip">${runtimeNote} Specials count toward watched time. Regular aired episodes determine progress and completed seasons.</span></span></span></article>
+      <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6h4"></path></svg></i><strong>${formatHours(data.estimatedMinutes)}${data.estimatedMinutes == null ? "" : "<small>h</small>"}</strong><span class="stats-overview-label">Est. hours watched ${infoTooltip("runtime-estimate-help", "How watch time is estimated", `${runtimeNote} Specials count toward watched time. Regular aired episodes determine progress and completed seasons.`, "runtime-info")}</span></article>
       <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"></path><path d="m2 12 10 5 10-5M2 17l10 5 10-5"></path></svg></i><strong>${data.seasonsCompleted.toLocaleString()}</strong><span>Seasons completed</span></article>
       <article><i class="stats-overview-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"></path></svg></i><strong>${data.ratedShows.toLocaleString()} <small>/ ${data.trackedShows.toLocaleString()}</small></strong><span>Rated shows</span></article>
     </section>
@@ -96,7 +94,7 @@ export function renderStats(shows, container) {
         </section>
       </div>
       <section class="stats-panel progress-panel" aria-labelledby="progress-heading">
-        <div class="stats-panel-heading"><div class="stats-heading-with-info"><h2 id="progress-heading">Aired episode progress</h2><span class="stats-info" tabindex="0" aria-label="What aired episode progress includes" aria-describedby="progress-help">${infoIcon}<span id="progress-help" role="tooltip">Specials are excluded from progress and completed-season totals.</span></span></div><strong>${Math.round(data.progressPercent)}%</strong></div>
+        <div class="stats-panel-heading"><div class="stats-heading-with-info"><h2 id="progress-heading">Aired episode progress</h2>${infoTooltip("progress-help", "What aired episode progress includes", "Specials are excluded from progress and completed-season totals.")}</div><strong>${Math.round(data.progressPercent)}%</strong></div>
         <progress value="${data.watchedRegularEpisodes}" max="${data.airedRegularEpisodes || 1}" aria-label="${data.watchedRegularEpisodes} of ${data.airedRegularEpisodes} regular aired episodes watched"></progress>
         <div class="progress-summary"><p><strong>${data.watchedRegularEpisodes.toLocaleString()}</strong> of ${data.airedRegularEpisodes.toLocaleString()} regular aired episodes watched</p><div class="progress-legend" aria-label="Progress bar legend"><span><i class="watched" aria-hidden="true"></i>Watched</span><span><i aria-hidden="true"></i>Remaining</span></div></div>
       </section>

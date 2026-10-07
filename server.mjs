@@ -11,6 +11,8 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import {
   aired,
+  reconcileUpdates,
+  validUpdateData,
   episodeKey,
   statuses,
   inLibrary,
@@ -38,6 +40,8 @@ library.shows = library.shows.map((s) => ({
 if ("lists" in library && !Array.isArray(library.lists))
   throw new Error("Unsupported library file. Your data has not been changed.");
 library.lists ||= [];
+// Saved activity flags do not control recording or visibility.
+delete library.preferences;
 
 // Write a complete temporary file before replacing the saved library atomically.
 // Persist a complete library snapshot atomically, then replace the in-memory copy.
@@ -51,14 +55,15 @@ function commit(next) {
 
 // Clone mutations keep the in-memory library unchanged when validation fails.
 // Clone the library, transform one saved show, and persist the result.
-function update(id, transform) {
+function update(id, transform, source = "personal") {
   const index = library.shows.findIndex((s) => s.id === id);
   if (index < 0)
     throw Object.assign(new Error("Show not found in your library."), {
       status: 404,
     });
   const next = structuredClone(library);
-  next.shows[index] = transform(next.shows[index]);
+  const baseline = reconcileUpdates(next.shows[index]);
+  next.shows[index] = reconcileUpdates(transform(baseline), { source });
   commit(next);
   return next.shows[index];
 }
@@ -156,6 +161,10 @@ function validateImportedLibrary(value) {
     watchlist: inWatchlist(show),
   }));
   for (const show of next.shows) validateArtworkOverrides(show);
+  if (next.shows.some((show) => !validUpdateData(show)))
+    throw Object.assign(new Error("Backup contains invalid update data."), { status: 400 });
+  // Restore old backups without reviving the removed activity toggle.
+  delete next.preferences;
   if ("lists" in next && !Array.isArray(next.lists))
     throw Object.assign(new Error("Backup contains invalid lists."), {
       status: 400,
@@ -376,8 +385,44 @@ export const server = http.createServer(async (req, res) => {
       });
       return res.end(readFileSync(resolve(root, "public", file)));
     }
-    if (req.method === "GET" && path === "/api/library")
+    if (req.method === "GET" && path === "/api/library") {
+      // Persist date transitions once; ordinary library reads do not rewrite unchanged data.
+      const next = { ...library, shows: library.shows.map((show) => reconcileUpdates(show)) };
+      if (JSON.stringify(next) !== JSON.stringify(library)) commit(next);
       return send(200, library);
+    }
+    if (req.method === "POST" && path === "/api/updates/read-all") {
+      const value = await body(req);
+      if (!Array.isArray(value?.updates) || value.updates.some((entry) =>
+        !entry || !Number.isSafeInteger(entry.showId) || entry.showId <= 0 || typeof entry.id !== "string"))
+        return send(400, { error: "Expected update identifiers." });
+      const requested = new Map(value.updates.map((entry) => [entry.showId, entry.id]));
+      const now = new Date().toISOString();
+      // Reconcile first so a newly released or refreshed entry stays unread if its ID changed.
+      const next = { ...library, shows: library.shows.map((show) => {
+        const current = reconcileUpdates(show, { now });
+        const entry = current.latestUpdate;
+        if (entry && !entry.readAt && requested.get(show.id) === entry.id)
+          current.latestUpdate = { ...entry, readAt: now };
+        return current;
+      }) };
+      if (JSON.stringify(next) !== JSON.stringify(library)) commit(next);
+      return send(200, { shows: library.shows });
+    }
+    const readUpdate = path.match(/^\/api\/shows\/(\d+)\/update-read$/);
+    if (req.method === "POST" && readUpdate) {
+      const value = await body(req);
+      const show = library.shows.find((item) => item.id === Number(readUpdate[1]));
+      if (!show) return send(404, { error: "Show not found." });
+      if (!show.latestUpdate || show.latestUpdate.id !== value.id)
+        return send(409, { error: "This update has changed. Reload the feed." });
+      return send(200, update(show.id, (current) => {
+        // A date transition may have replaced the entry during reconciliation.
+        if (current.latestUpdate?.id !== value.id)
+          throw Object.assign(new Error("This update has changed. Reload the feed."), { status: 409 });
+        return { ...current, latestUpdate: { ...current.latestUpdate, readAt: new Date().toISOString() } };
+      }));
+    }
     if (req.method === "GET" && path === "/api/export") {
       res.setHeader(
         "Content-Disposition",
@@ -566,7 +611,7 @@ export const server = http.createServer(async (req, res) => {
         if (match[2])
           return send(
             200,
-            update(id, (current) => ({ ...current, ...meta })),
+            update(id, (current) => ({ ...current, ...meta }), "external"),
           );
         // Recheck after the remote request to avoid duplicate concurrent additions.
         const duplicate = library.shows.find((s) => s.id === id);
@@ -582,8 +627,9 @@ export const server = http.createServer(async (req, res) => {
           lastWatchedAt: null,
           addedAt: new Date().toISOString(),
         };
-        commit({ ...library, shows: [...library.shows, show] });
-        return send(201, show);
+        const initialized = reconcileUpdates(show);
+        commit({ ...library, shows: [...library.shows, initialized] });
+        return send(201, initialized);
       }
       if (req.method === "PATCH" && !match[2]) {
         const b = await body(req);

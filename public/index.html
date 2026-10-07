@@ -57,10 +57,21 @@
         </div>
         <div id="continue-list" class="continue-list"></div>
       </section>
+      <!-- Favorites and latest news share a desktop row, then stack on smaller screens. -->
+      <div class="home-discovery">
       <section class="top-rated home-top-rated" aria-labelledby="home-top-rated-heading">
         <div class="stats-panel-heading"><h2 id="home-top-rated-heading">Top-rated shows</h2></div>
         <div class="top-rated-grid" id="home-top-rated-grid"></div>
       </section>
+      <section id="updates-section" class="updates-section" aria-labelledby="updates-heading">
+        <div class="section-heading updates-heading">
+          <div class="updates-heading-title"><h2 id="updates-heading">Updates</h2><span id="updates-info"></span></div>
+          <button id="updates-unread" title="Mark all as read" aria-label="Mark all as read" hidden disabled></button>
+        </div>
+        <div id="updates-list" class="updates-list" role="region" aria-label="Recent show updates" tabindex="0"></div>
+        <button id="updates-more" hidden aria-expanded="false" aria-controls="updates-list">Show more</button>
+      </section>
+      </div>
       </div>
       <!-- My Shows collection and filter controls -->
       <section id="library-view" hidden>

@@ -5,6 +5,8 @@ import {
   metadataRefreshQueue,
   statuses,
   collectionView,
+  today,
+  latestUpdates,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -41,6 +43,13 @@ let shows = [],
   pendingListShowId = null,
   listMemberSelection = new Set();
 const listFilters = new Map();
+
+// Feed expansion stays local; read state persists with each show's update.
+let updatesExpanded = false,
+  pendingReadId = null,
+  feedDate = null,
+  feedSyncPending = false,
+  metadataRefreshPending = 0;
 
 // Read the selected list ID from the current hash route.
 function selectedListId() {
@@ -144,7 +153,9 @@ function applyRoute({ scroll = false } = {}) {
 }
 // Redraw collection pages and statistics from saved state, then synchronize select controls.
 function render() {
-  renderHome(shows, mutationPending);
+  renderHome(shows, mutationPending, {
+    expanded: updatesExpanded, pendingReadId,
+  });
   renderLibrary(shows, libraryFilters, viewMode);
   renderLists(
     lists,
@@ -239,11 +250,86 @@ async function save(body, message, id = selectedId) {
 }
 // Fetch fresh metadata and redraw matching show details without replacing personal choices.
 async function refreshShow(id, notify = true) {
-  const updated = await api(`/api/shows/${id}/refresh`, { method: "POST" });
-  shows = shows.map((s) => (s.id === id ? updated : s));
+  metadataRefreshPending++;
+  try {
+    const updated = await api(`/api/shows/${id}/refresh`, { method: "POST" });
+    shows = shows.map((s) => (s.id === id ? updated : s));
+    render();
+    if (selectedId === id && $("#show-dialog").open) renderShow();
+    if (notify) toast("Show information is up to date.");
+  } finally {
+    metadataRefreshPending--;
+  }
+}
+
+// Persist read state, retaining the unread entry when its request fails.
+async function markUpdateRead(showId, entryId) {
+  if (mutationPending) return;
+  mutationPending = true;
+  // Keep the check selected while saving; persisted read state changes only on success.
+  pendingReadId = showId;
   render();
-  if (selectedId === id && $("#show-dialog").open) renderShow();
-  if (notify) toast("Show information is up to date.");
+  try {
+    const value = await api(`/api/shows/${showId}/update-read`, { method: "POST", body: { id: entryId } });
+    shows = shows.map((show) => show.id === showId ? value : show);
+  } catch (error) {
+    report(error);
+  } finally {
+    mutationPending = false;
+    pendingReadId = null;
+    render();
+    const target = $(`#updates-list input[data-read-update="${showId}"]`) || $(`#updates-list .update-title[data-show="${showId}"]`);
+    target?.focus({ preventScroll: true });
+  }
+}
+
+// Mark the current unread feed in one save, preserving news that replaces it during the request.
+async function markAllUpdatesRead() {
+  if (mutationPending) return;
+  // Snapshot all unread entries, including the ones beyond the initial ten rows.
+  const updates = latestUpdates(shows).filter((show) => !show.latestUpdate.readAt)
+    .map((show) => ({ showId: show.id, id: show.latestUpdate.id }));
+  if (!updates.length) return;
+  mutationPending = true;
+  render();
+  try {
+    const value = await api("/api/updates/read-all", { method: "POST", body: { updates } });
+    const saved = new Map(value.shows.map((show) => [show.id, show]));
+    shows = shows.map((show) => saved.get(show.id) || show);
+    toast("Updates marked as read.");
+  } catch (error) {
+    report(error);
+  } finally {
+    mutationPending = false;
+    render();
+    $("#updates-list").focus({ preventScroll: true });
+  }
+}
+
+// Reconcile date transitions and expired entries while open, without racing edits.
+async function syncFeedDate() {
+  if (!feedDate || feedSyncPending || mutationPending || metadataRefreshPending) return;
+  const hasExpired = latestUpdates(shows).length < shows.filter((show) => show.latestUpdate).length;
+  if (feedDate === today() && !hasExpired) return;
+  feedSyncPending = true;
+  const originalShows = shows;
+  const date = today();
+  try {
+    const value = await api("/api/library");
+    // Newer mutations own browser state; a later timer retries skipped reconciliation.
+    if (shows !== originalShows || mutationPending || metadataRefreshPending) return;
+    const saved = new Map(value.shows.map((show) => [show.id, show]));
+    shows = shows.map((show) => saved.has(show.id) ? {
+      ...show, updateSnapshot: saved.get(show.id).updateSnapshot, latestUpdate: saved.get(show.id).latestUpdate,
+    } : show);
+    feedDate = date;
+    render();
+    if ($("#show-dialog").open) renderShow();
+  } catch {
+    // Keep saved data usable offline; the next visible date check retries quietly.
+  } finally {
+    feedSyncPending = false;
+  }
 }
 
 // Artwork owns temporary image options; the app reconciles only saved choices.
@@ -290,6 +376,13 @@ document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
   if (button.dataset.close) return $(`#${button.dataset.close}`).close();
+  if (button.id === "updates-unread") return markAllUpdatesRead();
+  if (button.id === "updates-more") {
+    updatesExpanded = !updatesExpanded;
+    render();
+    $("#updates-more").focus({ preventScroll: true });
+    return;
+  }
   if (button.dataset.tab) {
     // Statuses combine with OR; Watchlist is an independent intersecting filter.
     const tab = button.dataset.tab;
@@ -585,6 +678,11 @@ document.addEventListener("click", async (event) => {
 // Apply filter, sort, rating, membership, rank, and progress changes from delegated controls.
 document.addEventListener("change", (event) => {
   const el = event.target;
+  // Read checkboxes persist through the guarded API.
+  if (el.dataset.readUpdate) {
+    if (!el.checked) return;
+    return markUpdateRead(Number(el.dataset.readUpdate), el.dataset.updateId);
+  }
   if (el.dataset.listSort) {
     const list = lists.find((entry) => entry.id === el.dataset.listSort);
     if (!list) return;
@@ -852,7 +950,9 @@ renderHelp($("#help-view"));
 // Load the saved library, apply the route, and refresh a bounded queue of stale metadata.
 async function boot() {
   try {
-    ({ shows, lists } = await api("/api/library"));
+    const value = await api("/api/library");
+    ({ shows, lists } = value);
+    feedDate = today();
     render();
     applyRoute({ scroll: true });
     // Refresh failures stop the batch while leaving saved progress and ratings usable.
@@ -873,4 +973,7 @@ async function boot() {
     $("#retry-load").addEventListener("click", boot);
   }
 }
+// A minute timer covers an open tab; visibility handles browsers that suspend timers.
+setInterval(() => { if (!document.hidden) syncFeedDate(); }, 60_000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncFeedDate(); });
 boot();

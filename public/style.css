@@ -1902,6 +1902,7 @@ main {
 }
 #home-view {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 #home-view .page-heading,
@@ -4054,4 +4055,69 @@ h1 {
 }
 @media (max-width: 650px) {
   .poster-grid.backdrop-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Home updates distinguish source and read state without depending on color alone. */
+.home-discovery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: 24px;
+}
+.home-discovery > section { min-width: 0; }
+.home-discovery .home-top-rated { min-height: 240px; }
+.home-top-rated .top-rated-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* Size containment lets favorites determine the desktop row height, independently of news. */
+.updates-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.updates-section {
+  contain: size;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.updates-heading { flex-shrink: 0; flex-wrap: wrap; gap: 8px; }
+.updates-heading-title { display: flex; align-items: center; gap: 8px; }
+.updates-info [role="tooltip"] { left: -90px; width: min(270px, 72vw); transform: translateY(-3px); }
+.updates-info:hover [role="tooltip"], .updates-info:focus [role="tooltip"] { transform: translateY(0); }
+#updates-unread { padding: 4px 7px; font-size: 11px; font-weight: 500; color: var(--muted); }
+.update-entry { display: grid; grid-template-columns: 32px minmax(0, 1fr) 126px; gap: 8px; align-items: start; padding: 8px 0; border-top: 1px solid var(--border); }
+.update-show { width: 32px; height: 48px; border: 0; border-radius: 4px; overflow: hidden; padding: 0; }
+.update-poster { width: 100%; height: 100%; object-fit: cover; }
+.update-show .poster-placeholder { width: 100%; height: 100%; font-size: 11px; }
+.update-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.update-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px 6px; align-items: center; color: var(--muted); font-size: 10px; text-align: right; }
+.update-meta time { flex-basis: 100%; }
+.update-source { font-weight: 600; }
+.update-external .update-source, .update-external .update-unread-label { color: var(--green); }
+.update-unread-label { font-weight: 600; }
+.update-read-control { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.update-read-control input { width: 13px; height: 13px; margin: 0; padding: 0; accent-color: var(--green); cursor: pointer; }
+.update-read-control:has(input:disabled) { cursor: default; }
+.update-read-control input:disabled { cursor: default; }
+.update-title { display: block; border: 0; background: transparent; padding: 0; margin: 0 0 2px; font-size: 13px; text-align: left; }
+button.update-title:hover { background: transparent; text-decoration: underline; }
+.update-copy p { margin: 0; font-size: 12px; color: var(--muted); }
+.update-external:not(.update-read) .update-copy p { color: var(--green); }
+.update-copy small { display: block; margin-top: 1px; color: var(--muted); font-size: 11px; }
+.update-read .update-source { color: var(--muted); }
+.updates-empty { padding: 20px 0 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+#updates-more { flex-shrink: 0; margin-top: 12px; padding: 5px 9px; font-size: 11px; }
+@media (max-width: 1100px) {
+  .home-discovery { grid-template-columns: minmax(0, 1fr); }
+  .home-discovery .home-top-rated { min-height: 0; }
+  .updates-section { contain: none; height: auto; }
+  .updates-list { flex: none; overflow-y: visible; }
+}
+@media (max-width: 650px) {
+  .home-top-rated .top-rated-grid { grid-template-columns: repeat(4, minmax(150px, 1fr)); }
+  .updates-section { padding: 18px; }
+}
+/* Very narrow screens keep the metadata readable beneath the update text. */
+@media (max-width: 360px) {
+  .update-entry { grid-template-columns: 32px minmax(0, 1fr); }
+  .update-meta { grid-column: 2; justify-content: flex-start; text-align: left; }
 }

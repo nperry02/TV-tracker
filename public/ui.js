@@ -1,5 +1,13 @@
 import { artworkPath } from "./model.js";
 
+// Shared info controls use the same icon and hover/focus tooltip presentation.
+export const infoIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
+
+// Render a focusable info control with trusted tooltip markup and escaped identifiers.
+export function infoTooltip(id, label, content, className = "") {
+  return `<span class="stats-info ${esc(className)}" tabindex="0" aria-label="${esc(label)}" aria-describedby="${esc(id)}">${infoIcon}<span id="${esc(id)}" role="tooltip">${content}</span></span>`;
+}
+
 // Find the first element matching a document selector.
 export const $ = (selector) => document.querySelector(selector);
 
