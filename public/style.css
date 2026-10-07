@@ -623,25 +623,15 @@ h1 {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
   font-size: 10px;
-  font-weight: 750;
-  border: 1px solid #ffffff24;
-  border-radius: 999px;
-  padding: 5px 9px;
+  font-weight: 650;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 2px 5px;
   background: #152119f7;
   color: #c7d6c9;
   box-shadow: 0 2px 8px #0004;
   white-space: nowrap;
-}
-.status-badge::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 6px currentColor;
 }
 .poster-wrap .status-badge {
   position: absolute;
@@ -649,17 +639,14 @@ h1 {
   left: 9px;
 }
 .status-watching {
-  border-color: #bff36d55;
   background: #23331bf2;
   color: #d5ed9c;
 }
 .status-paused {
-  border-color: #e9b95255;
   background: #33291af2;
   color: #edcf91;
 }
 .status-watchlist {
-  border-color: #d9aa6155;
   background: #30271cf2;
   color: #e6c68d;
 }
@@ -682,17 +669,14 @@ h1 {
   color: #e6c68d;
 }
 .status-caught-up {
-  border-color: #69c8b155;
   background: #17312bf2;
   color: #98d9c9;
 }
 .status-completed {
-  border-color: #9d8ce255;
   background: #26223af2;
   color: #c1b5ed;
 }
 .status-dropped {
-  border-color: #dc6b725f;
   background: #3a1f23f2;
   color: #f0a1a6;
 }
@@ -704,6 +688,7 @@ h1 {
   margin-top: 12px;
 }
 .card-heading h3 {
+  min-width: 0;
   font-size: 12px;
   font-weight: 600;
   margin: 0;
@@ -2934,17 +2919,12 @@ h1 {
 }
 .backdrop-card-info .card-heading { margin-top: 0; }
 .backdrop-card-info .card-heading h3 { min-width: 0; }
-/* Reuse badge colors with a clearer border and no bullet for backdrop headings. */
-.backdrop-card-info .backdrop-status-label {
+/* Heading badges stay in flow while artwork membership badges use their overlay. */
+.card-heading .status-badge {
   position: static;
   flex-shrink: 0;
   align-self: center;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 2px 5px;
-  font-weight: 650;
 }
-.backdrop-status-label::before { content: none; }
 .backdrop-card-info .card-meta { margin-top: 4px; }
 .backdrop-card-info .card-meta > span { flex-shrink: 0; }
 .backdrop-card-info .card-heading small,
@@ -2956,8 +2936,8 @@ h1 {
   .backdrop-card-overlay { padding: 8px; gap: 4px; }
   .backdrop-card-info .card-heading { gap: 4px; }
   .backdrop-card-info .card-heading h3 { font-size: 12px; }
-  .backdrop-gallery .status-badge { font-size: 8px; padding: 2px 5px; gap: 4px; }
-  .backdrop-gallery .status-badge::before { width: 4px; height: 4px; flex-basis: 4px; }
+  .card-heading .status-badge,
+  .backdrop-gallery .status-badge { font-size: 8px; }
 }
 .library-controls .custom-select-trigger {
   height: var(--library-control-height);

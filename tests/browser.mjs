@@ -250,6 +250,9 @@ try {
     "true",
   );
   assert.equal(await page.locator("#library-grid.poster-grid").count(), 1);
+  assert.equal(await page.locator("#library-grid .card-heading .status-badge").count(), await page.locator("#library-grid .show-card").count());
+  assert.equal(await page.locator("#library-grid .card-heading small").count(), 0);
+  assert.equal(await page.locator("#library-grid .card-badges .status-badge:not(.status-watchlist)").count(), 0);
   // Three icon-only choices share information and ordering with wider backdrop cards.
   const switchButtons = page.locator("#library-view-toggle button");
   assert.equal(await switchButtons.count(), 3);
@@ -268,15 +271,16 @@ try {
   assert.equal(beforeView.columns.split(" ").length, 6);
   assert.equal(afterView.columns.split(" ").length, 4);
   assert.equal(await page.locator("#library-grid .card-heading small").count(), 0);
-  assert.equal(await page.locator("#library-grid .card-heading .backdrop-status-label").count(), await page.locator("#library-grid .show-card").count());
-  assert.ok(await page.locator("#library-grid .card-heading .backdrop-status-label").first().textContent());
+  assert.equal(await page.locator("#library-grid .card-heading .status-badge").count(), await page.locator("#library-grid .show-card").count());
+  assert.ok(await page.locator("#library-grid .card-heading .status-badge").first().textContent());
+  assert.equal(afterView.info, beforeView.info);
   assert.equal(afterView.ratio, "16 / 9");
   assert.equal(await page.locator("#library-grid .show-card").first().evaluate((card) => {
     const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
     const title = card.querySelector(".card-heading").getBoundingClientRect();
     const badges = card.querySelector(".card-badges").getBoundingClientRect();
     const progress = card.querySelector(".progress-track").getBoundingClientRect();
-    const label = card.querySelector(".backdrop-status-label");
+    const label = card.querySelector(".status-badge");
     return getComputedStyle(label, "::before").content === "none" &&
       title.top > badges.bottom && progress.bottom <= frame.bottom &&
       Math.abs(card.getBoundingClientRect().bottom - frame.bottom) < 1;
@@ -962,7 +966,7 @@ try {
     const frame = card.querySelector(".poster-wrap").getBoundingClientRect();
     const title = card.querySelector(".card-heading").getBoundingClientRect();
     const progress = card.querySelector(".progress-track").getBoundingClientRect();
-    const status = card.querySelector(".card-heading .backdrop-status-label").getBoundingClientRect();
+    const status = card.querySelector(".card-heading .status-badge").getBoundingClientRect();
     const name = card.querySelector(".card-heading h3").getBoundingClientRect();
     const fits = title.top > badges.getBoundingClientRect().bottom && progress.bottom <= frame.bottom &&
       name.right <= status.left && status.right <= frame.right;

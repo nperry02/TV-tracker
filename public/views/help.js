@@ -84,7 +84,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">☷</i>
           <h3>Personal lists</h3>
-          <p>Use the three view icons in My Shows or a list to choose poster gallery, backdrop gallery, or compact rows. The backdrop gallery places details over landscape artwork and replaces the premiere year with a outlined watch status label beside the title. Missing backdrops fall back to posters.</p>
+          <p>Use the three view icons in My Shows or a list to choose poster gallery, backdrop gallery, or compact rows. Both galleries show an outlined watch status label beside the title instead of the premiere year. The backdrop gallery places details over landscape artwork. Missing backdrops fall back to posters.</p>
           <p>Search the Lists overview by list name or description.</p>
           <p>Collect shows already in My Shows or Watchlist. Search and filter each list using the familiar My Shows layouts. Edit ranked lists to change manual order with position fields; either list type can change its display order.</p>
           <p>List covers follow display order: four or more shows use a 2 × 2 backdrop grid; smaller lists use the first show's backdrop. Missing backdrops fall back to posters.</p>
