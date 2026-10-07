@@ -1,5 +1,6 @@
 import {
   artworkPath,
+  compareWatchStatus,
   inLibrary,
   inWatchlist,
   matchesLibraryFilters,
@@ -36,6 +37,7 @@ function progressLabel(show) {
 function sortShows(shows, sort) {
   // Missing dates stay after dated shows; names make every ordering deterministic.
   shows.sort((a, b) => {
+    if (sort === "watch-status") return compareWatchStatus(a, b);
     if (sort === "last-updated") {
       if (!a.lastWatchedAt || !b.lastWatchedAt)
         return (

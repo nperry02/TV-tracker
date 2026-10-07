@@ -7,6 +7,7 @@ export const listSortOptions = [
   ["added-newest", "Added: newest first"],
   ["title-asc", "Title: A–Z"],
   ["title-desc", "Title: Z–A"],
+  ["watch-status", "Watch status"],
   ["release-newest", "Release date: newest"],
   ["release-oldest", "Release date: oldest"],
   ["rating-high", "Rating: highest"],
