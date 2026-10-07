@@ -88,6 +88,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Stats
 
+- Recorded episode rewatches add to episode-watch and estimated watch-hour totals, including specials. Keep unique progress, completed seasons, statuses, ratings, and viewing order independent. Store optional per-episode repeat counts, excluding the original watch, and clear them when the associated watched progress is cleared. Preserve them in metadata refreshes and backups; older libraries default to zero.
 - Provide a dedicated Stats view inside the dashboard shell with lifetime library totals.
 - Show tracked shows, episodes watched, completed seasons, estimated watch hours, show-rating distribution, status counts, regular aired-episode progress, and the top genres by show count and Bayesian-weighted rating.
 - Keep Watchlist separate from viewing-status counts because it can overlap any status.

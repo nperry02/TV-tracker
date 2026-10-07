@@ -145,6 +145,32 @@ export function listEntries(list, shows) {
 // Episode ordering, availability, and progress
 // Build the season-and-episode key used to store watched progress.
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
+
+// Return the recorded repeats for an episode key, excluding its original watch.
+export function episodeRewatches(show, key, watched = null) {
+  return (watched ? watched.has(key) : show.watched.includes(key)) ? show.rewatchCounts?.[key] || 0 : 0;
+}
+
+// Count complete repeats across aired episodes; specials belong only to their own season.
+export function completeRewatches(show, season = null, date = today()) {
+  const episodes = show.episodes.filter((episode) => aired(episode, date) &&
+    (season === null ? episode.season_number > 0 : episode.season_number === season));
+  if (!episodes.length) return 0;
+  // Reuse a lookup across the summary rather than scanning progress for every episode.
+  const watched = new Set(show.watched);
+  return episodes.reduce((count, episode) => Math.min(count,
+    episodeRewatches(show, episodeKey(episode), watched)), Infinity);
+}
+
+// Validate optional repeat counts without requiring refreshed metadata to retain every key.
+export function validRewatchData(show) {
+  if (!("rewatchCounts" in show)) return true;
+  const counts = show.rewatchCounts;
+  return counts !== null && typeof counts === "object" && !Array.isArray(counts) &&
+    Object.entries(counts).every(([key, count]) => /^\d+:\d+$/.test(key) &&
+      show.watched?.includes(key) && Number.isSafeInteger(count) && count > 0 &&
+      count < Number.MAX_SAFE_INTEGER);
+}
 // Return the current local calendar date in sortable YYYY-MM-DD form.
 export function today(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -321,7 +347,6 @@ export function libraryStats(shows, date = today()) {
     const episodesByKey = new Map(
       show.episodes.map((episode) => [episodeKey(episode), episode]),
     );
-    episodesWatched += watched.size;
     const airedRegular = show.episodes.filter(
       (episode) => episode.season_number > 0 && aired(episode, date),
     );
@@ -345,13 +370,15 @@ export function libraryStats(shows, date = today()) {
 
     // Specials contribute to watch time even though they do not affect show progress.
     for (const key of watched) {
+      const watches = 1 + episodeRewatches(show, key, watched);
+      episodesWatched += watches;
       const episode = episodesByKey.get(key);
       const exact = positiveRuntime(episode?.runtime);
       const typical = positiveRuntime(show.typicalRuntime);
       const runtime = exact || typical || libraryMedianRuntime;
-      if (exact || typical) runtimeCoveredEpisodes += 1;
-      if (!exact && runtime) runtimeEstimatedEpisodes += 1;
-      if (runtime) estimatedMinutes += runtime;
+      if (exact || typical) runtimeCoveredEpisodes += watches;
+      if (!exact && runtime) runtimeEstimatedEpisodes += watches;
+      if (runtime) estimatedMinutes += runtime * watches;
     }
   }
 

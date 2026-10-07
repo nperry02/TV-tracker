@@ -13,6 +13,8 @@ import {
   aired,
   reconcileUpdates,
   validUpdateData,
+  validRewatchData,
+  episodeRewatches,
   episodeKey,
   statuses,
   inLibrary,
@@ -37,6 +39,8 @@ library.shows = library.shows.map((s) => ({
   tracked: inLibrary(s),
   watchlist: inWatchlist(s),
 }));
+if (library.shows.some((show) => !validRewatchData(show)))
+  throw new Error("Invalid rewatch data. Your data has not been changed.");
 if ("lists" in library && !Array.isArray(library.lists))
   throw new Error("Unsupported library file. Your data has not been changed.");
 library.lists ||= [];
@@ -161,6 +165,8 @@ function validateImportedLibrary(value) {
     watchlist: inWatchlist(show),
   }));
   for (const show of next.shows) validateArtworkOverrides(show);
+  if (next.shows.some((show) => !validRewatchData(show)))
+    throw Object.assign(new Error("Backup contains invalid rewatch data."), { status: 400 });
   if (next.shows.some((show) => !validUpdateData(show)))
     throw Object.assign(new Error("Backup contains invalid update data."), { status: 400 });
   // Restore old backups without reviving the removed activity toggle.
@@ -647,6 +653,7 @@ export const server = http.createServer(async (req, res) => {
             s.tracked = b.tracked;
             if (!b.tracked) {
               s.watched = [];
+              delete s.rewatchCounts;
               s.rating = null;
               s.seasonRatings = {};
               s.statusOverride = null;
@@ -730,6 +737,12 @@ export const server = http.createServer(async (req, res) => {
               const [seasonB, episodeB] = b.split(":").map(Number);
               return seasonA - seasonB || episodeA - episodeB;
             });
+            // Progress corrections remove repeat history only for cleared episodes.
+            if (s.rewatchCounts) {
+              for (const key of Object.keys(s.rewatchCounts))
+                if (!keys.has(key)) delete s.rewatchCounts[key];
+              if (!Object.keys(s.rewatchCounts).length) delete s.rewatchCounts;
+            }
             if (s.watched.length) s.tracked = true;
             if (s.watched.length > previousWatchedCount)
               s.lastWatchedAt = new Date().toISOString();
@@ -738,6 +751,23 @@ export const server = http.createServer(async (req, res) => {
               s.watched.length > previousWatchedCount
             )
               s.statusOverride = null;
+          }
+          // Repeat writes change only counts, never progress, status, or activity ordering.
+          if ("rewatch" in b) {
+            const operation = b.rewatch;
+            const episode = s.episodes.find((e) => e.season_number === operation?.season &&
+              e.episode_number === operation?.episode);
+            if (!episode || !["increment", "set"].includes(operation?.action) ||
+                !s.watched.includes(episodeKey(episode)))
+              throw Object.assign(new Error("Rewatches require a watched episode and valid action."), { status: 400 });
+            const key = episodeKey(episode);
+            const count = operation.action === "increment" ? episodeRewatches(s, key) + 1 : operation.count;
+            if (!Number.isSafeInteger(count) || count < 0 || count >= Number.MAX_SAFE_INTEGER)
+              throw Object.assign(new Error("Rewatch count must be a nonnegative safe whole number."), { status: 400 });
+            s.rewatchCounts ||= {};
+            if (count) s.rewatchCounts[key] = count;
+            else delete s.rewatchCounts[key];
+            if (!Object.keys(s.rewatchCounts).length) delete s.rewatchCounts;
           }
           if (!savedShow(s)) {
             const containing = listsContainingShow(id);

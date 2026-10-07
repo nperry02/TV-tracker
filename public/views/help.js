@@ -88,6 +88,7 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">⌁</i>
           <h3>Stats</h3>
+          <p>Episode watches and estimated watch time include recorded rewatches, including specials. Repeat counts exclude the original watch. Rewatches do not change unique episode progress, completed-season totals, show status, or viewing order. Clearing watched progress also clears its repeat counts.</p>
           <p>Explore lifetime totals, ratings, statuses, your most watched and highest-rated genres, episode progress, and estimated watch time. Genre rankings weight small samples toward your overall average.</p>
         </article>
         <article>

@@ -802,7 +802,7 @@ try {
     await page.locator(".runtime-info").hover();
     assert.match(
       await page.locator(".runtime-info [role=tooltip]").textContent(),
-      /watched episodes have show or episode runtime data/,
+      /episode watches have show or episode runtime data/,
     );
     await page.getByRole("heading", { name: "Highest-rated genres" }).waitFor();
     assert.equal(await page.locator(".genre-rating-bars li").count(), 2);
