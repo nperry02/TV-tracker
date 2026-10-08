@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { once } from "node:events";
 import { reconcileUpdates } from "../public/model.js";
+import { checkRewatches } from "./browser-rewatches.mjs";
 
 const live = process.env.LIVE_TMDB === "1";
 
@@ -433,6 +434,7 @@ try {
       !document.querySelector("#show-rating").disabled,
   );
   assert.equal(await page.locator('[data-episode="1"]').isChecked(), true);
+  if (!live) await checkRewatches(page, base);
   assert.equal(
     await page.locator(".detail-hero .status-badge").textContent(),
     "Watching",
@@ -802,7 +804,7 @@ try {
     await page.locator(".runtime-info").hover();
     assert.match(
       await page.locator(".runtime-info [role=tooltip]").textContent(),
-      /watched episodes have show or episode runtime data/,
+      /episode watches have show or episode runtime data/,
     );
     await page.getByRole("heading", { name: "Highest-rated genres" }).waitFor();
     assert.equal(await page.locator(".genre-rating-bars li").count(), 2);

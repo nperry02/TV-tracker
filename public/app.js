@@ -7,6 +7,8 @@ import {
   collectionView,
   today,
   latestUpdates,
+  episodeKey,
+  episodeRewatches,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -50,6 +52,9 @@ let updatesExpanded = false,
   feedDate = null,
   feedSyncPending = false,
   metadataRefreshPending = 0;
+
+// The correction editor captures its show and season so later renders cannot retarget it.
+let rewatchEditor = null;
 
 // Read the selected list ID from the current hash route.
 function selectedListId() {
@@ -231,8 +236,10 @@ async function save(body, message, id = selectedId) {
     shows = shows.map((s) => (s.id === id ? updated : s));
     render();
     if (message) toast(message);
+    return updated;
   } catch (error) {
     report(error);
+    return null;
   } finally {
     mutationPending = false;
     render();
@@ -360,6 +367,10 @@ const searchDialog = createSearchDialog({
 // Delegated button actions cover content that renderers replace after each change.
 // Dispatch delegated navigation, dialog, collection, and show actions from clicked controls.
 document.addEventListener("click", async (event) => {
+  // Episode menus close when interaction leaves their disclosure.
+  document.querySelectorAll(".rewatch-options[open]").forEach((menu) => {
+    if (!menu.contains(event.target)) menu.open = false;
+  });
   // Native details filters close when interaction moves elsewhere on the page.
   document.querySelectorAll(".library-controls .status-filter[open]").forEach((filter) => {
     if (!filter.contains(event.target)) filter.open = false;
@@ -375,7 +386,11 @@ document.addEventListener("click", async (event) => {
   if (pageLink && $("#nav-drawer").open) $("#nav-drawer").close();
   const button = event.target.closest("button");
   if (!button) return;
-  if (button.dataset.close) return $(`#${button.dataset.close}`).close();
+  if (button.dataset.close) {
+    const dialog = $(`#${button.dataset.close}`);
+    if (dialog.dataset.saving !== "true") dialog.close();
+    return;
+  }
   if (button.id === "updates-unread") return markAllUpdatesRead();
   if (button.id === "updates-more") {
     updatesExpanded = !updatesExpanded;
@@ -614,6 +629,25 @@ document.addEventListener("click", async (event) => {
       },
       "Progress saved.",
     );
+  if (button.dataset.rewatch) {
+    return save({ rewatch: { action: "increment", season: selectedSeason,
+      episode: Number(button.dataset.rewatch) } }, "Rewatch recorded.");
+  }
+  if (button.dataset.editRewatch) {
+    if (mutationPending) return;
+    const show = shows.find((entry) => entry.id === selectedId);
+    const episode = show.episodes.find((entry) => entry.season_number === selectedSeason &&
+      entry.episode_number === Number(button.dataset.editRewatch));
+    if (!episode || !show.watched.includes(episodeKey(episode))) return;
+    rewatchEditor = { showId: selectedId, season: selectedSeason, episode: episode.episode_number };
+    $("#rewatch-episode-name").textContent = `${episodeCode(episode)} · ${episode.name}`;
+    $("#rewatch-count").value = episodeRewatches(show, episodeKey(episode));
+    button.closest("details").open = false;
+    $("#rewatch-dialog").showModal();
+    $("#rewatch-count").focus();
+    $("#rewatch-count").select();
+    return;
+  }
   if (button.id === "mark-season" || button.id === "clear-season")
     return save(
       {
@@ -765,6 +799,37 @@ document.addEventListener("input", (event) => {
   replacement?.focus();
   replacement?.setSelectionRange(cursor, cursor);
 });
+
+// Save exact repeat corrections through the same guarded show mutation flow.
+$("#rewatch-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!rewatchEditor || mutationPending) return;
+  const count = Number($("#rewatch-count").value);
+  if (!Number.isSafeInteger(count) || count < 0 || count >= Number.MAX_SAFE_INTEGER) return;
+  const editor = { ...rewatchEditor };
+  const dialog = $("#rewatch-dialog");
+  dialog.dataset.saving = "true";
+  dialog.querySelectorAll("button, input").forEach((control) => { control.disabled = true; });
+  try {
+    const updated = await save({ rewatch: { action: "set", season: editor.season,
+      episode: editor.episode, count } }, "Rewatch count saved.", editor.showId);
+    if (updated) dialog.close();
+  } finally {
+    dialog.dataset.saving = "false";
+    dialog.querySelectorAll("button, input").forEach((control) => { control.disabled = false; });
+    if (dialog.open) $("#rewatch-count").focus();
+  }
+});
+// Returning from corrections restores focus to the recreated episode's options control.
+$("#rewatch-dialog").addEventListener("close", () => {
+  if (rewatchEditor?.showId === selectedId && rewatchEditor.season === selectedSeason)
+    document.getElementById(`rewatch-options-${rewatchEditor.episode}`)?.focus({ preventScroll: true });
+  rewatchEditor = null;
+});
+// An in-flight correction cannot be dismissed before its result is known.
+$("#rewatch-dialog").addEventListener("cancel", (event) => {
+  if ($("#rewatch-dialog").dataset.saving === "true") event.preventDefault();
+});
 // Save metadata first, then reconcile edited membership and manual ranks.
 // Save list metadata and edited member order, then reconcile the returned list state.
 $("#list-form").addEventListener("submit", async (event) => {
@@ -903,6 +968,13 @@ document.addEventListener("pointerout", (event) => {
 
 // Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
+  const rewatchMenu = $(".rewatch-options[open]");
+  if (event.key === "Escape" && rewatchMenu && !$("#rewatch-dialog").open) {
+    event.preventDefault();
+    rewatchMenu.open = false;
+    rewatchMenu.querySelector("summary").focus();
+    return;
+  }
   const openFilter = $(".library-controls .status-filter[open]");
   const openSeasonOptions = matchMedia("(max-width: 800px)").matches
     ? $(".season-options[open]")

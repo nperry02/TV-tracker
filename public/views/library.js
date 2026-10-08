@@ -9,6 +9,7 @@ import {
   progress,
   statuses,
   watchStatus,
+  lastViewingUpdate,
 } from "../model.js";
 import {
   $,
@@ -41,14 +42,15 @@ function sortShows(shows, sort) {
   shows.sort((a, b) => {
     if (sort === "watch-status") return compareWatchStatus(a, b);
     if (sort === "last-updated") {
-      if (!a.lastWatchedAt || !b.lastWatchedAt)
+      const dateA = lastViewingUpdate(a), dateB = lastViewingUpdate(b);
+      if (!dateA || !dateB)
         return (
-          Number(!a.lastWatchedAt) - Number(!b.lastWatchedAt) ||
+          Number(!dateA) - Number(!dateB) ||
           (b.addedAt || "").localeCompare(a.addedAt || "") ||
           a.name.localeCompare(b.name)
         );
       return (
-        b.lastWatchedAt.localeCompare(a.lastWatchedAt) ||
+        Date.parse(dateB) - Date.parse(dateA) ||
         (b.addedAt || "").localeCompare(a.addedAt || "") ||
         a.name.localeCompare(b.name)
       );
@@ -193,5 +195,6 @@ export function galleryShowCard(show, viewMode = "gallery") {
 
 // Render a compact show row with artwork, release date, status, rating, and progress.
 export function listShowRow(show) {
-  return `<button class="show-card show-row" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><span class="list-title">${poster(show, "list-poster", "w92")}<span><strong>${esc(show.name)}</strong>${inWatchlist(show) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(show.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(show))}</span><span class="list-cell" data-label="Rating">${stars(show.rating)}</span><span class="list-cell" data-label="Progress">${esc(progressLabel(show))}</span><span class="list-cell" data-label="Last updated">${show.lastWatchedAt ? displayDate(show.lastWatchedAt, true) : "No updates yet"}</span></button>`;
+  const updatedAt = lastViewingUpdate(show);
+  return `<button class="show-card show-row" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><span class="list-title">${poster(show, "list-poster", "w92")}<span><strong>${esc(show.name)}</strong>${inWatchlist(show) ? '<small>On watchlist</small>' : ""}</span></span><span class="list-cell" data-label="Released">${displayDate(show.first_air_date)}</span><span class="list-cell" data-label="Status">${badge(watchStatus(show))}</span><span class="list-cell" data-label="Rating">${stars(show.rating)}</span><span class="list-cell" data-label="Progress">${esc(progressLabel(show))}</span><span class="list-cell" data-label="Last updated">${updatedAt ? displayDate(updatedAt, true) : "No updates yet"}</span></button>`;
 }

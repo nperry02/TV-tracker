@@ -288,6 +288,17 @@
     <dialog id="show-dialog" class="show-dialog">
       <div id="show-content"></div>
     </dialog>
+    <!-- Repeat corrections reuse the compact editor dialog layout. -->
+    <dialog id="rewatch-dialog" class="list-dialog" aria-labelledby="rewatch-title">
+      <form id="rewatch-form">
+        <div class="dialog-top"><h2 id="rewatch-title">Edit rewatch count</h2><button type="button" class="icon-button" data-close="rewatch-dialog" aria-label="Close rewatch editor">×</button></div>
+        <p id="rewatch-episode-name"></p>
+        <label class="rewatch-count-label" for="rewatch-count">Rewatches, excluding the original watch</label>
+        <input id="rewatch-count" type="number" min="0" max="9007199254740990" step="1" required>
+        <p class="muted">Set to zero to clear recorded rewatches.</p>
+        <div class="list-dialog-actions"><span></span><span></span><button type="button" data-close="rewatch-dialog">Cancel</button><button id="rewatch-save" class="primary" type="submit">Save</button></div>
+      </form>
+    </dialog>
     <dialog id="list-dialog" class="list-dialog" aria-labelledby="list-dialog-title">
       <form id="list-form">
         <div class="dialog-top">

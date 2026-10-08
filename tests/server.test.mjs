@@ -138,7 +138,43 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(result.status, 200);
   assert.deepEqual(result.data.watched, ["1:1", "1:2", "2:1"]);
   assert.match(result.data.lastWatchedAt, /^\d{4}-\d{2}-\d{2}T/);
-  const firstWatchedAt = result.data.lastWatchedAt;
+  let firstWatchedAt = result.data.lastWatchedAt;
+  // Repeat writes preserve progress, status, update news, and Continue Watching order.
+  const beforeRewatch = structuredClone(result.data);
+  for (let count = 1; count <= 2; count++) {
+    result = await patch({ rewatch: { action: "increment", season: 1, episode: 1 } });
+    assert.equal(result.status, 200);
+    assert.equal(result.data.rewatchCounts["1:1"], count);
+  }
+  for (const key of ["watched", "statusOverride", "lastWatchedAt", "latestUpdate", "rating"])
+    assert.deepEqual(result.data[key], beforeRewatch[key]);
+  assert.ok(Date.parse(result.data.lastRewatchedAt) >= Date.parse(firstWatchedAt));
+  const recordedAt = result.data.lastRewatchedAt;
+  // Reject invalid repeat requests without mutating the saved count.
+  for (const rewatch of [null, { action: "increment", season: 2, episode: 2 },
+    { action: "increment", season: 99, episode: 1 }, { action: "other", season: 1, episode: 1 },
+    ...[-1, 1.5, "2", Number.MAX_SAFE_INTEGER].map((count) => ({ action: "set", season: 1, episode: 1, count }))])
+    assert.equal((await patch({ rewatch })).status, 400);
+  assert.equal(JSON.parse(readFileSync(file)).shows[0].rewatchCounts["1:1"], 2);
+  result = await patch({ rewatch: { action: "set", season: 1, episode: 1, count: 4 } });
+  assert.equal(result.data.rewatchCounts["1:1"], 4);
+  assert.equal(result.data.lastRewatchedAt, recordedAt);
+  result = await patch({ rewatch: { action: "set", season: 1, episode: 1, count: 0 } });
+  assert.equal(result.data.rewatchCounts, undefined);
+  assert.equal(result.data.lastRewatchedAt, recordedAt);
+  await patch({ rewatch: { action: "increment", season: 1, episode: 2 } });
+  result = await patch({ progress: { action: "episode", season: 1, episode: 2, watched: false } });
+  assert.equal(result.data.rewatchCounts, undefined);
+  // Restore original progress so the remaining API scenarios retain their fixture state.
+  result = await patch({ progress: { action: "episode", season: 1, episode: 2, watched: true } });
+  firstWatchedAt = result.data.lastWatchedAt;
+  await patch({ rewatch: { action: "increment", season: 1, episode: 1 } });
+  await patch({ rewatch: { action: "increment", season: 2, episode: 1 } });
+  result = await patch({ progress: { action: "season", season: 1, watched: false } });
+  assert.deepEqual(result.data.rewatchCounts, { "2:1": 1 });
+  await patch({ progress: { action: "season", season: 1, watched: true } });
+  result = await patch({ rewatch: { action: "set", season: 2, episode: 1, count: 0 } });
+  firstWatchedAt = result.data.lastWatchedAt;
   assert.equal(result.data.rating, 4.5);
   assert.equal(result.data.seasonRatings["1"], 3.5);
   result = await patch({ watchlist: true });
@@ -199,8 +235,17 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
       400,
     );
   }
+  await patch({ rewatch: { action: "increment", season: 1, episode: 2 } });
   const exported = await (await fetch(`${base}/api/export`)).json();
   assert.equal(exported.shows[0].rating, 4.5);
+  assert.deepEqual(exported.shows[0].rewatchCounts, { "1:2": 1 });
+  // Backup validation rejects bad repeat data before replacing the current library.
+  const invalidBackup = structuredClone(exported);
+  invalidBackup.shows[0].rewatchCounts["1:2"] = -1;
+  assert.equal((await fetch(`${base}/api/import`, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(invalidBackup) })).status, 400);
+  assert.equal((await fetch(`${base}/api/import`, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(exported) })).status, 200);
 
   // Restart from disk before verifying persistence and destructive membership changes.
   await stop();
@@ -211,6 +256,8 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(saved.shows[0].watchlist, true);
   assert.equal(saved.shows[0].tracked, true);
   assert.equal(saved.shows[0].typicalRuntime, 45);
+  assert.deepEqual(saved.shows[0].rewatchCounts, { "1:2": 1 });
+  assert.equal(saved.shows[0].lastRewatchedAt, exported.shows[0].lastRewatchedAt);
   assert.equal(saved.shows[0].episodes[0].runtime, 12);
   result = await patch({ tracked: false });
   assert.equal(result.data.tracked, false);
@@ -219,7 +266,9 @@ test("local API preserves progress, ratings, and overrides across restarts", asy
   assert.equal(result.data.rating, null);
   assert.deepEqual(result.data.seasonRatings, {});
   assert.deepEqual(result.data.watched, []);
+  assert.equal(result.data.rewatchCounts, undefined);
   assert.equal(result.data.lastWatchedAt, null);
+  assert.equal(result.data.lastRewatchedAt, undefined);
   assert.deepEqual(
     JSON.parse(readFileSync(file)).shows.find((show) => show.id === 2),
     untouchedShow,

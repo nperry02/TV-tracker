@@ -67,10 +67,14 @@ test("artwork API persists choices through refresh, backup, and restart", async 
   assert.equal(saved.data.poster_path, original.poster_path);
   assert.equal((await request("/api/shows/1396", "PATCH", { posterOverride: "https://evil.example/a.jpg" })).status, 400);
   assert.equal((await request("/api/shows/999", "PATCH", choice)).status, 404);
+  // Metadata refresh must preserve independent repeat history as well as artwork.
+  await request("/api/shows/1396", "PATCH", { progress: { action: "episode", season: 1, episode: 1, watched: true } });
+  await request("/api/shows/1396", "PATCH", { rewatch: { action: "increment", season: 1, episode: 1 } });
   const refreshed = await request("/api/shows/1396/refresh", "POST", {});
   assert.equal(refreshed.status, 200);
   assert.equal(refreshed.data.posterOverride, choice.posterOverride);
   assert.equal(refreshed.data.backdropOverride, choice.backdropOverride);
+  assert.deepEqual(refreshed.data.rewatchCounts, { "1:1": 1 });
 
   // Export/import retain paths but never store the fetched image collection.
   const backup = (await request("/api/export")).data;
@@ -89,5 +93,7 @@ test("artwork API persists choices through refresh, backup, and restart", async 
   const legacy = structuredClone(backup);
   delete legacy.shows[0].posterOverride;
   delete legacy.shows[0].backdropOverride;
+  delete legacy.shows[0].rewatchCounts;
   assert.equal((await request("/api/import", "POST", legacy)).status, 200);
+  assert.equal((await request("/api/library")).data.shows[0].rewatchCounts, undefined);
 });

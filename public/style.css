@@ -1242,7 +1242,7 @@ dialog::backdrop {
 .episode-list {
   border: 1px solid var(--border);
   border-radius: 9px;
-  overflow: hidden;
+  overflow: visible;
 }
 .episode {
   display: flex;
@@ -1257,7 +1257,7 @@ dialog::backdrop {
 .episode.watched {
   background: #24302166;
 }
-.episode input {
+.episode input[type="checkbox"] {
   width: 17px;
   height: 17px;
   accent-color: var(--accent);
@@ -1283,6 +1283,66 @@ dialog::backdrop {
   font-size: 10px;
   padding: 7px 10px;
   background: transparent;
+}
+
+/* Repeats stay separate from watched progress, with compact shared icon controls. */
+.episode-rewatch, .rewatch-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.rewatch-summary {
+  color: var(--accent);
+  font-size: 11px;
+  margin-left: 7px;
+  vertical-align: middle;
+}
+.season-header .rewatch-summary { margin-left: 0; margin-right: auto; }
+.rewatch-button, .rewatch-options summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 5px 7px;
+  font-size: 11px;
+  background: transparent;
+}
+.rewatch-button span { color: var(--accent); }
+.rewatch-options { position: relative; }
+.rewatch-options summary {
+  cursor: pointer;
+  list-style: none;
+  border-radius: 6px;
+}
+.rewatch-options summary::-webkit-details-marker { display: none; }
+.rewatch-options[inert] { opacity: .4; }
+.rewatch-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: 0 5px 16px #0005;
+  white-space: nowrap;
+}
+.rewatch-menu button { font-size: 11px; padding: 8px; }
+.episode:first-child { border-radius: 9px 9px 0 0; }
+.episode:last-child { border-radius: 0 0 9px 9px; }
+.rewatch-count-label { display: block; margin-bottom: 8px; font-size: 12px; }
+#rewatch-count { width: 100%; }
+#rewatch-episode-name { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .episode { flex-wrap: wrap; }
+  .episode-name { flex-basis: calc(100% - 34px); }
+  .episode-rewatch { margin-left: 26px; }
+  .episode-list .episode .through { margin-left: auto; max-width: none; }
+  .rewatch-menu { left: 0; right: auto; }
+  .season-header { flex-wrap: wrap; }
 }
 .detail-bottom {
   display: flex;

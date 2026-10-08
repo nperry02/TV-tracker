@@ -88,6 +88,8 @@ export function renderHelp(container) {
         <article>
           <i class="help-icon" aria-hidden="true">⌁</i>
           <h3>Stats</h3>
+          <p>Use the repeat button beside a watched episode to record another viewing. The number shows rewatches only, excluding the original watch. Open its options menu to edit the count or set it to zero. Show and season repeat indicators count complete rewatches of currently aired episodes; a newly aired episode can lower that summary until you rewatch it. Specials count separately and are excluded from the show indicator. Recording a rewatch moves the show up in My Shows when sorted by Last updated; the list row also displays that viewing date. Editing a count does not change recency. There is no separate rewatch mode or Home activity entry.</p>
+          <p>Episode watches and estimated watch time include recorded rewatches, including specials. Repeat counts exclude the original watch. Rewatches do not change unique episode progress, completed-season totals, show status, or viewing order. Clearing watched progress also clears its repeat counts.</p>
           <p>Explore lifetime totals, ratings, statuses, your most watched and highest-rated genres, episode progress, and estimated watch time. Genre rankings weight small samples toward your overall average.</p>
         </article>
         <article>
