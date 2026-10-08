@@ -9,6 +9,11 @@
   --muted: #9ba99e;
   --accent: #cef37b;
   --green: #8ed9a5;
+  /* Shared panel framing follows Stats; content layouts set their own internal gaps. */
+  --panel-padding: 15px;
+  --panel-heading-size: 20px;
+  --panel-heading-line-height: 1;
+  --panel-background: #111a14;
   font-family:
     Inter,
     -apple-system,
@@ -3108,12 +3113,12 @@ h1 {
   margin-bottom: 18px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #111a14;
+  background: var(--panel-background);
 }
 .stats-panel {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #111a14;
+  background: var(--panel-background);
 }
 .stats-overview article {
   display: grid;
@@ -3198,7 +3203,7 @@ h1 {
   line-height: 1;
 }
 .stats-panel {
-  padding: 15px;
+  padding: var(--panel-padding);
 }
 .ratings-panel {
   display: flex;
@@ -3215,8 +3220,8 @@ h1 {
 }
 .stats-panel-heading h2 {
   margin: 0;
-  font-size: 20px;
-  line-height: 1;
+  font-size: var(--panel-heading-size);
+  line-height: var(--panel-heading-line-height);
 }
 .stats-panel-heading > strong {
   color: var(--text);
@@ -3678,11 +3683,11 @@ h1 {
 .help-details article {
   border: 1px solid var(--border);
   border-radius: 13px;
-  background: #111a14;
+  background: var(--panel-background);
 }
 .help-card-grid article {
   min-height: 220px;
-  padding: 25px;
+  padding: var(--panel-padding);
 }
 .help-icon {
   display: grid;
@@ -3702,12 +3707,12 @@ h1 {
   gap: 14px;
 }
 .help-details article {
-  padding: 28px;
+  padding: var(--panel-padding);
 }
 .help-details h2 {
   margin: 8px 0 15px;
-  font-size: 22px;
-  line-height: 1.25;
+  font-size: var(--panel-heading-size);
+  line-height: var(--panel-heading-line-height);
 }
 .help-details article p + p {
   margin-top: 15px;
@@ -4048,9 +4053,7 @@ h1 {
   .stats-overview strong {
     font-size: 23px;
   }
-  .stats-panel {
-    padding: 17px;
-  }
+  :root { --panel-padding: 17px; }
 }
 
 /* Wider backdrop cards use the same responsive grid in My Shows and Lists. */
@@ -4078,10 +4081,10 @@ h1 {
   height: 360px;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: var(--panel-padding);
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--panel);
+  background: var(--panel-background);
 }
 .updates-heading { flex-shrink: 0; flex-wrap: wrap; gap: 8px; }
 .updates-heading-title { display: flex; align-items: center; gap: 8px; }
@@ -4115,9 +4118,6 @@ button.update-title:hover { background: transparent; text-decoration: underline;
   .updates-section, .upcoming-section { height: auto; }
   .updates-list, .upcoming-list { flex: none; max-height: 320px; overflow-y: auto; }
 }
-@media (max-width: 650px) {
-  .updates-section, .upcoming-section { padding: 18px; }
-}
 /* Very narrow screens keep the metadata readable beneath the update text. */
 @media (max-width: 360px) {
   .update-entry { grid-template-columns: 32px minmax(0, 1fr); }
@@ -4129,6 +4129,11 @@ button.update-title:hover { background: transparent; text-decoration: underline;
 /* Equal heading rows prevent the window selector from lowering only the Upcoming title. */
 .upcoming-heading, .updates-heading { min-height: 30px; align-items: center; }
 .upcoming-heading h2 { margin: 0; }
+/* Panel headings share typography even when their controls and content differ. */
+.upcoming-heading h2, .updates-heading h2, .help-card-grid h3 {
+  font-size: var(--panel-heading-size);
+  line-height: var(--panel-heading-line-height);
+}
 .upcoming-entry .card-heading { margin-top: 8px; }
 .upcoming-heading .custom-select-trigger { font-size: 11px; padding: 6px 9px; }
 .upcoming-list { display: flex; align-items: flex-start; gap: 16px; flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding-bottom: 8px; }

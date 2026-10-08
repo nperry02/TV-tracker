@@ -5,6 +5,23 @@ export async function checkUpcoming(page, base) {
   const backup = await (await page.request.get(`${base}/api/export`)).json();
   const context = await page.context().browser().newContext({ viewport: { width: 1440, height: 1050 }, timezoneId: "America/New_York" });
   const preview = await context.newPage();
+  // Compare resolved styles so future panel overrides cannot silently break shared framing.
+  async function checkPanelStyles() {
+    const differences = await preview.evaluate(() => {
+      const baseline = getComputedStyle(document.querySelector(".stats-panel"));
+      const heading = getComputedStyle(document.querySelector(".stats-panel-heading h2"));
+      return [...document.querySelectorAll(".stats-panel, .upcoming-section, .updates-section, .help-card-grid article, .help-details article")]
+        .flatMap((panel) => {
+          const style = getComputedStyle(panel);
+          const title = panel.querySelector("h2, h3");
+          const titleStyle = title && getComputedStyle(title);
+          return style.padding !== baseline.padding || style.backgroundColor !== baseline.backgroundColor || (titleStyle &&
+            (titleStyle.fontSize !== heading.fontSize || titleStyle.lineHeight !== heading.lineHeight))
+            ? [{ panel: panel.className, padding: style.padding, background: style.backgroundColor, fontSize: titleStyle?.fontSize, lineHeight: titleStyle?.lineHeight }] : [];
+        });
+    });
+    assert.deepEqual(differences, []);
+  }
   try {
     await preview.clock.install({ time: new Date("2026-10-08T16:00:00Z") });
     // Fixed future metadata keeps automatic refresh from replacing test releases.
@@ -52,11 +69,13 @@ export async function checkUpcoming(page, base) {
         scrollable: list.scrollWidth > list.clientWidth };
     });
     assert.deepEqual(geometry, { height: 360, aligned: true, titleAligned: true, sameHeight: true, beside: true, scrollable: true });
+    await checkPanelStyles();
     await preview.locator("#upcoming-list").evaluate((list) => { list.scrollLeft = 200; });
     assert.ok(await preview.locator("#upcoming-list").evaluate((list) => list.scrollLeft > 0));
     await preview.locator("#upcoming-list").evaluate((list) => { list.scrollLeft = 0; });
     await preview.locator(".home-discovery").screenshot({ path: "test-results/upcoming-desktop.png" });
     await preview.setViewportSize({ width: 360, height: 800 });
+    await checkPanelStyles();
     assert.equal(await preview.locator("#upcoming-list").evaluate((list) => list.clientHeight <= 320 && list.scrollWidth > list.clientWidth && list.scrollHeight <= list.clientHeight), true);
     assert.equal(await preview.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await preview.locator("#upcoming-section").screenshot({ path: "test-results/upcoming-mobile.png" });
