@@ -116,6 +116,7 @@ export function renderHelp(container) {
         <h2>Updates happen a little at a time.</h2>
         <p>When the app opens, it refreshes up to five stale shows: daily for Watching and Caught Up, weekly for Paused and Watchlist-only, and every 30 days for Completed and Dropped.</p>
         <p>You can also use Refresh show info in any show’s details to check it immediately.</p>
+        <p>Refresh status in the site footer opens Show info from any page, listing every saved show, including Watchlist and Dropped, independently of your filters. Search titles, see the last successful check and when each show becomes eligible, or refresh one immediately. Unknown check times appear first, followed by overdue and oldest checks. Due times describe eligibility, not a guaranteed check time; automatic batches prioritize Watching and Caught Up. Failed checks keep the previous successful timestamp.</p>
         <p>Saved personal poster and backdrop choices take priority over TMDB defaults and survive metadata refreshes and backups.</p>
         <p>Use Change artwork at the top of show details to choose a poster or backdrop. An asterisk beside the button means saved artwork differs from the current TMDB default. Options load only when you open the picker; Save changes applies your choices everywhere. Use TMDB default resets either image, and Cancel leaves saved artwork unchanged.</p>
       </article>

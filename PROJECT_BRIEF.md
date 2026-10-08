@@ -75,6 +75,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Show enough information to recognize each show and see its rating, status, and progress quickly.
 - Search TMDB and add shows to this library.
 - Persist personal ratings, progress, and library entries across restarts independently of refreshed metadata.
+- A muted Refresh status action in the site footer opens Show info from any page, a searchable overview of all saved shows, independent of filters, with status, last successful metadata check, elapsed time, refresh eligibility, and individual refresh controls. Unknown timestamps appear first, then overdue and oldest checks. Use existing saved timestamps and refresh requests; failed checks preserve the previous timestamp. Eligibility is not a guaranteed automatic check time. Retain the daily/weekly/30-day schedule and five-show startup limit.
 - Allow removing a show from All Shows to return it to an unwatched state. Clear viewing status, ratings, and progress; preserve an independent Watchlist flag. If it is not on Watchlist, remove the saved entry entirely so it can be added again from search.
 
 ## Home updates

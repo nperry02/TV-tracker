@@ -344,6 +344,7 @@ const files = {
   "/views/artwork-dialog.js": ["views/artwork-dialog.js", "text/javascript"],
   "/views/search-dialog.js": ["views/search-dialog.js", "text/javascript"],
   "/views/show-dialog.js": ["views/show-dialog.js", "text/javascript"],
+  "/views/show-info-dialog.js": ["views/show-info-dialog.js", "text/javascript"],
   "/views/stats.js": ["views/stats.js", "text/javascript"],
   "/assets/logo.png": ["assets/logo.png", "image/png"],
 };
