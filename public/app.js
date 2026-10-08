@@ -9,6 +9,7 @@ import {
   latestUpdates,
   episodeKey,
   episodeRewatches,
+  upcomingWindow,
 } from "./model.js";
 import { api } from "./api.js";
 import {
@@ -55,6 +56,18 @@ let updatesExpanded = false,
 
 // The correction editor captures its show and season so later renders cannot retarget it.
 let rewatchEditor = null;
+
+// The release window is a browser preference, never a library or backup field.
+let upcomingDays = readUpcomingWindow();
+
+// Read the supported release window with a quiet fallback when storage is unavailable.
+function readUpcomingWindow() {
+  try {
+    return upcomingWindow(localStorage.getItem("next-episode:upcoming-window"));
+  } catch {
+    return 30;
+  }
+}
 
 // Read the selected list ID from the current hash route.
 function selectedListId() {
@@ -160,7 +173,7 @@ function applyRoute({ scroll = false } = {}) {
 function render() {
   renderHome(shows, mutationPending, {
     expanded: updatesExpanded, pendingReadId,
-  });
+  }, upcomingDays);
   renderLibrary(shows, libraryFilters, viewMode);
   renderLists(
     lists,
@@ -173,12 +186,13 @@ function render() {
   renderStats(shows, $("#stats-content"));
   enhanceSelects();
 }
-// Select a show and initial season, close search, and open its detail dialog.
-function openShow(id) {
+// Open saved show details on a requested season or its next available episode's season.
+function openShow(id, season = null) {
   selectedId = Number(id);
   const show = shows.find((s) => s.id === selectedId);
   if (!show) return;
-  selectedSeason = initialShowSeason(show);
+  selectedSeason = season !== null && show.seasons.some((entry) => entry.number === Number(season))
+    ? Number(season) : initialShowSeason(show);
   renderShow();
   if ($("#search-dialog").open) $("#search-dialog").close();
   if (!$("#show-dialog").open) $("#show-dialog").showModal();
@@ -438,7 +452,7 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
-  if (button.dataset.show) return openShow(button.dataset.show);
+  if (button.dataset.show) return openShow(button.dataset.show, button.dataset.showSeason ?? null);
   if (button.dataset.next) {
     // Continue Watching always resolves the next aired episode at click time.
     const id = Number(button.dataset.next);
@@ -712,6 +726,18 @@ document.addEventListener("click", async (event) => {
 // Apply filter, sort, rating, membership, rank, and progress changes from delegated controls.
 document.addEventListener("change", (event) => {
   const el = event.target;
+  // Window changes redraw cached releases and keep focus on the custom selector.
+  if (el.id === "upcoming-window") {
+    upcomingDays = upcomingWindow(el.value);
+    try {
+      localStorage.setItem("next-episode:upcoming-window", String(upcomingDays));
+    } catch {
+      // This session's choice remains usable when browser storage is blocked.
+    }
+    render();
+    $("#upcoming-window").closest(".custom-select")?.querySelector(".custom-select-trigger")?.focus();
+    return;
+  }
   // Read checkboxes persist through the guarded API.
   if (el.dataset.readUpdate) {
     if (!el.checked) return;

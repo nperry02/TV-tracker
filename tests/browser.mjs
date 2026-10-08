@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 import { once } from "node:events";
 import { reconcileUpdates } from "../public/model.js";
 import { checkRewatches } from "./browser-rewatches.mjs";
+import { checkUpcoming } from "./browser-upcoming.mjs";
 
 const live = process.env.LIVE_TMDB === "1";
 
@@ -831,10 +832,9 @@ try {
     await page.screenshot({ path: "test-results/desktop-stats.png", fullPage: true });
     await page.getByRole("link", { name: "Home", exact: true }).click();
     await page.locator("#home-view").waitFor();
-    assert.equal(await page.locator("#home-top-rated-grid .stats-show").count(), 4);
-    await page.locator("#home-top-rated-grid .stats-show").first().click();
-    await page.locator("#show-dialog[open]").waitFor();
-    await page.getByRole("button", { name: "Close show", exact: true }).click();
+    assert.equal(await page.locator("#home-top-rated-grid").count(), 0);
+    assert.match(await page.locator("#upcoming-list").textContent(), /No episodes announced for the next 30 days/);
+    await checkUpcoming(page, base);
     await page.getByRole("link", { name: "My Shows", exact: true }).click();
     await page.locator("#library-view").waitFor();
     await page.getByRole("button", { name: /List/ }).click();
@@ -1446,10 +1446,10 @@ try {
     assert.equal(await page.locator("#updates-unread").getAttribute("title"), "Mark all as read");
     assert.equal(await page.locator("#updates-unread").evaluate((node) => node.tagName), "BUTTON");
     const desktopLayout = await page.evaluate(() => {
-      const favorites = document.querySelector(".home-top-rated").getBoundingClientRect();
+      const upcoming = document.querySelector("#upcoming-section").getBoundingClientRect();
       const updates = document.querySelector("#updates-section").getBoundingClientRect();
-      return { beside: updates.left >= favorites.right, aligned: Math.abs(updates.top - favorites.top) < 2,
-        sameHeight: Math.abs(updates.height - favorites.height) < 2,
+      return { beside: updates.left >= upcoming.right, aligned: Math.abs(updates.top - upcoming.top) < 2,
+        sameHeight: Math.abs(updates.height - upcoming.height) < 2,
         scrollable: document.querySelector("#updates-list").scrollHeight > document.querySelector("#updates-list").clientHeight };
     });
     assert.deepEqual(desktopLayout, { beside: true, aligned: true, sameHeight: true, scrollable: true });
@@ -1518,7 +1518,7 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator("#updates-section").screenshot({ path: "test-results/updates-mobile.png" });
     const mobileGeometry = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
-      stacked: document.querySelector("#updates-section").getBoundingClientRect().top >= document.querySelector(".home-top-rated").getBoundingClientRect().bottom,
+      stacked: document.querySelector("#updates-section").getBoundingClientRect().top >= document.querySelector("#upcoming-section").getBoundingClientRect().bottom,
       overflowing: [...document.querySelectorAll("#home-view section")].filter((node) => node.getBoundingClientRect().right > innerWidth)
         .map((node) => ({ id: node.id, className: node.className, width: node.getBoundingClientRect().width })),
     }));

@@ -196,6 +196,51 @@ export function regularEpisodes(show) {
         a.episode_number - b.episode_number,
     );
 }
+
+// Upcoming releases use date-only UTC ordinals so daylight-saving changes cannot shift a day.
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+
+// Normalize the browser's upcoming window, retaining only supported choices.
+export function upcomingWindow(value) {
+  return String(value) === "90" ? 90 : 30;
+}
+
+// Convert a valid calendar date into an ordinal, rejecting missing or malformed metadata.
+function calendarDay(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const timestamp = Date.parse(`${value}T00:00:00Z`);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) return null;
+  return timestamp / DAY_MILLISECONDS;
+}
+
+// Select each saved show's nearest future unwatched regular episode in the chosen date window.
+export function upcomingEpisodes(shows, window = 30, date = today()) {
+  const start = calendarDay(date);
+  if (start === null) return [];
+  const end = start + upcomingWindow(window);
+  const entries = [];
+  for (const show of shows) {
+    // Dropped is an explicit choice; all other saved statuses and Watchlist remain eligible.
+    if ((!inLibrary(show) && !inWatchlist(show)) || show.statusOverride === "Dropped") continue;
+    const watched = new Set(show.watched);
+    let next = null, nextDay = null;
+    // Compare candidates without sorting or changing the cached episode list.
+    for (const episode of show.episodes) {
+      if (episode.season_number <= 0 || watched.has(episodeKey(episode))) continue;
+      const day = calendarDay(episode.air_date);
+      if (day === null || day <= start || day > end) continue;
+      if (!next || day < nextDay || (day === nextDay &&
+          (episode.season_number < next.season_number ||
+            (episode.season_number === next.season_number && episode.episode_number < next.episode_number)))) {
+        next = episode;
+        nextDay = day;
+      }
+    }
+    if (next) entries.push({ show, episode: next, daysUntil: nextDay - start });
+  }
+  return entries.sort((a, b) => a.daysUntil - b.daysUntil ||
+    a.show.name.localeCompare(b.show.name) || a.show.id - b.show.id);
+}
 // Summarize aired progress, last watched, next unwatched, and upcoming regular episodes.
 export function progress(show, date = today()) {
   const episodes = regularEpisodes(show);
@@ -297,21 +342,6 @@ function median(values) {
   return sorted.length % 2
     ? sorted[middle]
     : (sorted[middle - 1] + sorted[middle]) / 2;
-}
-
-// Select up to five rated tracked shows, breaking ties by progress recency and title.
-export function topRatedShows(shows) {
-  return shows
-    .filter(inLibrary)
-    .filter((show) => Number.isFinite(show.rating))
-    .sort(
-      (a, b) =>
-        b.rating - a.rating ||
-        (b.lastWatchedAt || "").localeCompare(a.lastWatchedAt || "") ||
-        (b.addedAt || "").localeCompare(a.addedAt || "") ||
-        a.name.localeCompare(b.name),
-    )
-    .slice(0, 5);
 }
 
 // Aggregate tracked-library ratings, statuses, progress, runtime estimates, and genre rankings.
@@ -451,7 +481,6 @@ export function libraryStats(shows, date = today()) {
       : 0,
     topGenres,
     topGenresByRating,
-    topRated: topRatedShows(tracked),
   };
 }
 

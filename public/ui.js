@@ -15,6 +15,11 @@ export function infoTooltip(id, label, content, className = "") {
 // Find the first element matching a document selector.
 export const $ = (selector) => document.querySelector(selector);
 
+// Render the shared poster-gallery frame while callers supply their own detail content.
+export function posterGalleryCard(show, content, { className = "", season = null, label = null, badges = "", title = null } = {}) {
+  return `<button class="show-card ${esc(className)}" data-show="${show.id}"${season === null ? "" : ` data-show-season="${season}"`}${title ? ` title="${esc(title)}"` : ""} aria-label="${esc(label || `Open ${show.name}`)}"><div class="poster-wrap">${poster(show)}${badges}</div>${content}</button>`;
+}
+
 // Accessible custom-select enhancement
 let openSelect;
 let selectId = 0;
@@ -257,14 +262,14 @@ export function collectionGenreFilter({ selected, genres, attribute, id = "", op
 
 // Dates without a time are interpreted locally to avoid timezone date shifts.
 // Format a local date or timestamp, with a fallback for missing or invalid values.
-export function displayDate(value, includeTime = false) {
+export function displayDate(value, includeTime = false, includeYear = true) {
   if (!value) return "Not recorded";
   const date = new Date(includeTime ? value : `${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return "Not recorded";
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    ...(includeYear ? { year: "numeric" } : {}),
     ...(includeTime ? { hour: "numeric", minute: "2-digit" } : {}),
   }).format(date);
 }
