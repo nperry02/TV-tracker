@@ -837,6 +837,37 @@ dialog::backdrop {
 .search-dialog {
   max-width: 760px;
 }
+/* Saved metadata overview keeps controls fixed while its compact rows scroll. */
+.show-info-dialog { max-width: 880px; overflow: hidden; }
+.show-info-dialog[open] { display: flex; flex-direction: column; }
+.show-info-dialog .dialog-top { margin-bottom: 12px; }
+#show-info-count { margin: 7px 0 0; font-size: 13px; }
+#show-info-guidance { margin: 0 0 16px; font-size: 13px; line-height: 1.5; }
+.show-info-search { display: block; margin-bottom: 12px; }
+.show-info-search input { width: 100%; }
+.show-info-list { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.show-info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.show-info-name, .show-info-timing { min-width: 0; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.show-info-name strong { font-size: 14px; }
+.show-info-name span, .show-info-timing small { font-size: 12px; }
+.show-info-overdue { color: var(--accent); }
+.show-info-row button { padding: 5px 9px; font-size: 12px; }
+.show-info-row button[aria-disabled="true"] { opacity: .55; cursor: default; }
+.show-info-empty { margin: 12px 0; }
+@media (max-width: 650px) {
+  .show-info-dialog { padding: var(--panel-padding); }
+  .show-info-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .show-info-name { grid-column: 1; grid-row: 1; }
+  .show-info-timing { grid-column: 1; grid-row: 2; }
+  .show-info-row button { grid-column: 2; grid-row: 1 / 3; }
+}
 .dialog-top {
   display: flex;
   justify-content: space-between;
@@ -3096,7 +3127,10 @@ h1 {
 .site-footer {
   margin-left: 0;
   padding: 18px 5.5%;
+  flex-wrap: wrap;
 }
+.site-footer > div:last-child { flex-wrap: wrap; }
+.site-footer .text-button { font-size: inherit; font-weight: 400; }
 
 [hidden] {
   display: none !important;

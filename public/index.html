@@ -193,6 +193,7 @@
         ><span>A little home for your love of television.</span>
       </div>
       <div>
+        <button id="open-show-info" class="text-button" type="button" aria-haspopup="dialog" aria-controls="show-info-dialog" title="View last checks and refresh show information">Refresh status</button>
         <a href="/api/export" download>Back up library ↗</a
         ><a href="#help" data-page="help">Help & about</a>
       </div>
@@ -287,6 +288,13 @@
     </dialog>
     <dialog id="show-dialog" class="show-dialog">
       <div id="show-content"></div>
+    </dialog>
+    <!-- Refresh visibility uses saved metadata without fetching on open. -->
+    <dialog id="show-info-dialog" class="show-info-dialog" aria-labelledby="show-info-title" aria-describedby="show-info-guidance">
+      <div class="dialog-top"><div><h2 id="show-info-title">Show info</h2><p id="show-info-count" class="muted" aria-live="polite"></p></div><button type="button" class="icon-button" data-close="show-info-dialog" aria-label="Close show info">×</button></div>
+      <p id="show-info-guidance" class="muted">Automatic checks run when you open or reload the app, checking up to five overdue shows. Watching and Caught Up take priority. Due times mean eligible for a check, not a guaranteed check time.</p>
+      <label class="show-info-search"><span class="sr-only">Search saved show information</span><input id="show-info-query" type="search" placeholder="Search shows…" /></label>
+      <div id="show-info-list" class="show-info-list" role="region" aria-label="Saved show refresh information" tabindex="0"></div>
     </dialog>
     <!-- Repeat corrections reuse the compact editor dialog layout. -->
     <dialog id="rewatch-dialog" class="list-dialog" aria-labelledby="rewatch-title">

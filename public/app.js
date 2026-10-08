@@ -3,6 +3,7 @@ import {
   inWatchlist,
   inLibrary,
   metadataRefreshQueue,
+  metadataRefreshOverview,
   statuses,
   collectionView,
   today,
@@ -25,6 +26,7 @@ import { createSearchDialog } from "./views/search-dialog.js";
 import { createArtworkDialog } from "./views/artwork-dialog.js";
 import { renderHome } from "./views/home.js";
 import { renderHelp } from "./views/help.js";
+import { renderShowInfoDialog } from "./views/show-info-dialog.js";
 import { renderLibrary } from "./views/library.js";
 import {
   renderListDialog,
@@ -53,6 +55,10 @@ let updatesExpanded = false,
   feedDate = null,
   feedSyncPending = false,
   metadataRefreshPending = 0;
+
+// In-flight requests are shared by startup and manual checks for the same show.
+const metadataRefreshRequests = new Map();
+let showInfoOrder = null;
 
 // The correction editor captures its show and season so later renders cannot retarget it.
 let rewatchEditor = null;
@@ -184,7 +190,29 @@ function render() {
     $("#lists-query").value,
   );
   renderStats(shows, $("#stats-content"));
+  renderShowInfo();
   enhanceSelects();
+}
+// Update the overview only while open, using the latest saved data and request state.
+function renderShowInfo() {
+  if (!$("#show-info-dialog").open) return;
+  // Opening during a startup check pins the same order as a manual check does.
+  if (metadataRefreshPending && !showInfoOrder)
+    showInfoOrder = metadataRefreshOverview(shows).map(({ show }) => show.id);
+  renderShowInfoDialog(shows, {
+    pendingIds: new Set(metadataRefreshRequests.keys()),
+    disabled: mutationPending || metadataRefreshPending > 0,
+    order: showInfoOrder,
+  });
+}
+// Synchronize refresh controls without rebuilding the rest of the show dialog.
+function renderRefreshControls() {
+  renderShowInfo();
+  const button = $("#refresh-show");
+  if (button) {
+    button.disabled = mutationPending || metadataRefreshPending > 0;
+    button.textContent = metadataRefreshRequests.has(selectedId) ? "Refreshing…" : "↻ Refresh show info";
+  }
 }
 // Open saved show details on a requested season or its next available episode's season.
 function openShow(id, season = null) {
@@ -208,6 +236,7 @@ function renderShow() {
     if (seasonOptions && matchMedia("(max-width: 800px)").matches)
       seasonOptions.open = Boolean(keepSeasonOptionsOpen);
     enhanceSelects($("#show-content"));
+    renderRefreshControls();
   }
 }
 
@@ -269,9 +298,17 @@ async function save(body, message, id = selectedId) {
     target?.focus({ preventScroll: true });
   }
 }
-// Fetch fresh metadata and redraw matching show details without replacing personal choices.
-async function refreshShow(id, notify = true) {
+// Share an existing request and pin overview order before starting a fresh metadata check.
+function refreshShow(id, notify = true) {
+  if (metadataRefreshRequests.has(id)) return metadataRefreshRequests.get(id);
   metadataRefreshPending++;
+  const request = fetchShowInfo(id, notify);
+  metadataRefreshRequests.set(id, request);
+  renderRefreshControls();
+  return request;
+}
+// Fetch and apply successful metadata, retaining the saved snapshot on failure.
+async function fetchShowInfo(id, notify) {
   try {
     const updated = await api(`/api/shows/${id}/refresh`, { method: "POST" });
     shows = shows.map((s) => (s.id === id ? updated : s));
@@ -280,6 +317,28 @@ async function refreshShow(id, notify = true) {
     if (notify) toast("Show information is up to date.");
   } finally {
     metadataRefreshPending--;
+    metadataRefreshRequests.delete(id);
+    if (!metadataRefreshPending) showInfoOrder = null;
+    renderRefreshControls();
+  }
+}
+// Guard manual checks and restore show-detail focus and scroll after either outcome.
+async function refreshManually(id) {
+  if (mutationPending || metadataRefreshPending) return;
+  const dialog = $("#show-dialog");
+  const inDetails = dialog.open;
+  const scroll = dialog.scrollTop;
+  const focusId = document.activeElement?.id;
+  try {
+    await refreshShow(id);
+  } catch (error) {
+    report(error);
+  } finally {
+    if (inDetails && dialog.open && selectedId === id) {
+      renderShow();
+      dialog.scrollTop = scroll;
+      if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
+    }
   }
 }
 
@@ -406,6 +465,15 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.id === "updates-unread") return markAllUpdatesRead();
+  if (button.id === "open-show-info") {
+    $("#show-info-query").value = "";
+    $("#show-info-dialog").showModal();
+    renderShowInfo();
+    $("#show-info-list").scrollTop = 0;
+    $("#show-info-query").focus();
+    return;
+  }
+  if (button.dataset.infoRefresh) return refreshManually(Number(button.dataset.infoRefresh));
   if (button.id === "updates-more") {
     updatesExpanded = !updatesExpanded;
     render();
@@ -676,15 +744,7 @@ document.addEventListener("click", async (event) => {
         : "Season progress cleared.",
     );
   if (button.id === "refresh-show") {
-    button.disabled = true;
-    button.textContent = "Refreshing…";
-    try {
-      await refreshShow(selectedId);
-    } catch (error) {
-      report(error);
-    } finally {
-      renderShow();
-    }
+    return refreshManually(selectedId);
   }
   if (button.id === "remove-show") {
     const id = selectedId;
@@ -812,8 +872,13 @@ document.addEventListener("change", (event) => {
       },
     });
 });
-// Redraw a list when its title-search field changes.
+// Filter metadata rows or redraw a personal list when its title-search field changes.
 document.addEventListener("input", (event) => {
+  if (event.target.id === "show-info-query") {
+    $("#show-info-list").scrollTop = 0;
+    renderShowInfo();
+    return;
+  }
   const input = event.target.closest("[data-list-query]");
   if (!input) return;
   filtersForList(input.dataset.listQuery).query = input.value;
@@ -1041,6 +1106,12 @@ for (const dialog of document.querySelectorAll("dialog"))
       dialog.close();
   });
 
+// Closing by Escape, backdrop, or button consistently returns to the overview opener.
+$("#show-info-dialog").addEventListener("close", () => {
+  showInfoOrder = null;
+  $("#open-show-info").focus({ preventScroll: true });
+});
+
 // Static guidance renders independently of library loading and refreshes.
 renderHelp($("#help-view"));
 
@@ -1055,6 +1126,9 @@ async function boot() {
     applyRoute({ scroll: true });
     // Refresh failures stop the batch while leaving saved progress and ratings usable.
     for (const show of metadataRefreshQueue(shows)) {
+      // Recheck saved eligibility before each request from the captured startup queue.
+      const current = shows.find((entry) => entry.id === show.id);
+      if (!current || !metadataRefreshQueue([current]).length) continue;
       try {
         await refreshShow(show.id, false);
       } catch (error) {
@@ -1071,7 +1145,7 @@ async function boot() {
     $("#retry-load").addEventListener("click", boot);
   }
 }
-// A minute timer covers an open tab; visibility handles browsers that suspend timers.
-setInterval(() => { if (!document.hidden) syncFeedDate(); }, 60_000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) syncFeedDate(); });
+// Reconcile cached air dates and visible refresh timing; visibility covers suspended timers.
+setInterval(() => { if (!document.hidden) { syncFeedDate(); renderShowInfo(); } }, 60_000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { syncFeedDate(); renderShowInfo(); } });
 boot();
