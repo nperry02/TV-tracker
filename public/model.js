@@ -302,24 +302,46 @@ export function metadataRefreshInterval(show, date = today()) {
   if (status === "Paused") return 7 * DAY;
   return 30 * DAY;
 }
+// Describe refresh eligibility from the last successful check without scheduling a request.
+export function metadataRefreshTiming(show, now = new Date()) {
+  const interval = metadataRefreshInterval(show, today(now));
+  const refreshed = show.refreshedAt ? Date.parse(show.refreshedAt) : NaN;
+  if (!Number.isFinite(refreshed))
+    return { refreshedAt: null, dueAt: null, interval, overdue: true, elapsedDays: null, dueDays: 0, overdueDays: 0 };
+  const timestamp = now.getTime();
+  const dueAt = refreshed + interval;
+  // Keep the queue's strict boundary: a check is overdue only after its interval expires.
+  return {
+    refreshedAt: refreshed,
+    dueAt,
+    interval,
+    overdue: timestamp > dueAt,
+    elapsedDays: Math.max(0, Math.floor((timestamp - refreshed) / DAY)),
+    dueDays: Math.max(0, Math.floor((dueAt - timestamp) / DAY)),
+    overdueDays: Math.max(0, Math.floor((timestamp - dueAt) / DAY)),
+  };
+}
+// Return overview rows with unknown checks first, then overdue and oldest checks.
+export function metadataRefreshOverview(shows, now = new Date()) {
+  return shows.map((show) => ({ show, timing: metadataRefreshTiming(show, now) }))
+    .sort((a, b) =>
+      Number(b.timing.refreshedAt === null) - Number(a.timing.refreshedAt === null) ||
+      Number(b.timing.overdue) - Number(a.timing.overdue) ||
+      (a.timing.refreshedAt ?? 0) - (b.timing.refreshedAt ?? 0) ||
+      a.show.name.localeCompare(b.show.name) || a.show.id - b.show.id,
+    );
+}
 // Select a limited queue of stale shows, prioritizing active statuses and oldest metadata.
 export function metadataRefreshQueue(
   shows,
   now = new Date(),
   limit = 5,
 ) {
-  const timestamp = now.getTime();
-  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const date = today(now);
 
   // Prioritize shorter refresh intervals, then the stalest metadata.
   return shows
-    .filter((show) => {
-      const refreshed = new Date(show.refreshedAt).getTime();
-      return (
-        !Number.isFinite(refreshed) ||
-        timestamp - refreshed > metadataRefreshInterval(show, date)
-      );
-    })
+    .filter((show) => metadataRefreshTiming(show, now).overdue)
     .sort(
       (a, b) =>
         metadataRefreshInterval(a, date) - metadataRefreshInterval(b, date) ||
