@@ -8,7 +8,6 @@ import {
   matchesLibraryFilters,
   matchesGenres,
   libraryStats,
-  topRatedShows,
   metadataRefreshInterval,
   metadataRefreshQueue,
   listEntries,
@@ -309,10 +308,6 @@ test("library stats aggregate ratings, statuses, progress, specials, seasons, an
     { name: "Drama", averageRating: 4.25, weightedRating: 4.25, ratedShows: 2 },
     { name: "Crime", averageRating: 4, weightedRating: 4.1875, ratedShows: 1 },
   ]);
-  assert.deepEqual(
-    stats.topRated.map((entry) => entry.name),
-    ["Beta", "Alpha"],
-  );
 });
 
 test("library stats handle empty libraries and missing runtime metadata", () => {
@@ -330,15 +325,6 @@ test("library stats handle empty libraries and missing runtime metadata", () => 
   assert.equal(stats.runtimeCoveredEpisodes, 0);
   assert.deepEqual(libraryStats([]).topGenres, []);
   assert.deepEqual(libraryStats([]).topGenresByRating, []);
-});
-
-test("top-rated shows use progress recency to break equal ratings", () => {
-  const ranked = topRatedShows([
-    show({ id: 1, name: "Older", tracked: true, rating: 5, lastWatchedAt: "2026-01-01" }),
-    show({ id: 2, name: "Newer", tracked: true, rating: 5, lastWatchedAt: "2026-02-01" }),
-    show({ id: 3, name: "Watchlist", tracked: false, watchlist: true, rating: 5 }),
-  ]);
-  assert.deepEqual(ranked.map((entry) => entry.name), ["Newer", "Older"]);
 });
 
 test("list entries preserve ranks and sort missing values last", () => {

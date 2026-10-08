@@ -23,6 +23,7 @@ import {
   stars,
   image,
   viewToggle,
+  posterGalleryCard,
 } from "../ui.js";
 
 // Card and list presentation helpers
@@ -190,6 +191,7 @@ export function galleryShowCard(show, viewMode = "gallery") {
   const details = `<div class="card-heading"><h3>${esc(show.name)}</h3>${headingInfo}</div><div class="card-meta">${stars(show.rating)}<span>${showProgress.done ? `${showProgress.done} / ${showProgress.total} eps` : "Not started"}</span></div><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress>`;
   // Backdrop details sit inside the image frame; poster cards keep their footer.
   const overlay = isBackdrop ? `<div class="backdrop-card-overlay">${badges}<div class="backdrop-card-info">${details}</div></div>` : badges;
+  if (!isBackdrop) return posterGalleryCard(show, details, { badges });
   return `<button class="show-card" data-show="${show.id}" aria-label="Open ${esc(show.name)}"><div class="poster-wrap">${artwork}${overlay}</div>${isBackdrop ? "" : details}</button>`;
 }
 

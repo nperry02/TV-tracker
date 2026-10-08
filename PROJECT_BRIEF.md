@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-10-07
+Last updated: 2026-10-08
 
 ## Purpose and scope
 
@@ -67,7 +67,7 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 ## Your Shows
 
 - Present the library as a responsive dashboard with Home, My Shows, Lists, and Stats navigation in the header.
-- Keep the Home overview focused on library totals, Continue Watching, up to four top-rated shows, and latest updates.
+- Keep the Home overview focused on library totals, Continue Watching, upcoming episodes, and latest updates.
 - A personal library with an All view and tabs for Watching, Paused, Completed, Caught Up, and Dropped, plus a separate Watchlist. Shows can appear in both Watchlist and another status; those shows remain in All.
 - Filter by personal rating, watch status, and genre; combine filters.
 - Sort by watch status, personal rating, title, recently added, last updated watched progress, and original release date (newest or oldest first). Last updated is the default. It orders the most recent newly watched progress or recorded episode rewatch first, with shows lacking a timestamp afterward. Release date means the show's first premiere, not its most recent season; unknown dates appear last.
@@ -79,7 +79,8 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 
 ## Home updates
 
-- On desktop, place a narrow Updates column to the right of Top-rated shows, matching its height with an internally scrollable feed. Stack beneath Top-rated on smaller screens. Show one latest meaningful update per saved show, newest first. Keep entries for 30 days from discovery; show ten initially with Show more/less.
+- Upcoming episodes lists one nearest future unwatched regular episode per saved show except Dropped, ordered by air date then title. Include season premieres; exclude specials, unknown dates, and releases airing today. Offer a browser-saved 30/90-day window including its final day; rows open the corresponding season. Use cached episode metadata and the existing refresh schedule, with no new library fields or requests.
+- On desktop, place Upcoming episodes beside a narrow Updates column, both 360px tall. Upcoming cards scroll horizontally; Updates scrolls vertically. Stack on smaller screens with each list capped at 320px. Show one latest meaningful update per saved show, newest first. Keep entries for 30 days from discovery; show ten initially with Show more/less.
 - Detect newly available regular episodes, future season premiere dates and their changes or removal, Ended/Canceled series changes, and viewing-status changes. Do not log routine refreshes, ratings, artwork edits, or progress that does not change viewing status.
 - External show updates use green accents and explicit Show update labels. Personal activity and news for Dropped shows use muted styling. Paused and Watchlist-only shows still receive news; personal-list membership never duplicates an entry.
 - New external news replaces the previous entry and is unread. Personal activity cannot replace unread external news. A checkbox beside Unread marks an entry read, with a Mark as read hover hint; read entries remain until expiry. Personal activity is always included; there is no activity toggle. An info tooltip beside Updates explains retention.

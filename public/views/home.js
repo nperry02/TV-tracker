@@ -3,11 +3,11 @@ import {
   inLibrary,
   matchesTab,
   progress,
-  topRatedShows,
+  upcomingEpisodes,
   watchStatus,
   latestUpdates,
 } from "../model.js";
-import { $, displayDate, episodeCode, esc, image, infoTooltip, poster, stars } from "../ui.js";
+import { $, displayDate, episodeCode, esc, image, infoTooltip, poster, posterGalleryCard } from "../ui.js";
 
 // Render one current update per show with separate source and read-state labels.
 function renderUpdates(shows, mutationPending, { expanded = false, pendingReadId = null } = {}) {
@@ -41,9 +41,26 @@ function renderUpdates(shows, mutationPending, { expanded = false, pendingReadId
   }).join("") : '<div class="updates-empty">No recent updates. Show news and status changes will appear here.</div>';
 }
 
-// Render library totals, eligible Continue Watching cards, and top-rated favorites.
-export function renderHome(shows, mutationPending, updateOptions) {
+// Render upcoming releases from cached metadata without requesting additional refreshes.
+function renderUpcoming(shows, days) {
+  const entries = upcomingEpisodes(shows, days);
+  $("#upcoming-window").value = String(days);
+  $("#upcoming-list").innerHTML = entries.length ? entries.map(({ show, episode, daysUntil }) => {
+    const relative = daysUntil === 1 ? "Tomorrow" : `In ${daysUntil} days`;
+    // Three lines retain the release essentials; hover and accessible text keep full details.
+    const premiere = episode.episode_number === 1;
+    const episodeLabel = premiere ? `Season ${episode.season_number} premiere` : episodeCode(episode);
+    const fullDetails = `${show.name} · ${episodeCode(episode)} · ${episode.name || "Episode title to be announced"} · ${displayDate(episode.air_date)}`;
+    const details = `<div class="card-heading"><h3>${esc(show.name)}</h3></div><div class="upcoming-copy"><span${premiere ? ' class="upcoming-premiere"' : ""}>${episodeLabel}</span></div><div class="upcoming-date"><time datetime="${episode.air_date}">${esc(displayDate(episode.air_date, false, false))}</time><span aria-hidden="true"> · </span><strong>${relative}</strong></div>`;
+    return posterGalleryCard(show, details, { className: "upcoming-entry", season: episode.season_number,
+      label: `Open ${fullDetails}, ${relative}`, title: fullDetails });
+  }).join("") : `<div class="upcoming-empty">No episodes announced for the next ${days} days.</div>`;
+}
+
+// Render library totals, eligible Continue Watching cards, upcoming releases, and updates.
+export function renderHome(shows, mutationPending, updateOptions, days = 30) {
   renderUpdates(shows, mutationPending, updateOptions);
+  renderUpcoming(shows, days);
   // Overview cards summarize tracked membership rather than Watchlist overlap.
   const tracked = shows.filter((show) => matchesTab(show, "All"));
   const watching = shows.filter((show) => matchesTab(show, "Watching")).length;
@@ -78,15 +95,4 @@ export function renderHome(shows, mutationPending, updateOptions) {
       return `<article class="continue-card"><button class="continue-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(show, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(show.name)}</strong><small>${episodeCode(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></span></button><button class="next-watched" data-next="${show.id}" aria-label="Mark ${esc(show.name)} ${episodeCode(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
     })
     .join("");
-
-  // Four favorites leave room for latest news beside them; Stats keeps its five-show ranking.
-  const topRated = topRatedShows(shows).slice(0, 4);
-  $("#home-top-rated-grid").innerHTML = topRated.length
-    ? topRated
-        .map(
-          (show) =>
-            `<button class="stats-show" data-show="${show.id}" aria-label="Open ${esc(show.name)}, rated ${show.rating} out of 5">${poster(show, "", "w342")}<span><strong>${esc(show.name)}</strong>${stars(show.rating)}</span></button>`,
-        )
-        .join("")
-    : '<div class="stats-empty stats-empty-wide"><strong>No rated shows yet.</strong><span>Rate a show and your favorites will appear here.</span></div>';
 }
