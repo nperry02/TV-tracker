@@ -63,12 +63,23 @@ export async function checkUpcoming(page, base) {
       const upcoming = document.querySelector("#upcoming-section").getBoundingClientRect();
       const updates = document.querySelector("#updates-section").getBoundingClientRect();
       const list = document.querySelector("#upcoming-list");
+      const continueGap = document.querySelector(".continue-card").getBoundingClientRect().top -
+        document.querySelector("#continue-section h2").getBoundingClientRect().bottom;
+      const upcomingGap = document.querySelector(".upcoming-entry .poster-wrap").getBoundingClientRect().top -
+        document.querySelector("#upcoming-heading").getBoundingClientRect().bottom;
+      const updatesGap = document.querySelector("#updates-list").getBoundingClientRect().top -
+        document.querySelector("#updates-heading").getBoundingClientRect().bottom;
+      const bottomInset = upcoming.bottom - document.querySelector(".upcoming-entry").getBoundingClientRect().bottom - 1;
       return { height: upcoming.height, aligned: upcoming.top === updates.top,
+        balancedInset: Math.abs(bottomInset - parseFloat(getComputedStyle(document.querySelector("#upcoming-section")).paddingTop)) < 1,
+        contentGapMatched: Math.abs(upcomingGap - continueGap) < .5 && Math.abs(updatesGap - continueGap) < .5,
         titleAligned: document.querySelector("#upcoming-heading").getBoundingClientRect().top === document.querySelector("#updates-heading").getBoundingClientRect().top,
+        titleAtPadding: document.querySelector("#upcoming-heading").getBoundingClientRect().top - upcoming.top ===
+          parseFloat(getComputedStyle(document.querySelector("#upcoming-section")).paddingTop) + 1,
         sameHeight: upcoming.height === updates.height, beside: updates.left >= upcoming.right,
         scrollable: list.scrollWidth > list.clientWidth };
     });
-    assert.deepEqual(geometry, { height: 360, aligned: true, titleAligned: true, sameHeight: true, beside: true, scrollable: true });
+    assert.deepEqual(geometry, { height: 360, aligned: true, balancedInset: true, contentGapMatched: true, titleAligned: true, titleAtPadding: true, sameHeight: true, beside: true, scrollable: true });
     await checkPanelStyles();
     await preview.locator("#upcoming-list").evaluate((list) => { list.scrollLeft = 200; });
     assert.ok(await preview.locator("#upcoming-list").evaluate((list) => list.scrollLeft > 0));
