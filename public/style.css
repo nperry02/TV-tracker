@@ -1310,6 +1310,7 @@ dialog::backdrop {
   font-weight: 500;
   display: block;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .episode-name small {
   font-size: 10px;
@@ -1324,9 +1325,8 @@ dialog::backdrop {
 }
 
 /* Episode thumbs share their selected state and shape with the quick-watch bar. */
-.episode-title-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.episode-title-line strong { overflow-wrap: anywhere; }
 .episode-thumbs { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.episode > .episode-thumbs { margin-left: auto; }
 .thumb-button {
   display: inline-flex;
   align-items: center;
@@ -1395,9 +1395,8 @@ dialog::backdrop {
 @media (max-width: 480px) {
   .episode { flex-wrap: wrap; }
   .episode-name { flex-basis: calc(100% - 34px); }
-  .episode-rewatch { margin-left: 26px; }
-  .episode-list .episode .through { margin-left: auto; max-width: none; }
-  .rewatch-menu { left: 0; right: auto; }
+  .episode-rewatch { margin-left: 0; }
+  .episode-list .episode .through { margin-left: 0; max-width: none; }
   .season-header { flex-wrap: wrap; }
 }
 .detail-bottom {

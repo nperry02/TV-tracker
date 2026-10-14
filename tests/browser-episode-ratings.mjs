@@ -112,6 +112,14 @@ export async function checkEpisodeRatings(page, base) {
     // Show-detail corrections highlight the stored thumb without affecting recency or stars.
     await preview.goto(`${base}/#library`);
     await preview.locator('.show-card[data-show="1396"]').click();
+    const thumbPosition = await rowThumb(2, "up").evaluate(button => {
+      const row = button.closest(".episode");
+      const thumbs = button.closest(".episode-thumbs").getBoundingClientRect();
+      return thumbs.left >= row.querySelector(".episode-name").getBoundingClientRect().right &&
+        thumbs.right <= row.querySelector(".episode-rewatch").getBoundingClientRect().left &&
+        thumbs.left > row.getBoundingClientRect().left + row.getBoundingClientRect().width / 2;
+    });
+    assert.equal(thumbPosition, true);
     assert.equal(await rowThumb(2, "up").getAttribute("aria-pressed"), "true");
     assert.equal(await rowThumb(3, "down").getAttribute("aria-pressed"), "true");
     const beforeEdit = await stored();
