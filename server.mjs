@@ -14,6 +14,7 @@ import {
   reconcileUpdates,
   validUpdateData,
   validRewatchData,
+  validEpisodeRatingData,
   episodeRewatches,
   episodeKey,
   statuses,
@@ -41,6 +42,8 @@ library.shows = library.shows.map((s) => ({
 }));
 if (library.shows.some((show) => !validRewatchData(show)))
   throw new Error("Invalid rewatch data. Your data has not been changed.");
+if (library.shows.some((show) => !validEpisodeRatingData(show)))
+  throw new Error("Invalid episode ratings. Your data has not been changed.");
 if ("lists" in library && !Array.isArray(library.lists))
   throw new Error("Unsupported library file. Your data has not been changed.");
 library.lists ||= [];
@@ -167,6 +170,8 @@ function validateImportedLibrary(value) {
   for (const show of next.shows) validateArtworkOverrides(show);
   if (next.shows.some((show) => !validRewatchData(show)))
     throw Object.assign(new Error("Backup contains invalid rewatch data."), { status: 400 });
+  if (next.shows.some((show) => !validEpisodeRatingData(show)))
+    throw Object.assign(new Error("Backup contains invalid episode ratings."), { status: 400 });
   if (next.shows.some((show) => !validUpdateData(show)))
     throw Object.assign(new Error("Backup contains invalid update data."), { status: 400 });
   // Restore old backups without reviving the removed activity toggle.
@@ -655,6 +660,7 @@ export const server = http.createServer(async (req, res) => {
             if (!b.tracked) {
               s.watched = [];
               delete s.rewatchCounts;
+              delete s.episodeRatings;
               delete s.lastRewatchedAt;
               s.rating = null;
               s.seasonRatings = {};
@@ -718,8 +724,13 @@ export const server = http.createServer(async (req, res) => {
                 status: 400,
               });
             const keys = new Set(s.watched);
-            // Bulk actions never mark unaired episodes, but clearing can remove any key.
-            for (const e of s.episodes) {
+            // Clearing uses saved keys so metadata omissions cannot strand progress or thumbs.
+            // Adding progress still considers only known, aired metadata episodes.
+            const progressEpisodes = watched ? s.episodes : [...keys].map((key) => {
+              const [season_number, episode_number] = key.split(":").map(Number);
+              return { season_number, episode_number };
+            });
+            for (const e of progressEpisodes) {
               const selected =
                 action === "episode"
                   ? e.season_number === season && e.episode_number === episode
@@ -745,6 +756,12 @@ export const server = http.createServer(async (req, res) => {
                 if (!keys.has(key)) delete s.rewatchCounts[key];
               if (!Object.keys(s.rewatchCounts).length) delete s.rewatchCounts;
             }
+            // Clearing original progress also clears thumbs for the affected episodes.
+            if (s.episodeRatings) {
+              for (const key of Object.keys(s.episodeRatings))
+                if (!keys.has(key)) delete s.episodeRatings[key];
+              if (!Object.keys(s.episodeRatings).length) delete s.episodeRatings;
+            }
             if (s.watched.length) s.tracked = true;
             if (s.watched.length > previousWatchedCount)
               s.lastWatchedAt = new Date().toISOString();
@@ -753,6 +770,24 @@ export const server = http.createServer(async (req, res) => {
               s.watched.length > previousWatchedCount
             )
               s.statusOverride = null;
+          }
+          // Progress and a thumb can save atomically; rating-only edits never record a viewing.
+          if ("episodeRating" in b) {
+            const operation = b.episodeRating;
+            const episode = s.episodes.find((e) => e.season_number === operation?.season &&
+              e.episode_number === operation?.episode);
+            if (!episode || !["up", "down", null].includes(operation?.rating))
+              throw Object.assign(new Error("Episode ratings require a valid episode and up, down, or null."), { status: 400 });
+            const key = episodeKey(episode);
+            if (operation.rating !== null && !s.watched.includes(key))
+              throw Object.assign(new Error("Mark the episode watched before rating it."), { status: 400 });
+            if (operation.rating === null) {
+              if (s.episodeRatings) delete s.episodeRatings[key];
+            } else {
+              s.episodeRatings ||= {};
+              s.episodeRatings[key] = operation.rating;
+            }
+            if (s.episodeRatings && !Object.keys(s.episodeRatings).length) delete s.episodeRatings;
           }
           // Repeat writes preserve progress and status, with separate library recency.
           if ("rewatch" in b) {
