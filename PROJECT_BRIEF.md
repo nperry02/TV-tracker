@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-10-08
+Last updated: 2026-10-14
 
 ## Purpose and scope
 
@@ -62,7 +62,8 @@ Watchlist and library membership are independent. In search, + Add puts a show i
 - Unrated is separate from any numeric rating.
 - Season ratings are desired as an optional addition using the same scale; the user is open to supporting both show and season ratings.
 - Keep an explicitly entered show rating independent of season ratings; do not silently replace it with an average.
-- Episode ratings are outside the current scope.
+- Episode thumbs use an optional `episodeRatings` map with season/episode keys and `up` or `down` values. They are independent of show and season stars and Stats. Marking an episode watched and rating it can save atomically; rating corrections do not change viewing recency, progress, or Home Updates. Clear original progress, Clear season, or remove a show from All Shows to clear the affected thumbs. Preserve saved thumbs through metadata refreshes and backups; older libraries default to unrated.
+- Continue Watching reveals a vertical pill rising from its check circle on hover or keyboard focus, with a green thumbs-up area above a red thumbs-down area; touch screens have a small options button. A thumb marks the episode watched and rates it together, while the ordinary check stays unrated. Watched episode rows show editable thumb controls with the saved choice highlighted; clicking that choice again clears it. Disable ratings for unwatched episodes and controls during saves, preserve focus, and retain saved state on failure.
 
 ## Your Shows
 

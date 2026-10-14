@@ -9,6 +9,7 @@ import { reconcileUpdates } from "../public/model.js";
 import { checkRewatches } from "./browser-rewatches.mjs";
 import { checkUpcoming } from "./browser-upcoming.mjs";
 import { checkShowInfo } from "./browser-show-info.mjs";
+import { checkEpisodeRatings } from "./browser-episode-ratings.mjs";
 
 const live = process.env.LIVE_TMDB === "1";
 
@@ -837,6 +838,7 @@ try {
     assert.match(await page.locator("#upcoming-list").textContent(), /No episodes announced for the next 30 days/);
     await checkUpcoming(page, base);
     await checkShowInfo(page, base);
+    await checkEpisodeRatings(page, base);
     await page.getByRole("link", { name: "My Shows", exact: true }).click();
     await page.locator("#library-view").waitFor();
     await page.getByRole("button", { name: /List/ }).click();

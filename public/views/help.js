@@ -71,6 +71,7 @@ export function renderHelp(container) {
           <i class="help-icon" aria-hidden="true">★</i>
           <h3>Ratings</h3>
           <p>Rate a show or any season from half a star to five stars. Show and season ratings stay separate, so one never silently replaces the other.</p>
+          <p>Episodes use thumbs up or down. Hover over the Continue Watching check circle, or focus it with the keyboard, to reveal both choices above it. On touch screens, use the small options button. Choosing a thumb marks that episode watched and rates it together; clicking the check alone leaves it unrated. In show details, use the thumbs beside a watched episode to change its rating, or click the selected thumb again to clear it. Unwatched episodes cannot be rated. Thumbs do not change show or season star ratings or Stats.</p>
         </article>
         <article>
           <h3>Home updates</h3>
@@ -108,7 +109,7 @@ export function renderHelp(container) {
       <article>
         <p class="eyebrow">PRIVATE BY DESIGN</p>
         <h2>Your library stays on this computer.</h2>
-        <p>Ratings, progress, lists, cached show information, latest updates, and read state are stored in <code>data/library.json</code> and included in backups. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
+        <p>Ratings, episode thumbs, progress, lists, cached show information, latest updates, and read state are stored in <code>data/library.json</code> and included in backups. Episode thumbs remain independent of show and season stars and Stats; clearing watched progress also clears the affected thumbs. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
         <p>Use <a href="/api/export" download>Back up library ↗</a> to download your shows, lists, membership, and manual list order. A show must be removed from its lists before it can be deleted completely.</p>
       </article>
       <article>

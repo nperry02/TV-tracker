@@ -146,6 +146,21 @@ export function listEntries(list, shows) {
 // Build the season-and-episode key used to store watched progress.
 export const episodeKey = (e) => `${e.season_number}:${e.episode_number}`;
 
+// Return an episode's optional personal thumb, independently of show and season stars.
+export function episodeRating(show, key) {
+  const rating = show.episodeRatings?.[key];
+  return ["up", "down"].includes(rating) ? rating : null;
+}
+
+// Validate saved thumbs while retaining watched keys absent from refreshed metadata.
+export function validEpisodeRatingData(show) {
+  if (!("episodeRatings" in show)) return true;
+  const ratings = show.episodeRatings;
+  return ratings !== null && typeof ratings === "object" && !Array.isArray(ratings) &&
+    Object.entries(ratings).every(([key, rating]) => /^\d+:\d+$/.test(key) &&
+      Array.isArray(show.watched) && show.watched.includes(key) && ["up", "down"].includes(rating));
+}
+
 // Return the recorded repeats for an episode key, excluding its original watch.
 export function episodeRewatches(show, key, watched = null) {
   return (watched ? watched.has(key) : show.watched.includes(key)) ? show.rewatchCounts?.[key] || 0 : 0;
