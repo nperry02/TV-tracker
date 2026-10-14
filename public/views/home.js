@@ -7,7 +7,7 @@ import {
   watchStatus,
   latestUpdates,
 } from "../model.js";
-import { $, displayDate, episodeCode, esc, image, infoTooltip, poster, posterGalleryCard } from "../ui.js";
+import { $, displayDate, episodeCode, esc, image, infoTooltip, poster, posterGalleryCard, continueWatchControls } from "../ui.js";
 
 // Render one current update per show with separate source and read-state labels.
 function renderUpdates(shows, mutationPending, { expanded = false, pendingReadId = null } = {}) {
@@ -92,7 +92,7 @@ export function renderHome(shows, mutationPending, updateOptions, days = 30) {
       const showProgress = progress(show);
       const next = showProgress.next;
       const backdrop = image(artworkPath(show, "backdrop"), "w780");
-      return `<article class="continue-card"><button class="continue-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(show, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(show.name)}</strong><small>${episodeCode(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></span></button><button class="next-watched" data-next="${show.id}" aria-label="Mark ${esc(show.name)} ${episodeCode(next)} watched"${mutationPending ? " disabled" : ""}>✓<span>Watched</span></button></article>`;
+      return `<article class="continue-card"><button class="continue-open" data-show="${show.id}" aria-label="Open ${esc(show.name)}">${backdrop ? `<img class="continue-backdrop" src="${backdrop}" alt="" loading="lazy">` : poster(show, "continue-backdrop", "w342")}<span class="continue-copy"><strong>${esc(show.name)}</strong><small>${episodeCode(next)} · ${esc(next.name)}</small><progress class="progress-track" value="${showProgress.done}" max="${showProgress.total || 1}" aria-label="${showProgress.done} of ${showProgress.total} aired episodes watched"></progress></span></button>${continueWatchControls(show, next, mutationPending)}</article>`;
     })
     .join("");
 }

@@ -71,6 +71,7 @@ export function renderHelp(container) {
           <i class="help-icon" aria-hidden="true">★</i>
           <h3>Ratings</h3>
           <p>Rate a show or any season from half a star to five stars. Show and season ratings stay separate, so one never silently replaces the other.</p>
+          <p>Episodes use thumbs up or down. Hover over the Continue Watching check circle, or focus it with the keyboard, to reveal both choices above it. On touch screens, use the small options button. Choosing a thumb marks that episode watched and rates it together; clicking the check alone leaves it unrated. In show details, use the thumbs beside a watched episode to change its rating, or click the selected thumb again to clear it. Unwatched episodes cannot be rated. Thumbs do not change show or season star ratings or Stats.</p>
         </article>
         <article>
           <h3>Home updates</h3>

@@ -10,6 +10,7 @@ import {
   latestUpdates,
   episodeKey,
   episodeRewatches,
+  episodeRating,
   upcomingWindow,
 } from "./model.js";
 import { api } from "./api.js";
@@ -214,6 +215,13 @@ function renderRefreshControls() {
     button.textContent = metadataRefreshRequests.has(selectedId) ? "Refreshing…" : "↻ Refresh show info";
   }
 }
+// Toggle touch choices and suppress automatic reopening after an explicit dismissal.
+function setThumbMenu(wrapper, open) {
+  wrapper.classList.toggle("thumb-menu-open", open);
+  wrapper.classList.toggle("thumb-menu-dismissed", !open);
+  wrapper.querySelector("[data-toggle-thumbs]")?.setAttribute("aria-expanded", String(open));
+}
+
 // Open saved show details on a requested season or its next available episode's season.
 function openShow(id, season = null) {
   selectedId = Number(id);
@@ -272,6 +280,7 @@ async function save(body, message, id = selectedId) {
   const focused = document.activeElement;
   const focusId = focused?.id;
   const episode = focused?.dataset.episode;
+  const homeShowId = focused?.closest(".continue-watch-actions")?.querySelector("[data-next]")?.dataset.next;
   render();
   if (isCurrentDialog()) renderShow();
   try {
@@ -287,15 +296,24 @@ async function save(body, message, id = selectedId) {
     mutationPending = false;
     render();
     if ($("#show-dialog").open) renderShow();
-    if (!isCurrentDialog()) return;
-    $("#show-dialog").scrollTop = scroll;
-    // Recreated dialog markup receives focus by stable ID or episode number.
-    const target = focusId
-      ? document.getElementById(focusId)
-      : episode
-        ? $(`[data-episode="${episode}"]`)
-        : null;
-    target?.focus({ preventScroll: true });
+    if (isCurrentDialog()) {
+      $("#show-dialog").scrollTop = scroll;
+      // Recreated dialog markup receives focus by stable ID or episode number.
+      const target = focusId
+        ? document.getElementById(focusId)
+        : episode
+          ? $(`[data-episode="${episode}"]`)
+          : null;
+      target?.focus({ preventScroll: true });
+    } else if (homeShowId && !$("#home-view").hidden && !document.querySelector("dialog[open]")) {
+      // A successful watch advances the episode, so its old thumb ID no longer exists.
+      const target = document.getElementById(focusId) || document.getElementById(`next-watched-${homeShowId}`) ||
+        $("#continue-list .next-watched") || $("#home-view h1");
+      // A failed save keeps the same thumb, but its recreated bar must be visible to focus it.
+      if (target?.closest(".continue-rating-bar")) setThumbMenu(target.closest(".continue-watch-actions"), true);
+      if (target && !target.matches("button")) target.tabIndex = -1;
+      target?.focus({ preventScroll: true });
+    }
   }
 }
 // Share an existing request and pin overview order before starting a fresh metadata check.
@@ -440,6 +458,10 @@ const searchDialog = createSearchDialog({
 // Delegated button actions cover content that renderers replace after each change.
 // Dispatch delegated navigation, dialog, collection, and show actions from clicked controls.
 document.addEventListener("click", async (event) => {
+  // Touch-open choices dismiss when another part of the page is used.
+  document.querySelectorAll(".continue-watch-actions.thumb-menu-open").forEach((wrapper) => {
+    if (!wrapper.contains(event.target)) setThumbMenu(wrapper, false);
+  });
   // Episode menus close when interaction leaves their disclosure.
   document.querySelectorAll(".rewatch-options[open]").forEach((menu) => {
     if (!menu.contains(event.target)) menu.open = false;
@@ -521,6 +543,24 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.dataset.show) return openShow(button.dataset.show, button.dataset.showSeason ?? null);
+  if (button.dataset.toggleThumbs !== undefined) {
+    const wrapper = button.closest(".continue-watch-actions");
+    setThumbMenu(wrapper, !wrapper.classList.contains("thumb-menu-open"));
+    return;
+  }
+  if (button.dataset.episodeThumb) {
+    if (mutationPending || button.disabled) return;
+    const id = Number(button.dataset.thumbShow);
+    const show = shows.find((entry) => entry.id === id);
+    if (!show) return;
+    const season = Number(button.dataset.thumbSeason), episode = Number(button.dataset.thumbEpisode);
+    const key = `${season}:${episode}`;
+    const rating = episodeRating(show, key) === button.dataset.episodeThumb ? null : button.dataset.episodeThumb;
+    const body = { episodeRating: { season, episode, rating } };
+    if (button.dataset.thumbWatch !== undefined)
+      body.progress = { action: "episode", season, episode, watched: true };
+    return save(body, rating ? `Episode ${rating === "up" ? "liked" : "disliked"}.` : "Episode rating cleared.", id);
+  }
   if (button.dataset.next) {
     // Continue Watching always resolves the next aired episode at click time.
     const id = Number(button.dataset.next);
@@ -1059,6 +1099,13 @@ document.addEventListener("pointerout", (event) => {
 
 // Global keyboard controls close custom filters and open Add a show.
 document.addEventListener("keydown", (event) => {
+  const thumbMenu = document.activeElement?.closest(".continue-watch-actions");
+  if (event.key === "Escape" && thumbMenu) {
+    event.preventDefault();
+    setThumbMenu(thumbMenu, false);
+    thumbMenu.querySelector(".next-watched")?.focus();
+    return;
+  }
   const rewatchMenu = $(".rewatch-options[open]");
   if (event.key === "Escape" && rewatchMenu && !$("#rewatch-dialog").open) {
     event.preventDefault();
@@ -1081,6 +1128,14 @@ document.addEventListener("keydown", (event) => {
     searchDialog.open();
   }
 });
+// A fresh pointer or keyboard entry makes a previously dismissed rating bar available again.
+function resetThumbMenuDismissal(event) {
+  const wrapper = event.target.closest?.(".continue-watch-actions");
+  if (wrapper && (!event.relatedTarget || !wrapper.contains(event.relatedTarget)))
+    wrapper.classList.remove("thumb-menu-dismissed");
+}
+document.addEventListener("pointerover", resetThumbMenuDismissal);
+document.addEventListener("focusin", resetThumbMenuDismissal);
 // Apply hash navigation and start the destination page at the top.
 window.addEventListener("hashchange", () => applyRoute({ scroll: true }));
 

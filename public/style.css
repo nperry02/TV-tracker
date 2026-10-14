@@ -1323,6 +1323,24 @@ dialog::backdrop {
   background: transparent;
 }
 
+/* Episode thumbs share their selected state and shape with the quick-watch bar. */
+.episode-title-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.episode-title-line strong { overflow-wrap: anywhere; }
+.episode-thumbs { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.thumb-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  color: var(--muted);
+  border-color: transparent;
+  background: transparent;
+}
+.thumb-button[aria-pressed="true"] { color: var(--green); border-color: currentColor; background: #8ed9a512; }
+.thumb-button[data-episode-thumb="down"][aria-pressed="true"] { color: #e7a1a1; background: #e7a1a112; }
+
 /* Repeats stay separate from watched progress, with compact shared icon controls. */
 .episode-rewatch, .rewatch-summary {
   display: inline-flex;
@@ -2659,6 +2677,58 @@ h1 {
 }
 .next-watched span {
   display: none;
+}
+/* A vertical rating pill extends behind the watched circle without changing its click. */
+.continue-watch-actions { position: absolute; right: 14px; bottom: 14px; z-index: 2; display: flex; align-items: center; gap: 6px; }
+.continue-watch-actions .next-watched { position: relative; right: auto; bottom: auto; z-index: 1; }
+.continue-thumb-toggle { display: none; position: relative; z-index: 1; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 6px; background: #19251cec; }
+.continue-rating-bar {
+  --thumb-up-background: #cef37b25;
+  --thumb-down-background: #e7a1a125;
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 46px;
+  padding: 0 0 44px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(var(--thumb-up-background), var(--thumb-up-background)), #172019df;
+  box-shadow: 0 4px 15px #0005;
+  visibility: hidden;
+}
+/* A rounded red cap rises into green, then continues around the watched circle below. */
+.continue-rating-bar::before {
+  content: "";
+  position: absolute;
+  inset: 42px 0 0;
+  border-radius: 22px;
+  background: linear-gradient(var(--thumb-down-background), var(--thumb-down-background)), #172019;
+  pointer-events: none;
+}
+.continue-rating-bar .episode-thumbs { position: relative; display: flex; flex-direction: column; gap: 0; }
+.continue-rating-bar .thumb-button { width: 100%; height: 41px; padding: 9px; border: 0; border-radius: 0; flex-shrink: 0; }
+.continue-rating-bar .thumb-button svg { width: 22px; height: 22px; }
+.continue-rating-bar [data-episode-thumb="up"] {
+  color: var(--accent);
+  background: transparent;
+}
+.continue-rating-bar [data-episode-thumb="down"] { color: #e7a1a1; border-radius: 50% 50% 0 0; background: transparent; }
+.continue-rating-bar:has([data-episode-thumb="up"]:is(:hover, :focus-visible)) { --thumb-up-background: #cef37b45; }
+.continue-rating-bar [data-episode-thumb="down"]:hover { background: transparent; }
+.continue-rating-bar:has([data-episode-thumb="down"]:is(:hover, :focus-visible)) { --thumb-down-background: #e7a1a145; }
+.continue-rating-bar .thumb-button:focus-visible { outline-offset: -4px; }
+.continue-watch-actions:not(.thumb-menu-dismissed):focus-within .continue-rating-bar,
+.continue-watch-actions.thumb-menu-open .continue-rating-bar { visibility: visible; }
+@media (hover: hover) {
+  .continue-watch-actions:not(.thumb-menu-dismissed):hover .continue-rating-bar { visibility: visible; }
+}
+@media (hover: none), (pointer: coarse) {
+  .continue-thumb-toggle { display: inline-flex; order: -1; }
+  .continue-copy { right: 104px; }
+  .continue-watch-actions:not(.thumb-menu-open) .continue-rating-bar { visibility: hidden; }
+  .continue-watch-actions:not(.thumb-menu-dismissed):has(.next-watched:focus-visible) .continue-rating-bar,
+  .continue-watch-actions:not(.thumb-menu-dismissed):has(.continue-rating-bar:focus-within) .continue-rating-bar { visibility: visible; }
 }
 /* My Shows filters and results */
 .library {

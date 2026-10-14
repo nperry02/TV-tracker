@@ -1,4 +1,4 @@
-import { artworkPath } from "./model.js";
+import { artworkPath, episodeKey, episodeRating } from "./model.js";
 
 // Shared info controls use the same icon and hover/focus tooltip presentation.
 export const infoIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
@@ -6,6 +6,28 @@ export const infoIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx=
 // Shared Lucide Repeat and Ellipsis icons keep episode controls and summaries consistent.
 export const repeatIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="m7 22-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>`;
 export const ellipsisIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>`;
+
+// Complete Lucide thumbs SVGs share the same stroke style as other episode controls.
+// Source: https://github.com/lucide-icons/lucide/tree/main/icons
+export const thumbsUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/><path d="M7 10v12"/></svg>`;
+export const thumbsDownIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/><path d="M17 14V2"/></svg>`;
+
+// Render reusable thumb toggles for a watched episode or an atomic watch-and-rate action.
+export function episodeThumbButtons(show, episode, { disabled = false, markWatched = false } = {}) {
+  const rating = episodeRating(show, episodeKey(episode));
+  const description = `${episodeCode(episode)} · ${episode.name || show.name}`;
+  return `<div class="episode-thumbs" role="group" aria-label="Thumb rating for ${esc(description)}">${["up", "down"].map((direction) => {
+    const selected = rating === direction;
+    const action = selected ? `Clear thumbs-${direction} rating for` : `${markWatched ? "Mark watched and " : ""}${direction === "up" ? "like" : "dislike"}`;
+    const label = `${action} ${description}`;
+    return `<button type="button" class="thumb-button" id="thumb-${markWatched ? "continue" : "episode"}-${show.id}-${episode.season_number}-${episode.episode_number}-${direction}" data-episode-thumb="${direction}" data-thumb-show="${show.id}" data-thumb-season="${episode.season_number}" data-thumb-episode="${episode.episode_number}"${markWatched ? " data-thumb-watch" : ""} aria-pressed="${selected}" aria-label="${esc(label)}" title="${disabled && !markWatched && !show.watched.includes(episodeKey(episode)) ? "Mark watched before rating this episode" : esc(label)}"${disabled ? " disabled" : ""}>${direction === "up" ? thumbsUpIcon : thumbsDownIcon}</button>`;
+  }).join("")}</div>`;
+}
+
+// Keep the watched circle independent from the hover, keyboard, and touch rating choices.
+export function continueWatchControls(show, episode, disabled) {
+  return `<div class="continue-watch-actions"><button type="button" id="next-watched-${show.id}" class="next-watched" data-next="${show.id}" aria-label="Mark ${esc(show.name)} ${episodeCode(episode)} watched"${disabled ? " disabled" : ""}>✓<span>Watched</span></button><button type="button" class="continue-thumb-toggle" data-toggle-thumbs aria-label="Rate ${esc(show.name)} ${episodeCode(episode)}" aria-expanded="false" aria-controls="continue-thumbs-${show.id}"${disabled ? " disabled" : ""}>${ellipsisIcon}</button><div id="continue-thumbs-${show.id}" class="continue-rating-bar">${episodeThumbButtons(show, episode, { disabled, markWatched: true })}</div></div>`;
+}
 
 // Render a focusable info control with trusted tooltip markup and escaped identifiers.
 export function infoTooltip(id, label, content, className = "") {
