@@ -15,6 +15,7 @@ Read PROJECT_BRIEF.md for the product scope and deferred features.
 - `npm start`: run the local app.
 - `npm run dev`: run the local app with Node watch mode.
 - `npm run check`: check JavaScript syntax and run model/API tests.
+- `npm run check:secrets`: verify a pinned secret scanner, then scan fetched history and current publishable files without including ignored personal data.
 - `npm run test:browser`: run the Playwright browser flow against fixture TMDB data.
 - `npm run test:live`: run the isolated browser flow against live TMDB only when integration changes warrant it.
 

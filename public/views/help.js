@@ -109,6 +109,7 @@ export function renderHelp(container) {
       <article>
         <p class="eyebrow">PRIVATE BY DESIGN</p>
         <h2>Your library stays on this computer.</h2>
+        <p>The server accepts connections only from this computer. Sharing the source repository does not publish your running app, TMDB credential, or personal library.</p>
         <p>Ratings, episode thumbs, progress, lists, cached show information, latest updates, and read state are stored in <code>data/library.json</code> and included in backups. Episode thumbs remain independent of show and season stars and Stats; clearing watched progress also clears the affected thumbs. Poster gallery, backdrop gallery, and list view preferences stay in this browser, with a separate preference for each list. Next Episode has no account or cloud sync.</p>
         <p>Use <a href="/api/export" download>Back up library ↗</a> to download your shows, lists, membership, and manual list order. A show must be removed from its lists before it can be deleted completely.</p>
       </article>
