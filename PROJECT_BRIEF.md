@@ -1,6 +1,6 @@
 # TV Tracker — project brief
 
-Last updated: 2026-10-14
+Last updated: 2026-10-17
 
 ## Purpose and scope
 
@@ -14,7 +14,7 @@ This document records the requested product direction. The first working local w
 
 Use TMDB as the preferred initial source for TV search, posters, descriptions, genres, seasons, episodes, air dates, and series status. Its TV endpoints fit the requested scope; no second provider is currently needed.
 
-The user authorized reusing the existing TMDB credential from their Letterbox repository. It has been copied into this project's ignored `.env` file and validated successfully against TMDB's TV API. Keep credentials out of committed files and documentation.
+Each user supplies a TMDB credential in an ignored local `.env` file. Keep credentials and personal library backups out of committed files, documentation, and CI; automated tests use fixture data.
 
 References:
 
@@ -139,6 +139,8 @@ Do not build diary or date-entry workflows in the initial version. Current progr
 ## Initial implementation decisions
 
 - Local Node.js web app, available on this Mac at localhost:3210. No login or cloud sync.
+- The server explicitly binds to `127.0.0.1` and validates Host/Origin headers. Public source availability does not publish the running app or personal data; hosting the app for other users remains outside scope.
+- Public-repository CI uses read-only permissions, pinned official Actions, GitHub-hosted runners, fixture tests, and a checksum-verified secret scanner. Jobs skip private repositories to avoid private Actions usage charges. A reviewed main-branch ruleset is prepared for activation after publication and successful CI; GitHub settings are verified separately rather than inferred from checked-in configuration.
 - Personal library and cached metadata persist in `data/library.json`, with atomic file replacement and a downloadable JSON backup.
 - Show and optional season ratings both ship in the first version.
 - Search offers separate + Add and + Watchlist actions. All-show totals and average ratings use tracked library membership, independently of the watchlist flag.

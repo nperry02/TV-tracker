@@ -93,6 +93,58 @@ When application behavior described by the in-app Help & about page changes, upd
 
 Optional environment variables: `PORT` (default `3210`) and `TV_DATA_FILE` (alternative library path).
 
+## Local security and public source
+
+The server explicitly binds to this computer's loopback interface with
+`server.listen(..., "127.0.0.1", ...)` in [server.mjs](server.mjs). Host and Origin
+checks reject other hosts and browser origins. There is no login or user
+isolation: keep this app local rather than exposing it through port forwarding
+or a public tunnel. Making the source repository public does not host the app.
+
+Keep `.env` and its variants, personal library data, downloaded backups, and
+private keys outside Git. Only the placeholder `.env.example` is published.
+Use the ignored `backups/` directory for local backups saved within this checkout.
+Ignore rules do not remove older commits; revoke or rotate any credential found
+in published history, then assess whether history cleanup is needed.
+
+Run `npm run check:secrets` before publication or after sensitive changes. It
+downloads a pinned Gitleaks release, verifies its SHA-256 hash, scans every
+locally fetched Git ref, and scans current nonignored publishable files. Ignored
+credentials and personal libraries are excluded from that file snapshot. Reports
+show finding locations without secret values; temporary files are removed.
+The helper supports Apple Silicon macOS and Linux x64. An optional
+`GITLEAKS_ARCHIVE` can reuse a downloaded archive, still subject to the same pinned
+checksum. Secret scanning is a safeguard, not proof that no secret exists.
+
+The `CI` workflow runs model/API checks, fixture browser tests, and secret scans
+on pull requests, pushes to `main`, and manual dispatch. Jobs use read-only
+permissions, commit-pinned official Actions, and GitHub-hosted runners. No TMDB
+credential or other repository secret is needed. Jobs skip private repositories
+to avoid private Actions usage charges. Dependabot vulnerability alerts and
+security update pull requests are enabled for this repository; updates are not
+merged automatically. The prepared Dependabot configuration adds weekly checks
+for routine npm package and Action updates once merged into the default branch.
+These Dependabot features are free. Other copies of this repository must enable
+alerts and security updates separately in GitHub settings.
+
+After publication is explicitly approved and the workflow is on the default
+branch, run CI once and verify all three jobs pass. The prepared
+[main ruleset](.github/main-ruleset.json) can then be applied with
+`gh api --method POST repos/nperry02/TV-tracker/rulesets --input .github/main-ruleset.json`.
+It requires a PR, resolved conversations, and current passing `Model and API`,
+`Browser fixtures`, and `Secret scan` checks from GitHub Actions. It blocks force
+pushes and deletion of `main`, has no bypass actors, and requires zero approvals
+so a solo maintainer can merge their own PRs. The file alone does not activate
+protection. Reuse an existing ruleset rather than creating duplicates.
+
+Before considering publication complete, also verify secret scanning, push
+protection, Dependabot alerts/security updates, and approval for all external
+contributors' fork workflows are enabled. Keep Actions tokens read-only, automated
+PR approval disabled, and outside PRs off self-hosted runners. Public Git history
+includes author/committer emails; changing the email for future commits does not
+remove addresses already in history. Review PR comments and attachments as well
+as source files before changing visibility.
+
 ## Credits
 
 Show data and artwork come from [TMDB](https://www.themoviedb.org). This product uses the TMDB API but is not endorsed or certified by TMDB.

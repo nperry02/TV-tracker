@@ -124,7 +124,12 @@ export async function checkShowInfo(page, base) {
     await preview.locator('[data-info-show="41000"]').getByText("Overdue by 1 day", { exact: true }).waitFor();
     assert.equal(requests, 4);
     await preview.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-    assert.match(await preview.locator("#show-info-count").textContent(), /35 overdue|36 overdue/);
+    // The API records real server time while this browser uses a fixed clock.
+    // Only the freshly refreshed show varies; the 34 paused/watchlist fixtures are overdue.
+    const browserNow = await preview.evaluate(() => Date.now());
+    const freshCheck = refreshed.shows.find(show => show.id === 95396).refreshedAt;
+    const freshOverdue = browserNow - Date.parse(freshCheck) > 24 * 60 * 60 * 1000;
+    assert.equal(await preview.locator("#show-info-count").textContent(), `36 saved shows · ${34 + Number(freshOverdue)} overdue`);
     await preview.keyboard.press("Escape");
     // Missing timestamps sort first and render safely; stop startup after its first failed check.
     await preview.request.post(`${base}/api/import`, { data: { version: 1, shows: [
