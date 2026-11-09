@@ -7,6 +7,10 @@ export async function checkRewatches(page, base) {
   const viewport = page.viewportSize();
   // Wait for a completed show write before inspecting replacement controls.
   const settled = () => page.waitForFunction(() => !document.querySelector("#show-rating")?.disabled);
+  // Dialog closure queues a close event; wait for its focus-restoration handler as well.
+  const editorClosed = () => page.waitForFunction(() =>
+    !document.querySelector("#rewatch-dialog").open &&
+    document.activeElement === document.querySelector("#rewatch-options-1"));
   // Open the correction dialog through the keyboard-accessible episode menu.
   async function edit(number) {
     await page.locator(`#rewatch-options-${number}`).click();
@@ -59,17 +63,18 @@ export async function checkRewatches(page, base) {
     assert.equal(await page.locator("#rewatch-count").evaluate((input) => input.checkValidity()), false);
     await page.locator("#rewatch-count").fill("4");
     await page.locator("#rewatch-save").click();
-    await page.waitForFunction(() => !document.querySelector("#rewatch-dialog").open);
+    await editorClosed();
     assert.equal(await page.locator("#rewatch-1 span").textContent(), "4");
     assert.equal(await page.locator("#rewatch-options-1").evaluate((button) => button === document.activeElement), true);
     await edit(1);
     await page.locator("#rewatch-count").fill("0");
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await editorClosed();
     assert.equal(await page.locator("#rewatch-1 span").textContent(), "4");
     await edit(1);
     await page.locator("#rewatch-count").fill("0");
     await page.locator("#rewatch-save").click();
-    await page.waitForFunction(() => !document.querySelector("#rewatch-dialog").open);
+    await editorClosed();
     assert.equal(await page.locator("#rewatch-1 span").count(), 0);
 
     // Small screens keep repeat controls and the correction editor inside the dialog.
@@ -82,6 +87,7 @@ export async function checkRewatches(page, base) {
     await edit(1);
     assert.equal(await page.locator("#rewatch-dialog").evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth), true);
     await page.keyboard.press("Escape");
+    await editorClosed();
     assert.equal(await page.locator("#rewatch-dialog").isVisible(), false);
     assert.equal(await page.locator(".episode").first().evaluate((row) => row.scrollWidth <= row.clientWidth), true);
     await page.setViewportSize(viewport);
