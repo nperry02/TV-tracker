@@ -8,8 +8,8 @@ Install [Node.js 22 or newer](https://nodejs.org/), then clone the repository an
 enter its directory:
 
 ```sh
-git clone https://github.com/nperry02/TV-tracker.git
-cd TV-tracker
+git clone https://github.com/nperry02/next-episode.git
+cd next-episode
 ```
 
 Create the local environment file from the committed template:
@@ -130,7 +130,7 @@ alerts and security updates separately in GitHub settings.
 After publication is explicitly approved and the workflow is on the default
 branch, run CI once and verify all three jobs pass. The prepared
 [main ruleset](.github/main-ruleset.json) can then be applied with
-`gh api --method POST repos/nperry02/TV-tracker/rulesets --input .github/main-ruleset.json`.
+`gh api --method POST repos/nperry02/next-episode/rulesets --input .github/main-ruleset.json`.
 It requires a PR, resolved conversations, and current passing `Model and API`,
 `Browser fixtures`, and `Secret scan` checks from GitHub Actions. It blocks force
 pushes and deletion of `main`, has no bypass actors, and requires zero approvals
